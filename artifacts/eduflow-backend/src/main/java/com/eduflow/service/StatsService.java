@@ -42,9 +42,7 @@ public class StatsService {
         Map<String, Long> byCourse = new LinkedHashMap<>();
         for (StatutCours sc : StatutCours.values()) byCourse.put(sc.name(), coursRepo.countByStatut(sc));
 
-        long pendingTeachers = userRepo.countByRole(Role.ENSEIGNANT)
-                - teacherRepo.findByStatutCompte(StatutCompte.ACTIVE).size();
-        // Use repository count for pending submissions instead of in-memory scan.
+        long pendingTeachers = teacherRepo.findByStatutCompte(StatutCompte.PENDING_APPROVAL).size();
         long pendingSubs = soumissionRepo.countByStatut(StatutDevoir.SUBMITTED);
 
         // Top courses: still iterates published courses, but uses count queries
@@ -58,9 +56,7 @@ public class StatsService {
                 .sorted(Comparator.comparingLong(TopCourse::nbInscrits).reversed())
                 .limit(5).toList();
 
-        return new StatsOverview(byRole, byStatus, byCourse,
-                Math.max(0L, teacherRepo.findByStatutCompte(StatutCompte.PENDING_APPROVAL).size()),
-                pendingSubs, top);
+        return new StatsOverview(byRole, byStatus, byCourse, pendingTeachers, pendingSubs, top);
     }
 
     public TeacherStats teacherStats() {

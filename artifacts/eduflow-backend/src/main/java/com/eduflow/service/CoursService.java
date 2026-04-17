@@ -42,8 +42,8 @@ public class CoursService {
         return list.stream().map(this::toResponse).toList();
     }
 
-    @Transactional(readOnly = true)
     public CoursResponse get(Long id) {
+        // Read-write because students cause a consultation increment.
         Cours c = coursRepo.findById(id).orElseThrow(() -> new IllegalArgumentException("Course not found"));
         ensureVisible(c);
         if ("ETUDIANT".equals(SecurityUtils.currentRole())) {
