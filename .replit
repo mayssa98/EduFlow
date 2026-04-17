@@ -19,21 +19,25 @@ modules = ["nodejs-24", "java-graalvm22.3"]
   path = "scripts/post-merge.sh"
   timeoutMs = 20000
 
-  [[ports]]
-  localPort = 8080
-  externalPort = 8080
+[[ports]]
+localPort = 8080
+externalPort = 8080
 
-  [[ports]]
-  localPort = 8081
-  externalPort = 80
+[[ports]]
+localPort = 8081
+externalPort = 80
 
-  [[ports]]
-  localPort = 8082
-  externalPort = 3000
+[[ports]]
+localPort = 8082
+externalPort = 3000
 
-  [[ports]]
-  localPort = 21536
-  externalPort = 3001
+[[ports]]
+localPort = 21536
+externalPort = 3003
+
+[[ports]]
+localPort = 26151
+externalPort = 3001
 
   [userenv]
 
