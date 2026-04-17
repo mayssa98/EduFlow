@@ -1,14 +1,14 @@
 import {
   HttpClient
-} from "./chunk-K7T4VQNM.js";
-import "./chunk-2L7TZ5BB.js";
+} from "./chunk-D3Q5PTI3.js";
+import "./chunk-YE3PKCUO.js";
 import {
   Inject,
   Injectable,
   setClassMetadata,
   ɵɵdefineInjectable,
   ɵɵinject
-} from "./chunk-6LIR73BY.js";
+} from "./chunk-AMK4ACLQ.js";
 
 // ../../node_modules/.pnpm/@ngx-translate+http-loader@16.0.1_@angular+common@19.2.21_@angular+core@19.2.21_rxjs@7._91d74ed0543f53d84df6d1f4f7b4fd6c/node_modules/@ngx-translate/http-loader/fesm2022/ngx-translate-http-loader.mjs
 var TranslateHttpLoader = class _TranslateHttpLoader {
