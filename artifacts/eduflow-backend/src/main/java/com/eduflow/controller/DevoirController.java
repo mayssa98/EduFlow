@@ -3,6 +3,8 @@ package com.eduflow.controller;
 import com.eduflow.model.dto.DevoirDtos.*;
 import com.eduflow.service.DevoirService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -14,6 +16,14 @@ import java.util.List;
 @RestController
 @RequestMapping("/assignments")
 @Tag(name = "Assignments", description = "Assignment CRUD, submissions, grading")
+@ApiResponses({
+        @ApiResponse(responseCode = "200", description = "OK"),
+        @ApiResponse(responseCode = "204", description = "No content (delete)"),
+        @ApiResponse(responseCode = "400", description = "Validation error, deadline passed, or already graded"),
+        @ApiResponse(responseCode = "401", description = "Authentication required"),
+        @ApiResponse(responseCode = "403", description = "Forbidden — not the owning teacher / not enrolled"),
+        @ApiResponse(responseCode = "404", description = "Assignment or submission not found")
+})
 public class DevoirController {
 
     private final DevoirService service;

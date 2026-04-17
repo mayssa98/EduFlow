@@ -6,6 +6,8 @@ import com.eduflow.model.entity.enums.StatutCompte;
 import com.eduflow.service.StatsService;
 import com.eduflow.service.UtilisateurService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -17,6 +19,13 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/admin")
 @Tag(name = "Admin", description = "User management, approvals and stats (ADMIN role)")
+@ApiResponses({
+        @ApiResponse(responseCode = "200", description = "OK"),
+        @ApiResponse(responseCode = "400", description = "Validation error or business rule violation"),
+        @ApiResponse(responseCode = "401", description = "Authentication required"),
+        @ApiResponse(responseCode = "403", description = "Forbidden — caller is not ADMIN"),
+        @ApiResponse(responseCode = "404", description = "Resource not found")
+})
 public class AdminController {
 
     private final UtilisateurService userService;

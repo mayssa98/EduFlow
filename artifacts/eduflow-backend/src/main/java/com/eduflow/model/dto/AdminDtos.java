@@ -56,6 +56,20 @@ public class AdminDtos {
             double averageGrade,
             long totalSubmissions,
             long gradedSubmissions,
-            double submissionRate
+            double submissionRate,
+            long totalConsultations,
+            List<AssignmentStat> perAssignment
+    ) {}
+
+    public record AssignmentStat(
+            Long assignmentId,
+            String titre,
+            Long coursId,
+            long expected,
+            long submissions,
+            long graded,
+            double submissionRate,
+            double averageGrade,
+            long courseConsultations
     ) {}
 }

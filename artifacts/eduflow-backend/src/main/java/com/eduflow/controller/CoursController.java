@@ -5,6 +5,8 @@ import com.eduflow.model.entity.SupportPedagogique;
 import com.eduflow.service.CoursService;
 import com.eduflow.service.FileStorageService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.core.io.Resource;
@@ -19,6 +21,14 @@ import java.util.List;
 @RestController
 @RequestMapping("/courses")
 @Tag(name = "Courses", description = "Course CRUD, file upload, file serving")
+@ApiResponses({
+        @ApiResponse(responseCode = "200", description = "OK"),
+        @ApiResponse(responseCode = "204", description = "No content (delete)"),
+        @ApiResponse(responseCode = "400", description = "Validation error or invalid file type / oversize"),
+        @ApiResponse(responseCode = "401", description = "Authentication required"),
+        @ApiResponse(responseCode = "403", description = "Forbidden — not the owning teacher or course not visible"),
+        @ApiResponse(responseCode = "404", description = "Course or file not found")
+})
 public class CoursController {
 
     private final CoursService service;

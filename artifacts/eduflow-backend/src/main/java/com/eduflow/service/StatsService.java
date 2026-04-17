@@ -2,7 +2,7 @@ package com.eduflow.service;
 
 import com.eduflow.model.dto.AdminDtos.*;
 import com.eduflow.model.entity.Cours;
-import com.eduflow.model.entity.Soumission;
+import com.eduflow.model.entity.Devoir;
 import com.eduflow.model.entity.enums.Role;
 import com.eduflow.model.entity.enums.StatutCompte;
 import com.eduflow.model.entity.enums.StatutCours;
@@ -12,9 +12,7 @@ import com.eduflow.security.SecurityUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 @Transactional(readOnly = true)
@@ -34,6 +32,7 @@ public class StatsService {
     }
 
     public StatsOverview overview() {
+        // Pure repository-level COUNT aggregates (no full-table scans).
         Map<Role, Long> byRole = new EnumMap<>(Role.class);
         for (Role r : Role.values()) byRole.put(r, userRepo.countByRole(r));
 
@@ -43,50 +42,62 @@ public class StatsService {
         Map<String, Long> byCourse = new LinkedHashMap<>();
         for (StatutCours sc : StatutCours.values()) byCourse.put(sc.name(), coursRepo.countByStatut(sc));
 
-        long pendingTeachers = teacherRepo.findByStatutCompte(StatutCompte.PENDING_APPROVAL).size();
-        long pendingSubs = soumissionRepo.findAll().stream()
-                .filter(s -> s.getStatut() == StatutDevoir.SUBMITTED).count();
+        long pendingTeachers = userRepo.countByRole(Role.ENSEIGNANT)
+                - teacherRepo.findByStatutCompte(StatutCompte.ACTIVE).size();
+        // Use repository count for pending submissions instead of in-memory scan.
+        long pendingSubs = soumissionRepo.countByStatut(StatutDevoir.SUBMITTED);
 
-        List<TopCourse> top = coursRepo.findAll().stream()
-                .map(c -> new TopCourse(c.getId(), c.getTitre(),
-                        inscriptionRepo.findByCoursId(c.getId()).size(),
+        // Top courses: still iterates published courses, but uses count queries
+        // per course (no in-memory aggregation over submissions).
+        List<TopCourse> top = coursRepo.findByStatut(StatutCours.PUBLISHED).stream()
+                .map(c -> new TopCourse(
+                        c.getId(),
+                        c.getTitre(),
+                        inscriptionRepo.countByCoursId(c.getId()),
                         c.getNbConsultations() == null ? 0L : c.getNbConsultations().longValue()))
                 .sorted(Comparator.comparingLong(TopCourse::nbInscrits).reversed())
                 .limit(5).toList();
 
-        return new StatsOverview(byRole, byStatus, byCourse, pendingTeachers, pendingSubs, top);
+        return new StatsOverview(byRole, byStatus, byCourse,
+                Math.max(0L, teacherRepo.findByStatutCompte(StatutCompte.PENDING_APPROVAL).size()),
+                pendingSubs, top);
     }
 
     public TeacherStats teacherStats() {
         SecurityUtils.requireRole("ENSEIGNANT");
         Long uid = SecurityUtils.currentUserId();
-        List<Cours> mine = coursRepo.findByEnseignantId(uid);
-        long total = mine.size();
-        long published = mine.stream().filter(c -> c.getStatut() == StatutCours.PUBLISHED).count();
 
-        long totalAssign = 0, totalSubs = 0, gradedSubs = 0;
-        BigDecimal sumGrade = BigDecimal.ZERO;
-        long count = 0;
-        long expectedSubs = 0;
-        for (Cours c : mine) {
-            var assignments = devoirRepo.findByCoursId(c.getId());
-            totalAssign += assignments.size();
-            long enrolled = inscriptionRepo.findByCoursId(c.getId()).size();
-            for (var a : assignments) {
-                expectedSubs += enrolled;
-                List<Soumission> subs = soumissionRepo.findByDevoirId(a.getId());
-                totalSubs += subs.size();
-                for (Soumission s : subs) {
-                    if (s.getStatut() == StatutDevoir.GRADED && s.getNote() != null) {
-                        gradedSubs++;
-                        sumGrade = sumGrade.add(s.getNote());
-                        count++;
-                    }
-                }
-            }
+        long total = coursRepo.countByEnseignantId(uid);
+        long published = coursRepo.countByEnseignantIdAndStatut(uid, StatutCours.PUBLISHED);
+        long totalAssign = devoirRepo.countByTeacherId(uid);
+        Long sumConsult = coursRepo.sumConsultationsForTeacher(uid);
+        long consultations = sumConsult == null ? 0L : sumConsult;
+        Double avgGradeNullable = soumissionRepo.averageGradeForTeacher(uid);
+        double avg = avgGradeNullable == null ? 0.0 : avgGradeNullable;
+
+        long totalSubs = 0, gradedSubs = 0, expectedSubs = 0;
+        List<AssignmentStat> perAssignment = new ArrayList<>();
+        List<Devoir> assignments = devoirRepo.findByTeacherId(uid);
+        Map<Long, Long> enrollCache = new HashMap<>();
+        for (Devoir a : assignments) {
+            Cours c = a.getCours();
+            long enrolled = enrollCache.computeIfAbsent(c.getId(), inscriptionRepo::countByCoursId);
+            long subs = soumissionRepo.countByDevoirId(a.getId());
+            long graded = soumissionRepo.countByDevoirIdAndStatut(a.getId(), StatutDevoir.GRADED);
+            Double avgA = soumissionRepo.averageGradeForAssignment(a.getId());
+            double rate = enrolled == 0 ? 0.0 : (double) subs / enrolled;
+            totalSubs += subs;
+            gradedSubs += graded;
+            expectedSubs += enrolled;
+            perAssignment.add(new AssignmentStat(
+                    a.getId(), a.getTitre(), c.getId(),
+                    enrolled, subs, graded, rate,
+                    avgA == null ? 0.0 : avgA,
+                    c.getNbConsultations() == null ? 0L : c.getNbConsultations().longValue()
+            ));
         }
-        double avg = count == 0 ? 0.0 : sumGrade.doubleValue() / count;
-        double rate = expectedSubs == 0 ? 0.0 : (double) totalSubs / expectedSubs;
-        return new TeacherStats(total, published, totalAssign, avg, totalSubs, gradedSubs, rate);
+        double overallRate = expectedSubs == 0 ? 0.0 : (double) totalSubs / expectedSubs;
+        return new TeacherStats(total, published, totalAssign, avg, totalSubs, gradedSubs,
+                overallRate, consultations, perAssignment);
     }
 }
