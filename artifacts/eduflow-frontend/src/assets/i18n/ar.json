@@ -1,0 +1,49 @@
+{
+  "nav": {
+    "language": "اللغة",
+    "theme": "تبديل السمة",
+    "login": "تسجيل الدخول",
+    "signup": "إنشاء حساب",
+    "logout": "تسجيل الخروج",
+    "dashboard": "لوحة التحكم"
+  },
+  "common": {
+    "getStarted": "ابدأ الآن",
+    "learnMore": "اعرف المزيد",
+    "save": "حفظ",
+    "cancel": "إلغاء",
+    "delete": "حذف",
+    "edit": "تعديل",
+    "submit": "إرسال",
+    "search": "بحث",
+    "loading": "جارٍ التحميل…"
+  },
+  "home": {
+    "title": "مكِّن التعلم مع EduFlow",
+    "subtitle": "نظام إدارة تعلم حديث للتعليم العالي — مقررات، واجبات، وتحليلات تربوية مدعومة بالذكاء الاصطناعي."
+  },
+  "auth": {
+    "email": "البريد الإلكتروني",
+    "password": "كلمة المرور",
+    "confirmPassword": "تأكيد كلمة المرور",
+    "forgot": "هل نسيت كلمة المرور؟",
+    "loginCta": "تسجيل الدخول",
+    "signupCta": "إنشاء حساب",
+    "google": "المتابعة باستخدام Google"
+  },
+  "errors": {
+    "required": "هذا الحقل مطلوب",
+    "invalidEmail": "أدخل بريدًا إلكترونيًا صالحًا",
+    "weakPassword": "كلمة المرور: 8 أحرف على الأقل، حرف كبير، رقم ورمز خاص",
+    "invalidCredentials": "بيانات اعتماد غير صحيحة",
+    "blockedAccount": "حسابك محظور"
+  },
+  "dashboard": {
+    "users": "المستخدمون",
+    "courses": "المقررات",
+    "submissions": "التسليمات",
+    "pendingApprovals": "الموافقات المعلقة",
+    "recentActivity": "النشاط الأخير",
+    "atRiskStudents": "الطلاب المعرضون للخطر"
+  }
+}

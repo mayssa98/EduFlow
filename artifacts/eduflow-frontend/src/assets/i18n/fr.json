@@ -1,0 +1,49 @@
+{
+  "nav": {
+    "language": "Langue",
+    "theme": "Changer de thème",
+    "login": "Connexion",
+    "signup": "Inscription",
+    "logout": "Déconnexion",
+    "dashboard": "Tableau de bord"
+  },
+  "common": {
+    "getStarted": "Commencer",
+    "learnMore": "En savoir plus",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "submit": "Envoyer",
+    "search": "Rechercher",
+    "loading": "Chargement…"
+  },
+  "home": {
+    "title": "Donnez du pouvoir à l'apprentissage avec EduFlow",
+    "subtitle": "Un LMS moderne pour l'enseignement supérieur — cours, devoirs, analyses pédagogiques par IA."
+  },
+  "auth": {
+    "email": "E-mail",
+    "password": "Mot de passe",
+    "confirmPassword": "Confirmer le mot de passe",
+    "forgot": "Mot de passe oublié ?",
+    "loginCta": "Se connecter",
+    "signupCta": "Créer un compte",
+    "google": "Continuer avec Google"
+  },
+  "errors": {
+    "required": "Ce champ est obligatoire",
+    "invalidEmail": "Saisissez un e-mail valide",
+    "weakPassword": "Mot de passe : 8+ car., majuscule, chiffre et spécial",
+    "invalidCredentials": "Identifiants invalides",
+    "blockedAccount": "Votre compte est bloqué"
+  },
+  "dashboard": {
+    "users": "Utilisateurs",
+    "courses": "Cours",
+    "submissions": "Soumissions",
+    "pendingApprovals": "Approbations en attente",
+    "recentActivity": "Activité récente",
+    "atRiskStudents": "Étudiants à risque"
+  }
+}
