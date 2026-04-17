@@ -1,0 +1,112 @@
+{
+  "APP": {
+    "NAME": "EduFlow",
+    "TAGLINE": "تمكين التعليم من خلال البيانات"
+  },
+  "NAV": {
+    "HOME": "الرئيسية",
+    "DASHBOARD": "لوحة التحكم",
+    "COURSES": "الدورات",
+    "STUDENTS": "الطلاب",
+    "TEACHERS": "المعلمون",
+    "REPORTS": "التقارير",
+    "SETTINGS": "الإعدادات",
+    "PROFILE": "الملف الشخصي",
+    "LOGOUT": "تسجيل الخروج"
+  },
+  "AUTH": {
+    "LOGIN": "تسجيل الدخول",
+    "REGISTER": "إنشاء حساب",
+    "LOGOUT": "تسجيل الخروج",
+    "EMAIL": "البريد الإلكتروني",
+    "PASSWORD": "كلمة المرور",
+    "CONFIRM_PASSWORD": "تأكيد كلمة المرور",
+    "FULL_NAME": "الاسم الكامل",
+    "FORGOT_PASSWORD": "نسيت كلمة المرور؟",
+    "NO_ACCOUNT": "ليس لديك حساب؟",
+    "HAVE_ACCOUNT": "لديك حساب بالفعل؟",
+    "SIGN_IN": "تسجيل الدخول",
+    "SIGN_UP": "إنشاء حساب",
+    "WELCOME_BACK": "مرحباً بعودتك!",
+    "HELLO_STUDENT": "مرحباً، طالب!",
+    "SIGNIN_DETAILS": "سجل دخولك للبقاء على تواصل مع مؤسستك",
+    "SIGNUP_DETAILS": "أدخل بياناتك لبدء رحلتك التعليمية مع EduFlow",
+    "OR_USE_EMAIL": "أو استخدم بريدك الإلكتروني",
+    "OR_USE_EXISTING": "أو استخدم حسابك الحالي"
+  },
+  "DASHBOARD": {
+    "WELCOME": "مرحباً",
+    "OVERVIEW": "نظرة عامة",
+    "RECENT_ACTIVITY": "النشاط الأخير",
+    "TOTAL_STUDENTS": "إجمالي الطلاب",
+    "TOTAL_TEACHERS": "إجمالي المعلمين",
+    "TOTAL_COURSES": "إجمالي الدورات",
+    "ACTIVE_COURSES": "الدورات النشطة",
+    "COMPLETION_RATE": "معدل الإتمام",
+    "ATTENDANCE_RATE": "معدل الحضور",
+    "AVERAGE_GRADE": "متوسط الدرجات",
+    "AT_RISK": "في خطر"
+  },
+  "BUTTONS": {
+    "SAVE": "حفظ",
+    "CANCEL": "إلغاء",
+    "DELETE": "حذف",
+    "EDIT": "تعديل",
+    "ADD": "إضافة",
+    "SUBMIT": "إرسال",
+    "BACK": "رجوع",
+    "NEXT": "التالي",
+    "CONFIRM": "تأكيد",
+    "CLOSE": "إغلاق",
+    "VIEW_ALL": "عرض الكل",
+    "LOAD_MORE": "تحميل المزيد",
+    "EXPORT": "تصدير"
+  },
+  "ERRORS": {
+    "REQUIRED": "هذا الحقل مطلوب",
+    "EMAIL_INVALID": "يرجى إدخال بريد إلكتروني صالح",
+    "PASSWORD_TOO_SHORT": "يجب أن تتكون كلمة المرور من 8 أحرف على الأقل",
+    "PASSWORDS_MISMATCH": "كلمتا المرور غير متطابقتين",
+    "GENERIC": "حدث خطأ. يرجى المحاولة مرة أخرى.",
+    "NOT_FOUND": "الصفحة غير موجودة",
+    "UNAUTHORIZED": "غير مصرح لك بعرض هذه الصفحة",
+    "SERVER_ERROR": "خطأ في الخادم. يرجى المحاولة لاحقاً."
+  },
+  "THEME": {
+    "LIGHT": "الوضع الفاتح",
+    "DARK": "الوضع الداكن",
+    "TOGGLE": "تبديل المظهر"
+  },
+  "LANGUAGE": {
+    "SELECT": "اختر اللغة",
+    "ENGLISH": "الإنجليزية",
+    "FRENCH": "الفرنسية",
+    "ARABIC": "العربية"
+  },
+  "ROLES": {
+    "ADMIN": "مدير",
+    "TEACHER": "معلم",
+    "STUDENT": "طالب"
+  },
+  "STATUS": {
+    "ACTIVE": "نشط",
+    "INACTIVE": "غير نشط",
+    "PENDING": "قيد الانتظار",
+    "COMPLETED": "مكتمل",
+    "IN_PROGRESS": "جاري",
+    "FAILED": "فشل"
+  },
+  "LANDING": {
+    "HERO_TITLE": "المنصة الذكية للتعليم الحديث",
+    "HERO_SUBTITLE": "أدر الطلاب والدورات والأداء بتحليلات قوية ورؤى مدعومة بالذكاء الاصطناعي.",
+    "GET_STARTED": "ابدأ مجاناً",
+    "LEARN_MORE": "اعرف المزيد",
+    "FEATURES_TITLE": "كل ما تحتاجه لإدارة مدرسة رائعة",
+    "FEATURE_ANALYTICS": "تحليلات متقدمة",
+    "FEATURE_ANALYTICS_DESC": "لوحات معلومات في الوقت الفعلي وتقارير مفصلة للمديرين والمعلمين والطلاب.",
+    "FEATURE_AI": "رؤى مدعومة بالذكاء الاصطناعي",
+    "FEATURE_AI_DESC": "تحديد الطلاب المعرضين للخطر مبكراً وتخصيص مسارات التعلم بالتعلم الآلي.",
+    "FEATURE_MULTILANG": "دعم متعدد اللغات",
+    "FEATURE_MULTILANG_DESC": "متاح بالإنجليزية والفرنسية والعربية مع دعم كامل لتخطيط من اليمين إلى اليسار."
+  }
+}

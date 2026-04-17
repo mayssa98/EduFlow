@@ -1,0 +1,112 @@
+{
+  "APP": {
+    "NAME": "EduFlow",
+    "TAGLINE": "Empowering education through data"
+  },
+  "NAV": {
+    "HOME": "Home",
+    "DASHBOARD": "Dashboard",
+    "COURSES": "Courses",
+    "STUDENTS": "Students",
+    "TEACHERS": "Teachers",
+    "REPORTS": "Reports",
+    "SETTINGS": "Settings",
+    "PROFILE": "Profile",
+    "LOGOUT": "Log out"
+  },
+  "AUTH": {
+    "LOGIN": "Log in",
+    "REGISTER": "Register",
+    "LOGOUT": "Log out",
+    "EMAIL": "Email address",
+    "PASSWORD": "Password",
+    "CONFIRM_PASSWORD": "Confirm password",
+    "FULL_NAME": "Full name",
+    "FORGOT_PASSWORD": "Forgot your password?",
+    "NO_ACCOUNT": "Don't have an account?",
+    "HAVE_ACCOUNT": "Already have an account?",
+    "SIGN_IN": "Sign in",
+    "SIGN_UP": "Sign up",
+    "WELCOME_BACK": "Welcome back!",
+    "HELLO_STUDENT": "Hello, Student!",
+    "SIGNIN_DETAILS": "Sign in to stay connected with your institution",
+    "SIGNUP_DETAILS": "Enter your details to start your educational journey with EduFlow",
+    "OR_USE_EMAIL": "or use your email account",
+    "OR_USE_EXISTING": "or use your existing account"
+  },
+  "DASHBOARD": {
+    "WELCOME": "Welcome",
+    "OVERVIEW": "Overview",
+    "RECENT_ACTIVITY": "Recent Activity",
+    "TOTAL_STUDENTS": "Total Students",
+    "TOTAL_TEACHERS": "Total Teachers",
+    "TOTAL_COURSES": "Total Courses",
+    "ACTIVE_COURSES": "Active Courses",
+    "COMPLETION_RATE": "Completion Rate",
+    "ATTENDANCE_RATE": "Attendance Rate",
+    "AVERAGE_GRADE": "Average Grade",
+    "AT_RISK": "At Risk"
+  },
+  "BUTTONS": {
+    "SAVE": "Save",
+    "CANCEL": "Cancel",
+    "DELETE": "Delete",
+    "EDIT": "Edit",
+    "ADD": "Add",
+    "SUBMIT": "Submit",
+    "BACK": "Back",
+    "NEXT": "Next",
+    "CONFIRM": "Confirm",
+    "CLOSE": "Close",
+    "VIEW_ALL": "View all",
+    "LOAD_MORE": "Load more",
+    "EXPORT": "Export"
+  },
+  "ERRORS": {
+    "REQUIRED": "This field is required",
+    "EMAIL_INVALID": "Please enter a valid email address",
+    "PASSWORD_TOO_SHORT": "Password must be at least 8 characters",
+    "PASSWORDS_MISMATCH": "Passwords do not match",
+    "GENERIC": "An error occurred. Please try again.",
+    "NOT_FOUND": "Page not found",
+    "UNAUTHORIZED": "You are not authorized to view this page",
+    "SERVER_ERROR": "Server error. Please try again later."
+  },
+  "THEME": {
+    "LIGHT": "Light mode",
+    "DARK": "Dark mode",
+    "TOGGLE": "Toggle theme"
+  },
+  "LANGUAGE": {
+    "SELECT": "Select language",
+    "ENGLISH": "English",
+    "FRENCH": "French",
+    "ARABIC": "Arabic"
+  },
+  "ROLES": {
+    "ADMIN": "Administrator",
+    "TEACHER": "Teacher",
+    "STUDENT": "Student"
+  },
+  "STATUS": {
+    "ACTIVE": "Active",
+    "INACTIVE": "Inactive",
+    "PENDING": "Pending",
+    "COMPLETED": "Completed",
+    "IN_PROGRESS": "In progress",
+    "FAILED": "Failed"
+  },
+  "LANDING": {
+    "HERO_TITLE": "The Smart Platform for Modern Education",
+    "HERO_SUBTITLE": "Manage students, courses, and performance with powerful analytics and AI-driven insights.",
+    "GET_STARTED": "Get started free",
+    "LEARN_MORE": "Learn more",
+    "FEATURES_TITLE": "Everything you need to run a great school",
+    "FEATURE_ANALYTICS": "Advanced Analytics",
+    "FEATURE_ANALYTICS_DESC": "Real-time dashboards and detailed reports for admins, teachers, and students.",
+    "FEATURE_AI": "AI-Powered Insights",
+    "FEATURE_AI_DESC": "Identify at-risk students early and personalise learning paths with machine learning.",
+    "FEATURE_MULTILANG": "Multilingual Support",
+    "FEATURE_MULTILANG_DESC": "Available in English, French, and Arabic with full RTL layout support."
+  }
+}

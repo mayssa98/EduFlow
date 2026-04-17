@@ -1,0 +1,112 @@
+{
+  "APP": {
+    "NAME": "EduFlow",
+    "TAGLINE": "Valoriser l'éducation grâce aux données"
+  },
+  "NAV": {
+    "HOME": "Accueil",
+    "DASHBOARD": "Tableau de bord",
+    "COURSES": "Cours",
+    "STUDENTS": "Étudiants",
+    "TEACHERS": "Enseignants",
+    "REPORTS": "Rapports",
+    "SETTINGS": "Paramètres",
+    "PROFILE": "Profil",
+    "LOGOUT": "Déconnexion"
+  },
+  "AUTH": {
+    "LOGIN": "Connexion",
+    "REGISTER": "S'inscrire",
+    "LOGOUT": "Déconnexion",
+    "EMAIL": "Adresse e-mail",
+    "PASSWORD": "Mot de passe",
+    "CONFIRM_PASSWORD": "Confirmer le mot de passe",
+    "FULL_NAME": "Nom complet",
+    "FORGOT_PASSWORD": "Mot de passe oublié ?",
+    "NO_ACCOUNT": "Vous n'avez pas de compte ?",
+    "HAVE_ACCOUNT": "Vous avez déjà un compte ?",
+    "SIGN_IN": "Se connecter",
+    "SIGN_UP": "S'inscrire",
+    "WELCOME_BACK": "Bon retour !",
+    "HELLO_STUDENT": "Bonjour, Étudiant !",
+    "SIGNIN_DETAILS": "Connectez-vous pour rester en contact avec votre établissement",
+    "SIGNUP_DETAILS": "Entrez vos coordonnées pour commencer votre parcours éducatif avec EduFlow",
+    "OR_USE_EMAIL": "ou utilisez votre adresse e-mail",
+    "OR_USE_EXISTING": "ou utilisez votre compte existant"
+  },
+  "DASHBOARD": {
+    "WELCOME": "Bienvenue",
+    "OVERVIEW": "Aperçu",
+    "RECENT_ACTIVITY": "Activité récente",
+    "TOTAL_STUDENTS": "Total étudiants",
+    "TOTAL_TEACHERS": "Total enseignants",
+    "TOTAL_COURSES": "Total cours",
+    "ACTIVE_COURSES": "Cours actifs",
+    "COMPLETION_RATE": "Taux d'achèvement",
+    "ATTENDANCE_RATE": "Taux de présence",
+    "AVERAGE_GRADE": "Note moyenne",
+    "AT_RISK": "En difficulté"
+  },
+  "BUTTONS": {
+    "SAVE": "Enregistrer",
+    "CANCEL": "Annuler",
+    "DELETE": "Supprimer",
+    "EDIT": "Modifier",
+    "ADD": "Ajouter",
+    "SUBMIT": "Soumettre",
+    "BACK": "Retour",
+    "NEXT": "Suivant",
+    "CONFIRM": "Confirmer",
+    "CLOSE": "Fermer",
+    "VIEW_ALL": "Voir tout",
+    "LOAD_MORE": "Charger plus",
+    "EXPORT": "Exporter"
+  },
+  "ERRORS": {
+    "REQUIRED": "Ce champ est obligatoire",
+    "EMAIL_INVALID": "Veuillez saisir une adresse e-mail valide",
+    "PASSWORD_TOO_SHORT": "Le mot de passe doit contenir au moins 8 caractères",
+    "PASSWORDS_MISMATCH": "Les mots de passe ne correspondent pas",
+    "GENERIC": "Une erreur est survenue. Veuillez réessayer.",
+    "NOT_FOUND": "Page introuvable",
+    "UNAUTHORIZED": "Vous n'êtes pas autorisé à consulter cette page",
+    "SERVER_ERROR": "Erreur serveur. Veuillez réessayer plus tard."
+  },
+  "THEME": {
+    "LIGHT": "Mode clair",
+    "DARK": "Mode sombre",
+    "TOGGLE": "Changer le thème"
+  },
+  "LANGUAGE": {
+    "SELECT": "Choisir la langue",
+    "ENGLISH": "Anglais",
+    "FRENCH": "Français",
+    "ARABIC": "Arabe"
+  },
+  "ROLES": {
+    "ADMIN": "Administrateur",
+    "TEACHER": "Enseignant",
+    "STUDENT": "Étudiant"
+  },
+  "STATUS": {
+    "ACTIVE": "Actif",
+    "INACTIVE": "Inactif",
+    "PENDING": "En attente",
+    "COMPLETED": "Terminé",
+    "IN_PROGRESS": "En cours",
+    "FAILED": "Échoué"
+  },
+  "LANDING": {
+    "HERO_TITLE": "La plateforme intelligente pour l'éducation moderne",
+    "HERO_SUBTITLE": "Gérez les étudiants, les cours et les performances avec des analyses puissantes et des insights basés sur l'IA.",
+    "GET_STARTED": "Commencer gratuitement",
+    "LEARN_MORE": "En savoir plus",
+    "FEATURES_TITLE": "Tout ce dont vous avez besoin pour diriger une excellente école",
+    "FEATURE_ANALYTICS": "Analyses avancées",
+    "FEATURE_ANALYTICS_DESC": "Tableaux de bord en temps réel et rapports détaillés pour les administrateurs, enseignants et étudiants.",
+    "FEATURE_AI": "Insights alimentés par l'IA",
+    "FEATURE_AI_DESC": "Identifiez les étudiants en difficulté tôt et personnalisez les parcours d'apprentissage grâce au machine learning.",
+    "FEATURE_MULTILANG": "Support multilingue",
+    "FEATURE_MULTILANG_DESC": "Disponible en anglais, français et arabe avec une prise en charge complète de la mise en page RTL."
+  }
+}
