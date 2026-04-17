@@ -64,6 +64,12 @@ public class UtilisateurService {
 
     public UserSummary block(Long id) {
         Utilisateur u = require(id);
+        // Refuse to block the final ACTIVE administrator — operational continuity.
+        if (u.getRole() == Role.ADMIN
+                && u.getStatutCompte() == StatutCompte.ACTIVE
+                && userRepo.countByRoleAndStatutCompte(Role.ADMIN, StatutCompte.ACTIVE) <= 1) {
+            throw new IllegalStateException("Cannot block the last active administrator");
+        }
         u.setStatutCompte(StatutCompte.BLOCKED);
         return toSummary(userRepo.save(u));
     }
@@ -77,11 +83,16 @@ public class UtilisateurService {
 
     public DeleteResult delete(Long id) {
         Utilisateur u = require(id);
-        // Preserve at least one ACTIVE administrator at all times.
-        boolean isLastActiveAdmin = u.getRole() == Role.ADMIN
-                && u.getStatutCompte() == StatutCompte.ACTIVE
-                && userRepo.countByRoleAndStatutCompte(Role.ADMIN, StatutCompte.ACTIVE) <= 1;
-        if (isLastActiveAdmin) {
+        // Preserve at least one administrator at all times. Either:
+        //  - the target IS the final ACTIVE admin (preferred check), or
+        //  - the target is the only admin row in the system regardless of status
+        //    (defence in depth — blocking can't bypass this).
+        long activeAdmins = userRepo.countByRoleAndStatutCompte(Role.ADMIN, StatutCompte.ACTIVE);
+        long allAdmins = userRepo.countByRole(Role.ADMIN);
+        boolean isLastAdmin = u.getRole() == Role.ADMIN
+                && (allAdmins <= 1
+                    || (u.getStatutCompte() == StatutCompte.ACTIVE && activeAdmins <= 1));
+        if (isLastAdmin) {
             // Spec: deleting the last admin must be BLOCKED rather than removed,
             // so the platform always retains at least one administrator. The
             // operation succeeds (200) and reports blocked=true in the body.
