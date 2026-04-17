@@ -90,9 +90,9 @@ public class AnalyseIAService {
                 fournisseur = "gemini:" + props.getAi().getGeminiModel();
                 analyse.setRawResponse(r.raw);
             } catch (Exception ex) {
-                log.warn("[AI] Gemini failure, using heuristic fallback: {}", ex.getMessage());
+                log.warn("[AI] Gemini call failed ({}); using heuristic fallback", ex.getClass().getSimpleName());
                 risks = heuristic(snapshots);
-                summary = "Fallback heuristique : " + ex.getMessage();
+                summary = "Fallback heuristique : Gemini indisponible (" + ex.getClass().getSimpleName() + ")";
                 fournisseur = "heuristic";
                 usedFallback = true;
             }
@@ -188,7 +188,7 @@ public class AnalyseIAService {
                 String raw = callGemini(prompt);
                 return parseGemini(raw, snaps);
             } catch (Exception e) {
-                log.debug("[AI] Gemini attempt {} failed: {}", attempt, e.getMessage());
+                log.debug("[AI] Gemini attempt {} failed ({})", attempt, e.getClass().getSimpleName());
                 last = e;
             }
         }
