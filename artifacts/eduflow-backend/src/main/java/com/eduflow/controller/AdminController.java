@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Optional;
 
 @RestController
+@org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMIN')")
 @RequestMapping("/admin")
 @Tag(name = "Admin", description = "User management, approvals and stats (ADMIN role)")
 @ApiResponses({
