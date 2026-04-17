@@ -253,6 +253,18 @@ public class AnalyseIAService {
                     n.path("justification").asText(""), recos));
         }
         if (out.isEmpty()) throw new IllegalStateException("Empty risks list from Gemini");
+        // Guarantee one risk record per enrolled student. If Gemini omits or
+        // hallucinates ids, fill the gaps with the deterministic heuristic so
+        // the API contract stays predictable.
+        Set<Long> covered = new HashSet<>();
+        for (StudentRisk r : out) covered.add(r.etudiantId());
+        List<StudentSnapshot> missing = snaps.stream()
+                .filter(s -> !covered.contains(s.etudiantId()))
+                .toList();
+        if (!missing.isEmpty()) {
+            out = new ArrayList<>(out);
+            out.addAll(heuristic(missing));
+        }
         return new GeminiResult(out, summary, raw);
     }
 }
