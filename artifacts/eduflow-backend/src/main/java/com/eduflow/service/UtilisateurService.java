@@ -28,11 +28,18 @@ public class UtilisateurService {
 
     @Transactional(readOnly = true)
     public List<UserSummary> list(Optional<Role> role, Optional<StatutCompte> status) {
-        return userRepo.findAll().stream()
-                .filter(u -> role.map(r -> u.getRole() == r).orElse(true))
-                .filter(u -> status.map(s -> u.getStatutCompte() == s).orElse(true))
-                .sorted(Comparator.comparing(Utilisateur::getDateCreation).reversed())
-                .map(this::toSummary).toList();
+        // Repository-level filtering — no full-table scan or in-memory predicates.
+        List<Utilisateur> rows;
+        if (role.isPresent() && status.isPresent()) {
+            rows = userRepo.findByRoleAndStatutCompteOrderByDateCreationDesc(role.get(), status.get());
+        } else if (role.isPresent()) {
+            rows = userRepo.findByRoleOrderByDateCreationDesc(role.get());
+        } else if (status.isPresent()) {
+            rows = userRepo.findByStatutCompteOrderByDateCreationDesc(status.get());
+        } else {
+            rows = userRepo.findAllByOrderByDateCreationDesc();
+        }
+        return rows.stream().map(this::toSummary).toList();
     }
 
     public UserSummary create(UserCreateRequest req) {
