@@ -76,7 +76,7 @@ public class DevoirController {
 
     @PatchMapping("/submissions/{id}/grade")
     @PreAuthorize("hasRole('ENSEIGNANT')")
-    @Operation(summary = "Grade a submission (0–noteMax)")
+    @Operation(summary = "Grade a submission (0–20). Note is final and cannot be edited after grading.")
     public SoumissionResponse grade(@PathVariable Long id, @Valid @RequestBody SoumissionGradeRequest req) {
         return service.grade(id, req);
     }
