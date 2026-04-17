@@ -9,19 +9,8 @@ import {
   Input,
   NgModule,
   Pipe,
-  __spreadValues,
-  concat,
-  concatMap,
-  defer,
-  forkJoin,
-  isObservable,
   makeEnvironmentProviders,
-  map,
-  of,
   setClassMetadata,
-  shareReplay,
-  switchMap,
-  take,
   ɵɵdefineDirective,
   ɵɵdefineInjectable,
   ɵɵdefineInjector,
@@ -30,7 +19,20 @@ import {
   ɵɵdirectiveInject,
   ɵɵgetInheritedFactory,
   ɵɵinject
-} from "./chunk-AMK4ACLQ.js";
+} from "./chunk-4XM7K22P.js";
+import {
+  __spreadValues,
+  concat,
+  concatMap,
+  defer,
+  forkJoin,
+  isObservable,
+  map,
+  of,
+  shareReplay,
+  switchMap,
+  take
+} from "./chunk-SZPMUFGN.js";
 
 // ../../node_modules/.pnpm/@ngx-translate+core@16.0.4_@angular+common@19.2.21_@angular+core@19.2.21_rxjs@7.8.2_zon_008069a559cbe1a65dff412c1f116bfa/node_modules/@ngx-translate/core/fesm2022/ngx-translate-core.mjs
 var TranslateLoader = class {
