@@ -221,7 +221,7 @@ public class AuthService {
             throw new IllegalArgumentException("Refresh token expired");
         }
         Utilisateur user = userRepo.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+                .orElseThrow(() -> new com.eduflow.exception.NotFoundException("User not found"));
         stored.setRevoked(true);
         refreshRepo.save(stored);
         issueTokens(user, resp);
@@ -230,7 +230,7 @@ public class AuthService {
 
     public AuthUserResponse currentUser(Long userId) {
         Utilisateur user = userRepo.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+                .orElseThrow(() -> new com.eduflow.exception.NotFoundException("User not found"));
         return toResponse(user);
     }
 

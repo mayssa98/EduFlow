@@ -58,7 +58,7 @@ public class AnalyseIAService {
     public AnalyseResponse analyze(Long coursId) {
         SecurityUtils.requireRole("ENSEIGNANT");
         Cours cours = coursRepo.findById(coursId)
-                .orElseThrow(() -> new IllegalArgumentException("Course not found"));
+                .orElseThrow(() -> new com.eduflow.exception.NotFoundException("Course not found"));
         if (!cours.getEnseignant().getId().equals(SecurityUtils.currentUserId()))
             throw new AccessDeniedException("Not the course owner");
 

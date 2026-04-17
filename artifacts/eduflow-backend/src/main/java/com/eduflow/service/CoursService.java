@@ -44,7 +44,7 @@ public class CoursService {
 
     public CoursResponse get(Long id) {
         // Read-write because students cause a consultation increment.
-        Cours c = coursRepo.findById(id).orElseThrow(() -> new IllegalArgumentException("Course not found"));
+        Cours c = coursRepo.findById(id).orElseThrow(() -> new com.eduflow.exception.NotFoundException("Course not found"));
         ensureVisible(c);
         if ("ETUDIANT".equals(SecurityUtils.currentRole())) {
             c.setNbConsultations(c.getNbConsultations() + 1);
@@ -63,7 +63,7 @@ public class CoursService {
         c.setEnseignant(teacher);
         if (req.matiereId() != null) {
             c.setMatiere(matiereRepo.findById(req.matiereId())
-                    .orElseThrow(() -> new IllegalArgumentException("Matiere not found")));
+                    .orElseThrow(() -> new com.eduflow.exception.NotFoundException("Matiere not found")));
         }
         c.setStatut(StatutCours.DRAFT);
         return toResponse(coursRepo.save(c));
@@ -75,7 +75,7 @@ public class CoursService {
         if (req.description() != null) c.setDescription(req.description());
         if (req.matiereId() != null) {
             c.setMatiere(matiereRepo.findById(req.matiereId())
-                    .orElseThrow(() -> new IllegalArgumentException("Matiere not found")));
+                    .orElseThrow(() -> new com.eduflow.exception.NotFoundException("Matiere not found")));
         }
         return toResponse(coursRepo.save(c));
     }
@@ -118,17 +118,17 @@ public class CoursService {
 
     @Transactional(readOnly = true)
     public List<SupportResponse> listFiles(Long coursId) {
-        Cours c = coursRepo.findById(coursId).orElseThrow(() -> new IllegalArgumentException("Course not found"));
+        Cours c = coursRepo.findById(coursId).orElseThrow(() -> new com.eduflow.exception.NotFoundException("Course not found"));
         ensureVisible(c);
         return supportRepo.findByCoursId(coursId).stream().map(this::toSupport).toList();
     }
 
     @Transactional(readOnly = true)
     public SupportPedagogique getFileForServing(Long coursId, Long fileId) {
-        Cours c = coursRepo.findById(coursId).orElseThrow(() -> new IllegalArgumentException("Course not found"));
+        Cours c = coursRepo.findById(coursId).orElseThrow(() -> new com.eduflow.exception.NotFoundException("Course not found"));
         ensureVisible(c);
         SupportPedagogique sp = supportRepo.findById(fileId)
-                .orElseThrow(() -> new IllegalArgumentException("File not found"));
+                .orElseThrow(() -> new com.eduflow.exception.NotFoundException("File not found"));
         if (!sp.getCours().getId().equals(coursId)) throw new IllegalArgumentException("File not in course");
         return sp;
     }
@@ -136,7 +136,7 @@ public class CoursService {
     public void deleteFile(Long coursId, Long fileId) {
         Cours c = ownedOrThrow(coursId);
         SupportPedagogique sp = supportRepo.findById(fileId)
-                .orElseThrow(() -> new IllegalArgumentException("File not found"));
+                .orElseThrow(() -> new com.eduflow.exception.NotFoundException("File not found"));
         if (!sp.getCours().getId().equals(c.getId())) throw new IllegalArgumentException("File not in course");
         storage.delete(sp.getCheminFichier());
         supportRepo.delete(sp);
@@ -144,7 +144,7 @@ public class CoursService {
 
     private Cours ownedOrThrow(Long id) {
         SecurityUtils.requireRole("ENSEIGNANT");
-        Cours c = coursRepo.findById(id).orElseThrow(() -> new IllegalArgumentException("Course not found"));
+        Cours c = coursRepo.findById(id).orElseThrow(() -> new com.eduflow.exception.NotFoundException("Course not found"));
         if (!c.getEnseignant().getId().equals(SecurityUtils.currentUserId())) {
             throw new AccessDeniedException("You do not own this course");
         }

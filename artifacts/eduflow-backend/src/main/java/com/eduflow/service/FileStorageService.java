@@ -61,7 +61,7 @@ public class FileStorageService {
             throw new IllegalArgumentException("Invalid path");
         }
         if (!Files.exists(p)) {
-            throw new IllegalArgumentException("File not found");
+            throw new com.eduflow.exception.NotFoundException("File not found");
         }
         Resource r = new UrlResource(p.toUri());
         if (!r.isReadable()) throw new IllegalArgumentException("File not readable");

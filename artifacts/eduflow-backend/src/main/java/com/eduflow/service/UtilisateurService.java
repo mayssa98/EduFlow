@@ -83,7 +83,7 @@ public class UtilisateurService {
 
     public UserSummary decideApproval(Long id, ApprovalRequest.Decision decision) {
         Enseignant t = teacherRepo.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Teacher not found"));
+                .orElseThrow(() -> new com.eduflow.exception.NotFoundException("Teacher not found"));
         if (t.getStatutCompte() != StatutCompte.PENDING_APPROVAL)
             throw new IllegalStateException("Teacher is not awaiting approval");
         if (decision == ApprovalRequest.Decision.APPROVE) {
@@ -96,7 +96,7 @@ public class UtilisateurService {
     }
 
     private Utilisateur require(Long id) {
-        return userRepo.findById(id).orElseThrow(() -> new IllegalArgumentException("User not found"));
+        return userRepo.findById(id).orElseThrow(() -> new com.eduflow.exception.NotFoundException("User not found"));
     }
 
     public UserSummary toSummary(Utilisateur u) {

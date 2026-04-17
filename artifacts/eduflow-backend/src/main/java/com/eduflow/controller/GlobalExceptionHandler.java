@@ -2,10 +2,13 @@ package com.eduflow.controller;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.eduflow.exception.NotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
+import org.springframework.web.servlet.NoHandlerFoundException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -27,6 +30,11 @@ public class GlobalExceptionHandler {
         return body(HttpStatus.BAD_REQUEST, "Validation failed", fields);
     }
 
+    @ExceptionHandler(NotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleNotFound(NotFoundException ex) {
+        return body(HttpStatus.NOT_FOUND, ex.getMessage(), null);
+    }
+
     @ExceptionHandler({IllegalArgumentException.class, IllegalStateException.class})
     public ResponseEntity<Map<String, Object>> handleBadRequest(RuntimeException ex) {
         return body(HttpStatus.BAD_REQUEST, ex.getMessage(), null);
@@ -35,6 +43,16 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({BadCredentialsException.class})
     public ResponseEntity<Map<String, Object>> handleAuth(Exception ex) {
         return body(HttpStatus.UNAUTHORIZED, "Authentication required", null);
+    }
+
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<Map<String, Object>> handleMethodNotSupported(HttpRequestMethodNotSupportedException ex) {
+        return body(HttpStatus.METHOD_NOT_ALLOWED, ex.getMessage(), null);
+    }
+
+    @ExceptionHandler(NoHandlerFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleNoHandler(NoHandlerFoundException ex) {
+        return body(HttpStatus.NOT_FOUND, "Route not found", null);
     }
 
     @ExceptionHandler(AccessDeniedException.class)

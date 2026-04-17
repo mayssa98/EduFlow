@@ -39,7 +39,7 @@ public class DevoirService {
 
     @Transactional(readOnly = true)
     public DevoirResponse get(Long id) {
-        Devoir d = devoirRepo.findById(id).orElseThrow(() -> new IllegalArgumentException("Assignment not found"));
+        Devoir d = devoirRepo.findById(id).orElseThrow(() -> new com.eduflow.exception.NotFoundException("Assignment not found"));
         ensureCourseVisible(d.getCours().getId());
         return toResponse(d);
     }
@@ -47,7 +47,7 @@ public class DevoirService {
     public DevoirResponse create(DevoirCreateRequest req) {
         SecurityUtils.requireRole("ENSEIGNANT");
         Cours cours = coursRepo.findById(req.coursId())
-                .orElseThrow(() -> new IllegalArgumentException("Course not found"));
+                .orElseThrow(() -> new com.eduflow.exception.NotFoundException("Course not found"));
         if (!cours.getEnseignant().getId().equals(SecurityUtils.currentUserId()))
             throw new AccessDeniedException("Not the course owner");
         if (!req.dateDebut().isBefore(req.dateFin()))
@@ -64,7 +64,7 @@ public class DevoirService {
     }
 
     public DevoirResponse update(Long id, DevoirUpdateRequest req) {
-        Devoir d = devoirRepo.findById(id).orElseThrow(() -> new IllegalArgumentException("Assignment not found"));
+        Devoir d = devoirRepo.findById(id).orElseThrow(() -> new com.eduflow.exception.NotFoundException("Assignment not found"));
         if (!d.getCours().getEnseignant().getId().equals(SecurityUtils.currentUserId()))
             throw new AccessDeniedException("Not the course owner");
         if (req.titre() != null && !req.titre().isBlank()) d.setTitre(req.titre());
@@ -79,7 +79,7 @@ public class DevoirService {
     }
 
     public void delete(Long id) {
-        Devoir d = devoirRepo.findById(id).orElseThrow(() -> new IllegalArgumentException("Assignment not found"));
+        Devoir d = devoirRepo.findById(id).orElseThrow(() -> new com.eduflow.exception.NotFoundException("Assignment not found"));
         if (!d.getCours().getEnseignant().getId().equals(SecurityUtils.currentUserId()))
             throw new AccessDeniedException("Not the course owner");
         // Cascade: remove submissions before the assignment to avoid FK violations.
@@ -90,7 +90,7 @@ public class DevoirService {
     public SoumissionResponse submit(Long devoirId, SoumissionCreateRequest req) {
         SecurityUtils.requireRole("ETUDIANT");
         Devoir devoir = devoirRepo.findById(devoirId)
-                .orElseThrow(() -> new IllegalArgumentException("Assignment not found"));
+                .orElseThrow(() -> new com.eduflow.exception.NotFoundException("Assignment not found"));
         // Server-side deadline enforcement (regardless of frontend state).
         if (OffsetDateTime.now().isAfter(devoir.getDateFin()))
             throw new IllegalStateException("Deadline passed — submissions are closed");
@@ -126,7 +126,7 @@ public class DevoirService {
 
     @Transactional(readOnly = true)
     public List<SoumissionResponse> listSubmissions(Long devoirId) {
-        Devoir d = devoirRepo.findById(devoirId).orElseThrow(() -> new IllegalArgumentException("Assignment not found"));
+        Devoir d = devoirRepo.findById(devoirId).orElseThrow(() -> new com.eduflow.exception.NotFoundException("Assignment not found"));
         if (!d.getCours().getEnseignant().getId().equals(SecurityUtils.currentUserId())
                 && !"ADMIN".equals(SecurityUtils.currentRole()))
             throw new AccessDeniedException("Not the course owner");
@@ -135,7 +135,7 @@ public class DevoirService {
 
     public SoumissionResponse grade(Long submissionId, SoumissionGradeRequest req) {
         Soumission s = soumissionRepo.findById(submissionId)
-                .orElseThrow(() -> new IllegalArgumentException("Submission not found"));
+                .orElseThrow(() -> new com.eduflow.exception.NotFoundException("Submission not found"));
         if (!s.getDevoir().getCours().getEnseignant().getId().equals(SecurityUtils.currentUserId()))
             throw new AccessDeniedException("Not the course owner");
         BigDecimal max = BigDecimal.valueOf(20);
@@ -156,7 +156,7 @@ public class DevoirService {
     }
 
     private void ensureCourseVisible(Long coursId) {
-        Cours c = coursRepo.findById(coursId).orElseThrow(() -> new IllegalArgumentException("Course not found"));
+        Cours c = coursRepo.findById(coursId).orElseThrow(() -> new com.eduflow.exception.NotFoundException("Course not found"));
         String role = SecurityUtils.currentRole();
         if ("ADMIN".equals(role)) return;
         if ("ENSEIGNANT".equals(role)) {
