@@ -102,6 +102,10 @@ public class DevoirService {
         Long etudiantId = SecurityUtils.currentUserId();
         Etudiant etu = etudiantRepo.findById(etudiantId)
                 .orElseThrow(() -> new AccessDeniedException("Student profile missing"));
+        // Enrollment guard: student must be enrolled in the course before submitting.
+        boolean enrolled = inscriptionRepo.findByEtudiantId(etudiantId).stream()
+                .anyMatch(i -> i.getCours().getId().equals(devoir.getCours().getId()));
+        if (!enrolled) throw new AccessDeniedException("You are not enrolled in this course");
 
         Soumission existing = soumissionRepo.findByDevoirIdAndEtudiantId(devoirId, etudiantId).orElse(null);
         if (existing != null) {
@@ -134,9 +138,9 @@ public class DevoirService {
                 .orElseThrow(() -> new IllegalArgumentException("Submission not found"));
         if (!s.getDevoir().getCours().getEnseignant().getId().equals(SecurityUtils.currentUserId()))
             throw new AccessDeniedException("Not the course owner");
-        BigDecimal max = s.getDevoir().getNoteMax();
+        BigDecimal max = BigDecimal.valueOf(20);
         if (req.note().compareTo(BigDecimal.ZERO) < 0 || req.note().compareTo(max) > 0)
-            throw new IllegalArgumentException("Grade must be between 0 and " + max);
+            throw new IllegalArgumentException("Grade must be between 0 and 20");
         s.setNote(req.note());
         s.setCommentaire(req.commentaire());
         s.setStatut(StatutDevoir.GRADED);

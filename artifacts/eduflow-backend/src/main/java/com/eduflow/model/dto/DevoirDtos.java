@@ -46,7 +46,7 @@ public class DevoirDtos {
     ) {}
 
     public record SoumissionGradeRequest(
-            @NotNull @DecimalMin("0.00") @DecimalMax("100.00") BigDecimal note,
+            @NotNull @DecimalMin("0.00") @DecimalMax("20.00") BigDecimal note,
             @Size(max = 5000) String commentaire
     ) {}
 
