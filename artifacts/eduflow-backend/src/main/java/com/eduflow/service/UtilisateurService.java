@@ -68,21 +68,24 @@ public class UtilisateurService {
         return toSummary(userRepo.save(u));
     }
 
-    public void delete(Long id) {
+    public DeleteResult delete(Long id) {
         Utilisateur u = require(id);
         if (u.getRole() == Role.ADMIN && userRepo.countByRole(Role.ADMIN) <= 1) {
-            // Spec: deleting the last admin must be BLOCKED, not a hard error.
-            // Transition the account to BLOCKED so the platform always retains
-            // at least one administrator while signalling the action was refused.
+            // Spec: deleting the last admin must be BLOCKED rather than removed,
+            // so the platform always retains at least one administrator. The
+            // operation succeeds (200) and reports blocked=true in the body.
             if (u.getStatutCompte() != StatutCompte.BLOCKED) {
                 u.setStatutCompte(StatutCompte.BLOCKED);
                 userRepo.save(u);
             }
-            throw new IllegalStateException(
-                    "Cannot delete the last administrator — account has been blocked instead");
+            return new DeleteResult(false, true,
+                    "Last administrator cannot be deleted; account has been blocked instead.");
         }
         userRepo.delete(u);
+        return new DeleteResult(true, false, "User deleted.");
     }
+
+    public record DeleteResult(boolean deleted, boolean blocked, String message) {}
 
     @Transactional(readOnly = true)
     public List<UserSummary> pendingTeachers() {

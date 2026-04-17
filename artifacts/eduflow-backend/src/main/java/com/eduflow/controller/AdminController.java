@@ -57,10 +57,9 @@ public class AdminController {
     public UserSummary unblock(@PathVariable Long id) { return userService.unblock(id); }
 
     @DeleteMapping("/users/{id}")
-    @Operation(summary = "Delete a user (rejects deletion of the last admin)")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
-        userService.delete(id);
-        return ResponseEntity.noContent().build();
+    @Operation(summary = "Delete a user — last admin is blocked instead of removed (response carries deleted/blocked flags)")
+    public ResponseEntity<UtilisateurService.DeleteResult> delete(@PathVariable Long id) {
+        return ResponseEntity.ok(userService.delete(id));
     }
 
     @GetMapping("/approvals")
