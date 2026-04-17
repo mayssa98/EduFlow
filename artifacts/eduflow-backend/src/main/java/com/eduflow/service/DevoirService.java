@@ -168,7 +168,12 @@ public class DevoirService {
                 throw new AccessDeniedException("Forbidden");
             return;
         }
+        // Students may only read assignments for PUBLISHED courses they are enrolled in.
         if (c.getStatut() != StatutCours.PUBLISHED) throw new AccessDeniedException("Forbidden");
+        Long uid = SecurityUtils.currentUserId();
+        boolean enrolled = inscriptionRepo.findByEtudiantId(uid).stream()
+                .anyMatch(i -> i.getCours().getId().equals(coursId));
+        if (!enrolled) throw new AccessDeniedException("Not enrolled in this course");
     }
 
     private DevoirResponse toResponse(Devoir d) {
