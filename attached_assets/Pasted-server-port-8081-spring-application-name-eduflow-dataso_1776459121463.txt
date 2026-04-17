@@ -1,0 +1,90 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: eduflow
+
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:eduflow}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:eduflow2026}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    open-in-view: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+        jdbc:
+          time_zone: UTC
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+
+  servlet:
+    multipart:
+      max-file-size: 500MB
+      max-request-size: 500MB
+
+# ==================== EduFlow Custom Properties ====================
+eduflow:
+  jwt:
+    secret: ${JWT_SECRET:ZjY5YTMwNDEwMmIwN2QxYjA1MjU1YTRmODJmOGQ5YTFiNDUxY2YxYjA4Njk0MmY1YmNiNzM2YzY4NjE2ODI4YQ==}
+    access-token-expiration-ms: 900000       # 15 minutes
+    refresh-token-expiration-ms: 604800000   # 7 days
+  frontend:
+    url: ${FRONTEND_URL:http://localhost:4200}
+  file:
+    upload-dir: ${FILE_UPLOAD_DIR:./uploads}
+  ai:
+    api-key: ${GEMINI_API_KEY:AIzaSyCLelVFbhw-luPsebbtpu-0alVSxJaatsE}
+    model: ${GEMINI_MODEL:gemini-1.5-flash}
+    api-url: ${GEMINI_API_URL:https://generativelanguage.googleapis.com/v1beta/models}
+    timeout-seconds: 30
+  resend:
+    api-key: ${RESEND_API_KEY:re_QtFk5GWa_BPKyBmgba8nnNyiwB1K364Bn}
+    from: ${RESEND_FROM:EduFlow <onboarding@resend.dev>}
+  google:
+    client-id: ${GOOGLE_CLIENT_ID:753472559277-jbbjnusa38sb2lgaff6p2vh5irs1hu0s.apps.googleusercontent.com}
+  admin:
+    default-email: ${ADMIN_EMAIL:admin@eduflow.com}
+    default-password: ${ADMIN_PASSWORD:Admin@EduFlow2026}
+
+# ==================== Logging ====================
+logging:
+  level:
+    com.eduflow: INFO
+    com.eduflow.security: DEBUG
+    com.eduflow.ai: DEBUG
+    org.springframework.security: WARN
+    org.hibernate.SQL: WARN
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+# ==================== Actuator ====================
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when-authorized
+
+# ==================== OpenAPI ====================
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true

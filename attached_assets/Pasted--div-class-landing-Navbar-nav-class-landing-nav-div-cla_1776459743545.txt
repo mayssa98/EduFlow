@@ -1,0 +1,75 @@
+<div class="landing">
+  <!-- Navbar -->
+  <nav class="landing-nav">
+    <div class="nav-container">
+      <div class="nav-logo"><img class="logo-box" src="site-logo.svg" alt="EduFlow logo" /> EduFlow</div>
+      <div class="nav-links">
+        <a href="#features">Fonctionnalités</a>
+        <a href="#stats">Statistiques</a>
+        <a routerLink="/login" mat-stroked-button>Connexion</a>
+        <a routerLink="/register" mat-raised-button color="primary">S'inscrire</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-content">
+      <h1>Transformez l'éducation avec <span class="gradient-text">EduFlow</span></h1>
+      <p>Une plateforme LMS intelligente avec analyse prédictive IA pour optimiser l'apprentissage et le suivi des étudiants.</p>
+      <div class="hero-actions">
+        <a routerLink="/register" mat-raised-button color="primary" class="hero-btn">Commencer gratuitement</a>
+        <a href="#features" mat-stroked-button class="hero-btn">Découvrir</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section id="features" class="features-section">
+    <div class="section-container">
+      <h2 class="section-title">{{ featuresTitle }}</h2>
+      <p class="section-subtitle">{{ featuresSubtitle }}</p>
+      <div class="features-grid">
+        @for (f of features; track f.title) {
+          <div class="feature-card">
+            <div class="feature-icon">{{ f.icon }}</div>
+            <h3>{{ f.title }}</h3>
+            <p>{{ f.desc }}</p>
+          </div>
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- Stats -->
+  <section id="stats" class="stats-section">
+    <div class="section-container">
+      <div class="stats-grid">
+        @for (s of stats; track s.label) {
+          <div class="stat-item">
+            <span class="stat-value">{{ s.value || '-' }}</span>
+            <span class="stat-label">{{ s.label }}</span>
+          </div>
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="cta-section">
+    <div class="section-container">
+      <h2>Prêt à commencer ?</h2>
+      <p>Rejoignez des milliers d'établissements qui utilisent EduFlow</p>
+      <a routerLink="/register" mat-raised-button color="primary" class="hero-btn">Créer un compte</a>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="landing-footer">
+    <div class="footer-container">
+      <div class="footer-brand"><img class="logo-box" src="site-logo.svg" alt="EduFlow logo" /> EduFlow</div>
+      <p>© 2026 EduFlow. Tous droits réservés.</p>
+    </div>
+  </footer>
+</div>
+
