@@ -18,6 +18,8 @@ public class AppProperties {
     private Email email = new Email();
     private Google google = new Google();
     private Cookie cookie = new Cookie();
+    private Upload upload = new Upload();
+    private Ai ai = new Ai();
 
     @Getter @Setter public static class Jwt {
         private String accessSecret;
@@ -52,5 +54,16 @@ public class AppProperties {
     @Getter @Setter public static class Cookie {
         private boolean secure = true;
         private String sameSite = "Strict";
+    }
+    @Getter @Setter public static class Upload {
+        private String dir = "./uploads";
+        private long pdfMaxBytes = 26_214_400L;
+        private long mp4MaxBytes = 262_144_000L;
+    }
+    @Getter @Setter public static class Ai {
+        private String geminiApiKey;
+        private String geminiModel = "gemini-1.5-flash";
+        private int timeoutSeconds = 30;
+        private double fallbackThreshold = 10.0;
     }
 }

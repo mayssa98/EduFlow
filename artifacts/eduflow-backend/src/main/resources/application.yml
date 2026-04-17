@@ -70,6 +70,22 @@ eduflow:
   cookie:
     secure: ${COOKIE_SECURE:true}
     same-site: Strict
+  upload:
+    dir: ${UPLOAD_DIR:./uploads}
+    pdf-max-bytes: 26214400      # 25 MB
+    mp4-max-bytes: 262144000     # 250 MB
+  ai:
+    gemini-api-key: ${GEMINI_API_KEY:}
+    gemini-model: ${GEMINI_MODEL:gemini-1.5-flash}
+    timeout-seconds: 30
+    fallback-threshold: 10.0     # moyenne < 10 → ELEVE in heuristic
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: alpha
+  api-docs:
+    path: /v3/api-docs
 
 logging:
   level:
