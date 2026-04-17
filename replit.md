@@ -17,7 +17,7 @@ Learning Management System (LMS) for higher education built as a pnpm monorepo w
 - **JWT secrets**: must be ≥32 bytes; the app fails to start otherwise (no silent padding).
 - **Email**: Resend HTTP API. When `RESEND_API_KEY` is unset, the service logs delivery metadata only (never the OTP itself).
 - **Google OAuth**: Authorization-code flow via `GoogleOAuthService` (server-side token exchange + userinfo). New OAuth users default to `ETUDIANT/ACTIVE`.
-- **Admin seed**: `AdminSeeder` (CommandLineRunner) creates `admin@eduflow.com` (password from `ADMIN_DEFAULT_PASSWORD`, default `Admin@EduFlow2026`) on first boot if absent.
+- **Admin seed**: Java Flyway migration `db.migration.V2__seed_admin` idempotently inserts `admin@eduflow.com` (password from the `ADMIN_DEFAULT_PASSWORD` Replit Secret, BCrypt(12) hashed). The migration is a no-op once the row exists.
 
 ## Required environment variables
 
