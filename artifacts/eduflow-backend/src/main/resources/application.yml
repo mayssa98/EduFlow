@@ -1,0 +1,78 @@
+server:
+  port: ${APP_BACKEND_PORT:8081}
+  servlet:
+    context-path: /api
+  forward-headers-strategy: framework
+
+spring:
+  application:
+    name: eduflow-backend
+  datasource:
+    url: jdbc:postgresql://${PGHOST}:${PGPORT}/${PGDATABASE}?sslmode=disable
+    username: ${PGUSER}
+    password: ${PGPASSWORD}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        jdbc:
+          time_zone: UTC
+        format_sql: false
+    open-in-view: false
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    locations: classpath:db/migration
+  servlet:
+    multipart:
+      max-file-size: 250MB
+      max-request-size: 260MB
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: never
+
+eduflow:
+  jwt:
+    access-secret: ${JWT_SECRET}
+    refresh-secret: ${JWT_REFRESH_SECRET}
+    access-expiry-minutes: ${JWT_ACCESS_EXPIRY_MIN:15}
+    refresh-expiry-days: ${JWT_REFRESH_EXPIRY_DAYS:7}
+  cors:
+    allowed-origin: ${APP_FRONTEND_ORIGIN:http://localhost:5000}
+  otp:
+    expiry-minutes: ${OTP_EXPIRY_MIN:10}
+    max-attempts: 5
+  login:
+    max-attempts: ${LOGIN_MAX_ATTEMPTS:5}
+  admin:
+    default-email: ${ADMIN_DEFAULT_EMAIL:admin@eduflow.com}
+    default-password: ${ADMIN_DEFAULT_PASSWORD:Admin@EduFlow2026}
+  email:
+    resend-api-key: ${RESEND_API_KEY:}
+    from-address: ${EMAIL_FROM:noreply@eduflow.com}
+    from-name: EduFlow
+  google:
+    client-id: ${GOOGLE_CLIENT_ID:}
+    client-secret: ${GOOGLE_CLIENT_SECRET:}
+    redirect-uri: ${GOOGLE_REDIRECT_URI:${APP_FRONTEND_ORIGIN:http://localhost:5000}/auth/google/callback}
+  cookie:
+    secure: ${COOKIE_SECURE:true}
+    same-site: Strict
+
+logging:
+  level:
+    root: INFO
+    com.eduflow: DEBUG
+    org.springframework.security: INFO

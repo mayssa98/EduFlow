@@ -1,0 +1,61 @@
+package com.eduflow.model.dto;
+
+import com.eduflow.model.entity.enums.Role;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
+
+public class AuthDtos {
+
+    public record RegisterRequest(
+            @NotBlank @Email @Size(max = 180) String email,
+            @NotBlank @Size(min = 8, max = 128)
+            @Pattern(regexp = "^(?=.*[A-Z])(?=.*\\d)(?=.*[^A-Za-z0-9]).+$",
+                     message = "Password must contain at least one uppercase letter, one digit, and one special character")
+            String password,
+            @NotBlank @Size(max = 120) String nom,
+            @NotBlank @Size(max = 120) String prenom,
+            @NotNull Role role
+    ) {}
+
+    public record OtpVerifyRequest(
+            @NotBlank @Email String email,
+            @NotBlank @Pattern(regexp = "^\\d{6}$") String code
+    ) {}
+
+    public record LoginRequest(
+            @NotBlank @Email String email,
+            @NotBlank String password
+    ) {}
+
+    public record ForgotPasswordRequest(
+            @NotBlank @Email String email
+    ) {}
+
+    public record ResetPasswordRequest(
+            @NotBlank @Email String email,
+            @NotBlank @Pattern(regexp = "^\\d{6}$") String code,
+            @NotBlank @Size(min = 8, max = 128)
+            @Pattern(regexp = "^(?=.*[A-Z])(?=.*\\d)(?=.*[^A-Za-z0-9]).+$")
+            String newPassword
+    ) {}
+
+    public record GoogleAuthRequest(
+            @NotBlank String code,
+            String redirectUri
+    ) {}
+
+    public record AuthUserResponse(
+            Long id,
+            String email,
+            String nom,
+            String prenom,
+            Role role,
+            String statutCompte,
+            String photoUrl
+    ) {}
+
+    public record SimpleMessageResponse(String message) {}
+}

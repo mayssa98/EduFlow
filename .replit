@@ -1,4 +1,4 @@
-modules = ["nodejs-24"]
+modules = ["nodejs-24", "java-graalvm22.3"]
 
 [deployment]
 router = "application"
@@ -26,3 +26,21 @@ externalPort = 8080
 [[ports]]
 localPort = 8081
 externalPort = 80
+
+[[ports]]
+localPort = 8082
+externalPort = 3000
+
+[userenv]
+
+[userenv.shared]
+APP_FRONTEND_ORIGIN = "https://193a752a-9762-4a2e-8e0e-7d51e1392a95-00-3dvhlec7ue3hb.kirk.replit.dev"
+APP_BACKEND_PORT = "8082"
+JWT_ACCESS_EXPIRY_MIN = "15"
+JWT_REFRESH_EXPIRY_DAYS = "7"
+OTP_EXPIRY_MIN = "10"
+LOGIN_MAX_ATTEMPTS = "5"
+ADMIN_DEFAULT_EMAIL = "admin@eduflow.com"
+ADMIN_DEFAULT_PASSWORD = "Admin@EduFlow2026"
+JWT_SECRET = "bbW71cYV6dTbvJsDtJPLSbIbrCpgsnKLXOnGa4aswzGfknaikkl7r2vNstpotX8te4gVva4jQPrZ3+cjkq2DqQ=="
+JWT_REFRESH_SECRET = "IyH/AYK0jOiDSVzZn84I/yCow4kON67ZpCCbq1XsPLwdxVYjAJxQL8zmLdIUqxALO0G2YtJb0K7nbhSpSAnpUw=="
