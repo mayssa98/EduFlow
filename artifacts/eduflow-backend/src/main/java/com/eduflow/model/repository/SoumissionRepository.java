@@ -18,6 +18,8 @@ public interface SoumissionRepository extends JpaRepository<Soumission, Long> {
 
     long countByStatut(StatutDevoir statut);
 
+    java.util.List<Soumission> findTop10ByOrderByDateSoumissionDesc();
+
     @Query("select count(s) from Soumission s where s.devoir.id = :devoirId")
     long countByDevoirId(@Param("devoirId") Long devoirId);
 

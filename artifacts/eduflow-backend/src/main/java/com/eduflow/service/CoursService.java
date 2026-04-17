@@ -23,11 +23,13 @@ public class CoursService {
     private final MatiereRepository matiereRepo;
     private final SupportPedagogiqueRepository supportRepo;
     private final FileStorageService storage;
+    private final com.eduflow.model.repository.InscriptionRepository inscriptionRepo;
 
     public CoursService(CoursRepository c, EnseignantRepository e, MatiereRepository m,
-                        SupportPedagogiqueRepository s, FileStorageService st) {
+                        SupportPedagogiqueRepository s, FileStorageService st,
+                        com.eduflow.model.repository.InscriptionRepository ir) {
         this.coursRepo = c; this.enseignantRepo = e; this.matiereRepo = m;
-        this.supportRepo = s; this.storage = st;
+        this.supportRepo = s; this.storage = st; this.inscriptionRepo = ir;
     }
 
     @Transactional(readOnly = true)
@@ -161,6 +163,11 @@ public class CoursService {
         }
         if (c.getStatut() != StatutCours.PUBLISHED)
             throw new AccessDeniedException("Course not available");
+        // Students must be enrolled to read the course (and its file supports).
+        Long uid = SecurityUtils.currentUserId();
+        boolean enrolled = inscriptionRepo.findByEtudiantId(uid).stream()
+                .anyMatch(i -> i.getCours().getId().equals(c.getId()));
+        if (!enrolled) throw new AccessDeniedException("Not enrolled in this course");
     }
 
     private CoursResponse toResponse(Cours c) {

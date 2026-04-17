@@ -56,7 +56,17 @@ public class StatsService {
                 .sorted(Comparator.comparingLong(TopCourse::nbInscrits).reversed())
                 .limit(5).toList();
 
-        return new StatsOverview(byRole, byStatus, byCourse, pendingTeachers, pendingSubs, top);
+        // Recent activity: last 10 submissions across the platform.
+        List<RecentActivity> recent = soumissionRepo.findTop10ByOrderByDateSoumissionDesc().stream()
+                .map(s -> new RecentActivity(
+                        "SUBMISSION",
+                        s.getId(),
+                        s.getDevoir().getTitre(),
+                        s.getEtudiant().getPrenom() + " " + s.getEtudiant().getNom(),
+                        s.getDateSoumission()))
+                .toList();
+
+        return new StatsOverview(byRole, byStatus, byCourse, pendingTeachers, pendingSubs, top, recent);
     }
 
     public TeacherStats teacherStats() {

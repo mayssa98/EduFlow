@@ -44,7 +44,16 @@ public class AdminDtos {
             Map<String, Long> coursesByStatus,
             long pendingTeachers,
             long pendingSubmissions,
-            List<TopCourse> topCourses
+            List<TopCourse> topCourses,
+            List<RecentActivity> recentActivity
+    ) {}
+
+    public record RecentActivity(
+            String type,
+            Long id,
+            String title,
+            String actor,
+            OffsetDateTime timestamp
     ) {}
 
     public record TopCourse(Long coursId, String titre, long nbInscrits, long nbConsultations) {}
