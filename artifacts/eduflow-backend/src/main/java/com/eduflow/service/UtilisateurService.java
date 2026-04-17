@@ -70,8 +70,17 @@ public class UtilisateurService {
 
     public void delete(Long id) {
         Utilisateur u = require(id);
-        if (u.getRole() == Role.ADMIN && userRepo.countByRole(Role.ADMIN) <= 1)
-            throw new IllegalStateException("Cannot delete the last administrator");
+        if (u.getRole() == Role.ADMIN && userRepo.countByRole(Role.ADMIN) <= 1) {
+            // Spec: deleting the last admin must be BLOCKED, not a hard error.
+            // Transition the account to BLOCKED so the platform always retains
+            // at least one administrator while signalling the action was refused.
+            if (u.getStatutCompte() != StatutCompte.BLOCKED) {
+                u.setStatutCompte(StatutCompte.BLOCKED);
+                userRepo.save(u);
+            }
+            throw new IllegalStateException(
+                    "Cannot delete the last administrator — account has been blocked instead");
+        }
         userRepo.delete(u);
     }
 

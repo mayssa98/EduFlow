@@ -1,6 +1,7 @@
 package com.eduflow.service;
 
 import com.eduflow.config.AppProperties;
+import org.springframework.security.authentication.BadCredentialsException;
 import com.eduflow.model.dto.AuthDtos.*;
 import com.eduflow.model.entity.*;
 import com.eduflow.model.entity.enums.OtpPurpose;
@@ -160,7 +161,24 @@ public class AuthService {
                 });
         user.setGoogleSubject(profile.sub());
         if (profile.picture() != null) user.setPhotoUrl(profile.picture());
-        if (user.getStatutCompte() == StatutCompte.PENDING) user.setStatutCompte(StatutCompte.ACTIVE);
+        // Status checks must mirror password login — Google sign-in must NEVER
+        // bypass admin approval or unblock a disabled account.
+        if (user.getStatutCompte() == StatutCompte.BLOCKED) {
+            throw new BadCredentialsException("Account is blocked");
+        }
+        if (user.getStatutCompte() == StatutCompte.PENDING_APPROVAL) {
+            // Persist the linked Google subject so the eventual approval works,
+            // but do NOT issue any session.
+            userRepo.save(user);
+            throw new BadCredentialsException("Teacher account awaiting admin approval");
+        }
+        if (user.getStatutCompte() == StatutCompte.PENDING) {
+            // Google has already verified the email — auto-activate students.
+            user.setStatutCompte(StatutCompte.ACTIVE);
+        }
+        if (user.getStatutCompte() != StatutCompte.ACTIVE) {
+            throw new BadCredentialsException("Account not active");
+        }
         user.setDerniereConnexion(OffsetDateTime.now());
         userRepo.save(user);
         issueTokens(user, resp);

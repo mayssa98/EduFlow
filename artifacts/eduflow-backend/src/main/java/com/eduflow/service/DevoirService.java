@@ -138,6 +138,10 @@ public class DevoirService {
                 .orElseThrow(() -> new com.eduflow.exception.NotFoundException("Submission not found"));
         if (!s.getDevoir().getCours().getEnseignant().getId().equals(SecurityUtils.currentUserId()))
             throw new AccessDeniedException("Not the course owner");
+        if (s.getStatut() == StatutDevoir.GRADED) {
+            // Grading is final — match the documented contract.
+            throw new IllegalStateException("Submission already graded");
+        }
         BigDecimal max = BigDecimal.valueOf(20);
         if (req.note().compareTo(BigDecimal.ZERO) < 0 || req.note().compareTo(max) > 0)
             throw new IllegalArgumentException("Grade must be between 0 and 20");
