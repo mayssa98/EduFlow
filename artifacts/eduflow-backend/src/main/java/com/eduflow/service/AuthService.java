@@ -95,18 +95,15 @@ public class AuthService {
         Utilisateur user = userRepo.findByEmailNormalized(EmailNormalizer.normalize(req.email()))
                 .orElseThrow(() -> new IllegalArgumentException("Invalid OTP"));
         OtpCode otp = consumeOtp(user, req.code(), OtpPurpose.ACCOUNT_VERIFY);
-        if (user.getRole() == Role.ENSEIGNANT) {
-            user.setStatutCompte(StatutCompte.PENDING_APPROVAL);
-        } else {
-            user.setStatutCompte(StatutCompte.ACTIVE);
-        }
+        // Email is now verified — activate the account and issue session tokens
+        // regardless of role. Role-specific gating (e.g. teacher approval) is
+        // enforced separately at resource access time, not at email verification.
+        user.setStatutCompte(StatutCompte.ACTIVE);
         user.setNbTentativesLogin(0);
         userRepo.save(user);
         otpRepo.save(otp);
 
-        if (user.getStatutCompte() == StatutCompte.ACTIVE) {
-            issueTokens(user, resp);
-        }
+        issueTokens(user, resp);
         return toResponse(user);
     }
 
