@@ -16,7 +16,7 @@ public class DevoirDtos {
             NiveauDifficulte difficulte,
             @NotNull OffsetDateTime dateDebut,
             @NotNull OffsetDateTime dateFin,
-            @DecimalMin("0.01") @DecimalMax("100.00") BigDecimal noteMax
+            @DecimalMin("0.01") @DecimalMax("20.00") BigDecimal noteMax
     ) {}
 
     public record DevoirUpdateRequest(
@@ -25,7 +25,7 @@ public class DevoirDtos {
             NiveauDifficulte difficulte,
             OffsetDateTime dateDebut,
             OffsetDateTime dateFin,
-            @DecimalMin("0.01") @DecimalMax("100.00") BigDecimal noteMax
+            @DecimalMin("0.01") @DecimalMax("20.00") BigDecimal noteMax
     ) {}
 
     public record DevoirResponse(

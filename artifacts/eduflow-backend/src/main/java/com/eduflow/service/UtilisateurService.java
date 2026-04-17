@@ -77,7 +77,11 @@ public class UtilisateurService {
 
     public DeleteResult delete(Long id) {
         Utilisateur u = require(id);
-        if (u.getRole() == Role.ADMIN && userRepo.countByRole(Role.ADMIN) <= 1) {
+        // Preserve at least one ACTIVE administrator at all times.
+        boolean isLastActiveAdmin = u.getRole() == Role.ADMIN
+                && u.getStatutCompte() == StatutCompte.ACTIVE
+                && userRepo.countByRoleAndStatutCompte(Role.ADMIN, StatutCompte.ACTIVE) <= 1;
+        if (isLastActiveAdmin) {
             // Spec: deleting the last admin must be BLOCKED rather than removed,
             // so the platform always retains at least one administrator. The
             // operation succeeds (200) and reports blocked=true in the body.
