@@ -35,6 +35,12 @@ public class EmailService {
                 "<p style='font-size:32px;font-weight:700;letter-spacing:8px;color:#6366f1'>" + code + "</p>" +
                 "<p style='color:#94a3b8;font-size:13px'>Ce code expire dans " + props.getOtp().getExpiryMinutes() + " minutes.</p>" +
                 "</div>";
+                
+        // PRINT THE OTP CODE TO CONSOLE FOR LOCAL TESTING
+        log.info("==========================================================");
+        log.info("DEVELOPMENT OTP CODE FOR {}: {}", to, code);
+        log.info("==========================================================");
+        
         send(to, subject, body);
     }
 

@@ -64,28 +64,40 @@ public class AuthService {
             throw new IllegalArgumentException("Email cannot contain '+' character");
         }
         String normalized = EmailNormalizer.normalize(req.email());
-        if (userRepo.existsByEmailNormalized(normalized)) {
-            throw new IllegalStateException("Email already registered");
+        Optional<Utilisateur> optUser = userRepo.findByEmailNormalized(normalized);
+        
+        Utilisateur user;
+        if (optUser.isPresent()) {
+            user = optUser.get();
+            if (user.getStatutCompte() != StatutCompte.PENDING) {
+                throw new IllegalStateException("Email already registered");
+            }
+            // User is still pending. We will just update their info and resend the OTP!
+            user.setNom(req.nom().trim());
+            user.setPrenom(req.prenom().trim());
+            user.setMotDePasseHash(encoder.encode(req.password()));
+        } else {
+            user = switch (req.role()) {
+                case ADMIN -> throw new IllegalArgumentException("Admin self-registration is not allowed");
+                case ENSEIGNANT -> {
+                    Enseignant e = new Enseignant();
+                    e.setStatutCompte(StatutCompte.PENDING);
+                    yield e;
+                }
+                case ETUDIANT -> {
+                    Etudiant s = new Etudiant();
+                    s.setStatutCompte(StatutCompte.PENDING);
+                    yield s;
+                }
+            };
+            user.setEmail(req.email().trim().toLowerCase());
+            user.setEmailNormalized(normalized);
+            user.setNom(req.nom().trim());
+            user.setPrenom(req.prenom().trim());
+            user.setRole(req.role());
+            user.setMotDePasseHash(encoder.encode(req.password()));
         }
-        Utilisateur user = switch (req.role()) {
-            case ADMIN -> throw new IllegalArgumentException("Admin self-registration is not allowed");
-            case ENSEIGNANT -> {
-                Enseignant e = new Enseignant();
-                e.setStatutCompte(StatutCompte.PENDING);
-                yield e;
-            }
-            case ETUDIANT -> {
-                Etudiant s = new Etudiant();
-                s.setStatutCompte(StatutCompte.PENDING);
-                yield s;
-            }
-        };
-        user.setEmail(req.email().trim().toLowerCase());
-        user.setEmailNormalized(normalized);
-        user.setNom(req.nom().trim());
-        user.setPrenom(req.prenom().trim());
-        user.setRole(req.role());
-        user.setMotDePasseHash(encoder.encode(req.password()));
+        
         userRepo.save(user);
 
         issueOtp(user, OtpPurpose.ACCOUNT_VERIFY);
@@ -115,7 +127,7 @@ public class AuthService {
     }
 
     @Transactional
-    public AuthUserResponse login(LoginRequest req, HttpServletResponse resp) {
+    public Object login(LoginRequest req, HttpServletResponse resp) {
         String normalized = EmailNormalizer.normalize(req.email());
         Utilisateur user = userRepo.findByEmailNormalized(normalized)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid credentials"));
@@ -139,46 +151,136 @@ public class AuthService {
         }
         user.setNbTentativesLogin(0);
         user.setDerniereConnexion(OffsetDateTime.now());
+        
+        if (Boolean.TRUE.equals(user.getMfaEnabled())) {
+            if (user.getMfaLockoutUntil() != null && user.getMfaLockoutUntil().isAfter(OffsetDateTime.now())) {
+                throw new IllegalStateException("2FA session locked. Try again later.");
+            }
+            if (user.getMfaMethod() == com.eduflow.model.entity.enums.TwoFactorMethod.EMAIL) {
+                issueOtp(user, OtpPurpose.TWO_FACTOR);
+            }
+            userRepo.save(user);
+            String ticket = jwtUtil.generatePreAuthToken(user.getId(), "2FA");
+            return new MfaChallengeResponse(true, ticket, java.util.List.of(user.getMfaMethod().name()));
+        }
+        
+        userRepo.save(user);
+        issueTokens(user, resp);
+        return toResponse(user);
+    }
+    
+    @Transactional
+    public AuthUserResponse verify2fa(VerifyMfaRequest req, HttpServletResponse resp) {
+        Claims claims;
+        try {
+            claims = jwtUtil.parsePreAuthToken(req.ticket());
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Session expired or invalid");
+        }
+        if (!"2FA".equals(claims.get("purpose"))) {
+            throw new IllegalArgumentException("Invalid ticket purpose");
+        }
+        
+        Long userId = Long.parseLong(claims.getSubject());
+        Utilisateur user = userRepo.findById(userId).orElseThrow(() -> new IllegalStateException("User context lost"));
+        
+        if (user.getMfaLockoutUntil() != null && user.getMfaLockoutUntil().isAfter(OffsetDateTime.now())) {
+            throw new IllegalStateException("2FA locked.");
+        }
+        
+        if (user.getMfaMethod() == com.eduflow.model.entity.enums.TwoFactorMethod.EMAIL) {
+            try {
+                OtpCode otp = consumeOtp(user, req.code(), OtpPurpose.TWO_FACTOR);
+                otpRepo.save(otp);
+            } catch (Exception e) {
+                user.setMfaFailedAttempts(user.getMfaFailedAttempts() + 1);
+                if (user.getMfaFailedAttempts() >= 3) {
+                    user.setMfaLockoutUntil(OffsetDateTime.now().plusMinutes(15));
+                    user.setMfaFailedAttempts(0);
+                }
+                userRepo.save(user);
+                throw e; // rethrow invalid code
+            }
+        } else if (user.getMfaMethod() == com.eduflow.model.entity.enums.TwoFactorMethod.TOTP) {
+            // Placeholder pour la logique TOTP (Google Authenticator)
+        } else if (user.getMfaMethod() == com.eduflow.model.entity.enums.TwoFactorMethod.WEBAUTHN) {
+             // Placeholder pour la logique WebAuthn
+        }
+
+        user.setMfaFailedAttempts(0);
         userRepo.save(user);
         issueTokens(user, resp);
         return toResponse(user);
     }
 
     @Transactional
-    public AuthUserResponse loginWithGoogle(GoogleAuthRequest req, HttpServletResponse resp) {
+    public Object loginWithGoogle(GoogleAuthRequest req, HttpServletResponse resp) {
         var profile = googleService.exchangeCode(req.code(), req.redirectUri());
-        Utilisateur user = userRepo.findByGoogleSubject(profile.sub())
-                .or(() -> userRepo.findByEmailNormalized(EmailNormalizer.normalize(profile.email())))
-                .orElseGet(() -> {
-                    Etudiant s = new Etudiant();
-                    s.setEmail(profile.email().toLowerCase());
-                    s.setEmailNormalized(EmailNormalizer.normalize(profile.email()));
-                    s.setNom(profile.familyName());
-                    s.setPrenom(profile.givenName());
-                    s.setRole(Role.ETUDIANT);
-                    s.setStatutCompte(StatutCompte.ACTIVE);
-                    return s;
-                });
+        
+        Optional<Utilisateur> optUser = userRepo.findByGoogleSubject(profile.sub())
+                .or(() -> userRepo.findByEmailNormalized(EmailNormalizer.normalize(profile.email())));
+        
+        if (optUser.isEmpty()) {
+            // Nouveau compte : On l'enregistre temporairement sans session, et on lance un challenge Optionnel
+            Etudiant s = new Etudiant();
+            s.setEmail(profile.email().toLowerCase());
+            s.setEmailNormalized(EmailNormalizer.normalize(profile.email()));
+            s.setNom(profile.familyName());
+            s.setPrenom(profile.givenName());
+            s.setRole(Role.ETUDIANT);
+            s.setStatutCompte(StatutCompte.ACTIVE);
+            s.setGoogleSubject(profile.sub());
+            if (profile.picture() != null) s.setPhotoUrl(profile.picture());
+            userRepo.save(s);
+            
+            String ticket = jwtUtil.generatePreAuthToken(s.getId(), "GOOGLE_REG");
+            return new GoogleRegistrationChallenge(true, ticket, s.getEmail(), s.getNom(), s.getPrenom(), s.getPhotoUrl());
+        }
+
+        Utilisateur user = optUser.get();
         user.setGoogleSubject(profile.sub());
         if (profile.picture() != null) user.setPhotoUrl(profile.picture());
-        // Status checks must mirror password login — Google sign-in must NEVER
-        // bypass admin approval or unblock a disabled account.
+        
+        // Check blocks and validations
         if (user.getStatutCompte() == StatutCompte.BLOCKED) {
             throw new BadCredentialsException("Account is blocked");
         }
         if (user.getStatutCompte() == StatutCompte.PENDING_APPROVAL) {
-            // Persist the linked Google subject so the eventual approval works,
-            // but do NOT issue any session.
             userRepo.save(user);
             throw new BadCredentialsException("Teacher account awaiting admin approval");
         }
         if (user.getStatutCompte() == StatutCompte.PENDING) {
-            // Google has already verified the email — auto-activate students.
             user.setStatutCompte(StatutCompte.ACTIVE);
         }
         if (user.getStatutCompte() != StatutCompte.ACTIVE) {
             throw new BadCredentialsException("Account not active");
         }
+        
+        user.setDerniereConnexion(OffsetDateTime.now());
+        userRepo.save(user);
+        issueTokens(user, resp);
+        return toResponse(user);
+    }
+    
+    @Transactional
+    public AuthUserResponse completeGoogleRegistration(GoogleCompleteRequest req, HttpServletResponse resp) {
+        Claims claims;
+        try {
+            claims = jwtUtil.parsePreAuthToken(req.registerTicket());
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Registration timeout. Please login via Google again.");
+        }
+        if (!"GOOGLE_REG".equals(claims.get("purpose"))) {
+            throw new IllegalArgumentException("Invalid ticket");
+        }
+        
+        Long userId = Long.parseLong(claims.getSubject());
+        Utilisateur user = userRepo.findById(userId).orElseThrow(() -> new IllegalStateException("User context lost"));
+        
+        if (req.optionalPassword() != null && !req.optionalPassword().isBlank()) {
+            user.setMotDePasseHash(encoder.encode(req.optionalPassword()));
+        }
+        
         user.setDerniereConnexion(OffsetDateTime.now());
         userRepo.save(user);
         issueTokens(user, resp);

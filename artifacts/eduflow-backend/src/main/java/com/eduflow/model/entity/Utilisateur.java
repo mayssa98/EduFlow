@@ -2,6 +2,7 @@ package com.eduflow.model.entity;
 
 import com.eduflow.model.entity.enums.Role;
 import com.eduflow.model.entity.enums.StatutCompte;
+import com.eduflow.model.entity.enums.TwoFactorMethod;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -61,6 +62,22 @@ public abstract class Utilisateur {
 
     @Column(name = "derniere_connexion")
     private OffsetDateTime derniereConnexion;
+
+    @Column(name = "mfa_enabled", nullable = false)
+    private Boolean mfaEnabled = false;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "mfa_method", length = 20)
+    private TwoFactorMethod mfaMethod;
+
+    @Column(name = "mfa_secret")
+    private String mfaSecret;
+
+    @Column(name = "mfa_failed_attempts", nullable = false)
+    private Integer mfaFailedAttempts = 0;
+
+    @Column(name = "mfa_lockout_until")
+    private OffsetDateTime mfaLockoutUntil;
 
     @Column(name = "date_creation", nullable = false, updatable = false)
     private OffsetDateTime dateCreation = OffsetDateTime.now();

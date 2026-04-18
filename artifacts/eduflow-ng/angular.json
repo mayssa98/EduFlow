@@ -47,13 +47,13 @@
                 }
               ],
               "outputHashing": "all",
-              "baseHref": "/eduflow/"
+              "baseHref": "/"
             },
             "development": {
               "optimization": false,
               "extractLicenses": false,
               "sourceMap": true,
-              "baseHref": "/eduflow/"
+              "baseHref": "/"
             }
           },
           "defaultConfiguration": "production"

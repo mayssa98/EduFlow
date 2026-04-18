@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+import java.util.List;
 
 public class AuthDtos {
 
@@ -47,6 +48,11 @@ public class AuthDtos {
             String redirectUri
     ) {}
 
+    public record GoogleOAuthConfigResponse(
+            String clientId,
+            String redirectUri
+    ) {}
+
     public record AuthUserResponse(
             Long id,
             String email,
@@ -54,6 +60,31 @@ public class AuthDtos {
             String prenom,
             Role role,
             String statutCompte,
+            String photoUrl
+    ) {}
+
+    public record MfaChallengeResponse(
+            boolean mfaRequired,
+            String ticket,
+            List<String> availableMethods
+    ) {}
+
+    public record VerifyMfaRequest(
+            @NotBlank String ticket,
+            @NotBlank String code
+    ) {}
+
+    public record GoogleCompleteRequest(
+            @NotBlank String registerTicket,
+            String optionalPassword // Le mot de passe est optionnel
+    ) {}
+
+    public record GoogleRegistrationChallenge(
+            boolean requiresRegistration,
+            String registerTicket,
+            String email,
+            String nom,
+            String prenom,
             String photoUrl
     ) {}
 

@@ -1,11 +1,11 @@
 {
-  "name": "@workspace/eduflow-ng",
+  "name": "eduflow-ng",
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "dev": "ng serve --port $PORT --host 0.0.0.0 --disable-host-check --configuration development",
+    "start": "ng serve --port 4200 --configuration development",
+    "dev": "ng serve --port 4200 --configuration development",
     "build": "ng build --configuration production",
-    "serve": "node -e \"require('http').createServer(require('serve-static')('dist/eduflow-ng/browser')).listen(process.env.PORT||21536)\"",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {

@@ -63,12 +63,28 @@ public class JwtUtil {
                 .compact();
     }
 
+    public String generatePreAuthToken(Long userId, String purpose) {
+        Instant now = Instant.now();
+        return Jwts.builder()
+                .subject(String.valueOf(userId))
+                .claim("type", "preauth")
+                .claim("purpose", purpose)
+                .issuedAt(Date.from(now))
+                .expiration(Date.from(now.plus(Duration.ofMinutes(15)))) // 15 minutes limit for 2FA or Registration
+                .signWith(accessKey)
+                .compact();
+    }
+
     public Claims parseAccessToken(String token) {
         return Jwts.parser().verifyWith(accessKey).build().parseSignedClaims(token).getPayload();
     }
 
     public Claims parseRefreshToken(String token) {
         return Jwts.parser().verifyWith(refreshKey).build().parseSignedClaims(token).getPayload();
+    }
+
+    public Claims parsePreAuthToken(String token) {
+        return Jwts.parser().verifyWith(accessKey).build().parseSignedClaims(token).getPayload();
     }
 
     public Duration getAccessExpiry() { return accessExpiry; }

@@ -129,12 +129,40 @@ public class UtilisateurService {
         return toSummary(teacherRepo.save(t));
     }
 
+    public ProfileResponse updateProfile(Long userId, UpdateProfileRequest req) {
+        Utilisateur u = require(userId);
+        u.setNom(req.nom().trim());
+        u.setPrenom(req.prenom().trim());
+        return toProfile(userRepo.save(u));
+    }
+
+    public void changePassword(Long userId, ChangePasswordRequest req) {
+        Utilisateur u = require(userId);
+        if (u.getMotDePasseHash() == null || !encoder.matches(req.currentPassword(), u.getMotDePasseHash())) {
+            throw new IllegalArgumentException("Mot de passe actuel incorrect");
+        }
+        u.setMotDePasseHash(encoder.encode(req.newPassword()));
+        userRepo.save(u);
+    }
+
+    @Transactional(readOnly = true)
+    public ProfileResponse getProfile(Long userId) {
+        return toProfile(require(userId));
+    }
+
     private Utilisateur require(Long id) {
+
         return userRepo.findById(id).orElseThrow(() -> new com.eduflow.exception.NotFoundException("User not found"));
     }
 
     public UserSummary toSummary(Utilisateur u) {
         return new UserSummary(u.getId(), u.getEmail(), u.getNom(), u.getPrenom(),
                 u.getRole(), u.getStatutCompte(), u.getDateCreation(), u.getDerniereConnexion());
+    }
+
+    public ProfileResponse toProfile(Utilisateur u) {
+        return new ProfileResponse(u.getId(), u.getEmail(), u.getNom(), u.getPrenom(),
+                u.getRole().name(), u.getStatutCompte().name(), u.getPhotoUrl(),
+                u.getDateCreation(), u.getDerniereConnexion());
     }
 }

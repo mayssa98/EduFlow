@@ -1,6 +1,7 @@
 package com.eduflow.controller;
 
 import com.eduflow.model.dto.AuthDtos.*;
+import com.eduflow.config.AppProperties;
 import com.eduflow.security.CookieUtil;
 import com.eduflow.security.JwtAuthFilter;
 import com.eduflow.service.AuthService;
@@ -27,10 +28,12 @@ public class AuthController {
 
     private final AuthService authService;
     private final CookieUtil cookieUtil;
+    private final AppProperties props;
 
-    public AuthController(AuthService authService, CookieUtil cookieUtil) {
+    public AuthController(AuthService authService, CookieUtil cookieUtil, AppProperties props) {
         this.authService = authService;
         this.cookieUtil = cookieUtil;
+        this.props = props;
     }
 
     @Operation(summary = "Create a pending account and email an OTP code")
@@ -50,16 +53,44 @@ public class AuthController {
 
     @Operation(summary = "Email + password login; sets HttpOnly access/refresh cookies")
     @PostMapping("/login")
-    public ResponseEntity<AuthUserResponse> login(@Valid @RequestBody LoginRequest req,
-                                                  HttpServletResponse resp) {
+    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest req,
+                                   HttpServletResponse resp) {
         return ResponseEntity.ok(authService.login(req, resp));
+    }
+
+    @Operation(summary = "Verify the 2FA code if a challenge was returned during login")
+    @PostMapping("/verify-2fa")
+    public ResponseEntity<AuthUserResponse> verify2fa(@Valid @RequestBody VerifyMfaRequest req,
+                                                      HttpServletResponse resp) {
+        return ResponseEntity.ok(authService.verify2fa(req, resp));
     }
 
     @Operation(summary = "Google OAuth ID-token sign-in; creates the account on first use")
     @PostMapping("/google")
-    public ResponseEntity<AuthUserResponse> google(@Valid @RequestBody GoogleAuthRequest req,
-                                                   HttpServletResponse resp) {
+    public ResponseEntity<?> google(@Valid @RequestBody GoogleAuthRequest req,
+                                    HttpServletResponse resp) {
         return ResponseEntity.ok(authService.loginWithGoogle(req, resp));
+    }
+
+    @Operation(summary = "Complete Google OAuth registration with an optional password")
+    @PostMapping("/google/complete")
+    public ResponseEntity<AuthUserResponse> googleComplete(@Valid @RequestBody GoogleCompleteRequest req,
+                                                           HttpServletResponse resp) {
+        return ResponseEntity.ok(authService.completeGoogleRegistration(req, resp));
+    }
+
+    @Operation(summary = "Return safe Google OAuth client configuration for frontend authorization redirect")
+    @GetMapping("/google/config")
+    public ResponseEntity<GoogleOAuthConfigResponse> googleConfig() {
+        String clientId = props.getGoogle().getClientId();
+        String redirectUri = props.getGoogle().getRedirectUri();
+        if (clientId == null || clientId.isBlank()) {
+            throw new IllegalStateException("Google OAuth is not configured");
+        }
+        if (redirectUri == null || redirectUri.isBlank()) {
+            throw new IllegalStateException("Google redirect URI is not configured");
+        }
+        return ResponseEntity.ok(new GoogleOAuthConfigResponse(clientId, redirectUri));
     }
 
     @Operation(summary = "Rotate the access token using the refresh cookie")
@@ -69,15 +100,16 @@ public class AuthController {
         return ResponseEntity.ok(authService.refresh(token, resp));
     }
 
-    @Operation(summary = "Revoke the refresh token and clear auth cookies")
+    @Operation(summary = "Revoke the refresh token and clear auth cookies (idempotent — always clears cookies)")
     @PostMapping("/logout")
-    public ResponseEntity<SimpleMessageResponse> logout(HttpServletRequest req,
-                                                        HttpServletResponse resp,
-                                                        @AuthenticationPrincipal JwtAuthFilter.AuthPrincipal principal) {
+    public ResponseEntity<Void> logout(HttpServletRequest req,
+                                       HttpServletResponse resp,
+                                       @AuthenticationPrincipal JwtAuthFilter.AuthPrincipal principal) {
         String refresh = cookieUtil.readCookie(req, CookieUtil.REFRESH_COOKIE);
         Long userId = principal != null ? principal.userId() : null;
+        // Idempotent: always clear cookies even if token is already invalid/expired
         authService.logout(refresh, userId, resp);
-        return ResponseEntity.ok(new SimpleMessageResponse("Logged out"));
+        return ResponseEntity.noContent().build(); // 204 Déconnecté
     }
 
     @Operation(summary = "Email a password-reset OTP if the account exists (always returns 200)")

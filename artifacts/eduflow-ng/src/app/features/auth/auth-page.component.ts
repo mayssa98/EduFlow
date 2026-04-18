@@ -1,7 +1,7 @@
-import { Component, inject, signal, computed } from '@angular/core';
+import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators, FormGroup, AbstractControl } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
 import { AuthService } from '../../core/services/auth.service';
@@ -9,10 +9,18 @@ import { ThemeToggleComponent } from '../../shared/components/theme-toggle/theme
 import { LanguageSwitcherComponent } from '../../shared/components/language-switcher/language-switcher.component';
 
 const PWD_REGEX = /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_\-+={}[\]:;"'<>,.?/\\|`~]).{8,}$/;
+
+// Validation: pas de + dans l'email
 function emailNoPlus(c: AbstractControl) {
   if (!c.value) return null;
   return String(c.value).includes('+') ? { plus: true } : null;
 }
+
+// Validation: règles détaillées du mot de passe
+function pwdLength(c: AbstractControl)    { return c.value && c.value.length >= 8 ? null : { pwdLength: true }; }
+function pwdUpper(c: AbstractControl)     { return c.value && /[A-Z]/.test(c.value) ? null : { pwdUpper: true }; }
+function pwdDigit(c: AbstractControl)     { return c.value && /\d/.test(c.value) ? null : { pwdDigit: true }; }
+function pwdSpecial(c: AbstractControl)   { return c.value && /[!@#$%^&*()_\-+={}\[\]:;"'<>,.?/\\|`~]/.test(c.value) ? null : { pwdSpecial: true }; }
 
 @Component({
   selector: 'app-auth-page',
@@ -20,9 +28,6 @@ function emailNoPlus(c: AbstractControl) {
   imports: [CommonModule, ReactiveFormsModule, RouterLink, TranslateModule, ThemeToggleComponent, LanguageSwitcherComponent],
   template: `
     <div class="auth-shell">
-      <div class="bg-glow bg-glow-1"></div>
-      <div class="bg-glow bg-glow-2"></div>
-
       <div class="topbar">
         <a routerLink="/" class="brand">
           <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
@@ -41,7 +46,7 @@ function emailNoPlus(c: AbstractControl) {
       </div>
 
       <!-- OTP screen -->
-      <div class="card otp-card glass fade-up" *ngIf="step() === 'otp'">
+      <div class="auth-otp-card fade-up" *ngIf="step() === 'otp'">
         <h1>{{ 'AUTH.OTP_TITLE' | translate }}</h1>
         <p class="muted">{{ 'AUTH.OTP_SUBTITLE' | translate }} <strong>{{ pendingEmail() }}</strong></p>
         <input class="input otp-input" maxlength="6" inputmode="numeric" [value]="otpCode()"
@@ -60,80 +65,142 @@ function emailNoPlus(c: AbstractControl) {
         <button class="link" (click)="step.set('signin'); error.set(null)">← {{ 'BUTTONS.BACK' | translate }}</button>
       </div>
 
+      <!-- OTP 2FA screen -->
+      <div class="auth-otp-card fade-up" *ngIf="step() === 'otp2fa'">
+        <h1>Vérification 2FA</h1>
+        <p class="muted">Entrez le code envoyé sur votre email pour certifier votre connexion.</p>
+        <input class="input otp-input" maxlength="6" inputmode="numeric" [value]="otpCode()"
+               (input)="onOtpInput($event)" placeholder="••••••" autocomplete="one-time-code"/>
+        <div class="error" *ngIf="error()">{{ error() }}</div>
+        <button class="btn btn-primary btn-lg full" (click)="submit2fa()" [disabled]="otpCode().length !== 6 || busy()">
+          <span class="spinner" *ngIf="busy()"></span>Vérifier
+        </button>
+        <button class="link" (click)="step.set('signin'); error.set(null)">← {{ 'BUTTONS.BACK' | translate }}</button>
+      </div>
+
+      <!-- Google Optional Setup -->
+      <div class="auth-otp-card fade-up" *ngIf="step() === 'googleOptional'">
+        <h1>Dernière étape</h1>
+        <p class="muted">Votre compte Google a été certifié. Souhaitez-vous créer un mot de passe (optionnel) pour vous connecter autrement à l'avenir ?</p>
+        <input class="input" type="password" [value]="optionalPwd()" (input)="onOptionalPwdInput($event)" placeholder="Mot de passe optionnel"/>
+        <div class="error" *ngIf="error()">{{ error() }}</div>
+        <button class="btn btn-primary btn-lg full" (click)="completeGoogle()" [disabled]="busy()">
+          <span class="spinner" *ngIf="busy()"></span>Continuer
+        </button>
+      </div>
+
       <!-- Sliding login/signup -->
-      <div class="auth-container fade-up" *ngIf="step() === 'signin' || step() === 'signup'"
-           [class.signup-active]="step() === 'signup'">
+      <div class="container auth-slider fade-up" *ngIf="step() === 'signin' || step() === 'signup'"
+           [class.active]="step() === 'signup'">
         <!-- Sign-up form -->
-        <div class="panel panel-signup">
+        <div class="form-container sign-up-container">
           <form [formGroup]="signUpForm" (ngSubmit)="onSignUp()" class="form" novalidate>
             <h1>{{ 'AUTH.REGISTER' | translate }}</h1>
-            <button type="button" class="btn social" (click)="auth.googleLogin()">
-              <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
-                <path fill="#EA4335" d="M12 11v3.2h5.4c-.2 1.4-1.7 4-5.4 4-3.3 0-6-2.7-6-6s2.7-6 6-6c1.9 0 3.1.8 3.8 1.5l2.6-2.5C16.7 3.4 14.6 2.4 12 2.4 6.7 2.4 2.4 6.7 2.4 12s4.3 9.6 9.6 9.6c5.5 0 9.2-3.9 9.2-9.4 0-.6-.1-1.1-.2-1.6H12z"/>
-              </svg>
-              {{ 'AUTH.CONTINUE_GOOGLE' | translate }}
-            </button>
-            <span class="divider">{{ 'AUTH.OR_USE_EMAIL' | translate }}</span>
-            <input class="input" formControlName="prenom" [class.invalid]="touched(signUpForm, 'prenom')"
-                   [placeholder]="'AUTH.FIRST_NAME' | translate" autocomplete="given-name"/>
-            <input class="input" formControlName="nom" [class.invalid]="touched(signUpForm, 'nom')"
-                   [placeholder]="'AUTH.LAST_NAME' | translate" autocomplete="family-name"/>
+            <div class="social-container">
+              <button type="button" class="social google-option" (click)="auth.googleLogin()" aria-label="Google">
+                <svg class="google-icon" viewBox="0 0 24 24" aria-hidden="true">
+                  <path fill="#EA4335" d="M12 11v3.2h5.4c-.2 1.4-1.7 4-5.4 4-3.3 0-6-2.7-6-6s2.7-6 6-6c1.9 0 3.1.8 3.8 1.5l2.6-2.5C16.7 3.4 14.6 2.4 12 2.4 6.7 2.4 2.4 6.7 2.4 12s4.3 9.6 9.6 9.6c5.5 0 9.2-3.9 9.2-9.4 0-.6-.1-1.1-.2-1.6H12z"/>
+                </svg>
+                {{ 'AUTH.CONTINUE_GOOGLE' | translate }}
+              </button>
+            </div>
+            <div class="role-switch" role="tablist" aria-label="Role">
+              <button type="button" class="role-option" [class.active]="signUpForm.value.role === 'ETUDIANT'"
+                      (click)="signUpForm.patchValue({ role: 'ETUDIANT' })">
+                {{ 'ROLES.STUDENT' | translate }}
+              </button>
+              <button type="button" class="role-option" [class.active]="signUpForm.value.role === 'ENSEIGNANT'"
+                      (click)="signUpForm.patchValue({ role: 'ENSEIGNANT' })">
+                {{ 'ROLES.TEACHER' | translate }}
+              </button>
+            </div>
+            <div class="name-row">
+              <input class="input" formControlName="prenom" [class.invalid]="touched(signUpForm, 'prenom')"
+                    [placeholder]="'AUTH.FIRST_NAME' | translate" autocomplete="given-name"/>
+              <input class="input" formControlName="nom" [class.invalid]="touched(signUpForm, 'nom')"
+                    [placeholder]="'AUTH.LAST_NAME' | translate" autocomplete="family-name"/>
+            </div>
+            <!-- Champ Email avec erreurs individuelles -->
             <input class="input" type="email" formControlName="email" [class.invalid]="touched(signUpForm, 'email')"
                    [placeholder]="'AUTH.EMAIL' | translate" autocomplete="email"/>
-            <small class="input-error" *ngIf="touched(signUpForm, 'email') && f(signUpForm,'email').errors?.['plus']">
-              {{ 'AUTH.NO_PLUS_IN_EMAIL' | translate }}
+            <small class="input-error" *ngIf="touched(signUpForm, 'email') && f(signUpForm,'email').errors?.['email']">
+              Format d'email invalide.
             </small>
+            <small class="input-error" *ngIf="touched(signUpForm, 'email') && f(signUpForm,'email').errors?.['plus']">
+              4. Erreur : le symbole « + » n'est pas autorisé.
+            </small>
+
+            <!-- Champ Mot de passe avec erreurs individuelles par règle -->
             <input class="input" type="password" formControlName="password" [class.invalid]="touched(signUpForm, 'password')"
                    [placeholder]="'AUTH.PASSWORD' | translate" autocomplete="new-password"/>
-            <small class="input-error" *ngIf="touched(signUpForm, 'password') && f(signUpForm,'password').errors?.['pattern']">
-              {{ 'AUTH.PASSWORD_RULES' | translate }}
-            </small>
-            <select class="input" formControlName="role">
-              <option value="ETUDIANT">{{ 'ROLES.STUDENT' | translate }}</option>
-              <option value="ENSEIGNANT">{{ 'ROLES.TEACHER' | translate }}</option>
-            </select>
+            <div class="pwd-rules" *ngIf="signUpForm.get('password')?.value">
+              <small class="rule" [class.ok]="!f(signUpForm,'password').errors?.['pwdLength']">
+                <span class="rule-icon">{{ !f(signUpForm,'password').errors?.['pwdLength'] ? '✓' : '✗' }}</span>
+                5. Le mot de passe doit contenir au moins 8 caractères
+              </small>
+              <small class="rule" [class.ok]="!f(signUpForm,'password').errors?.['pwdUpper']">
+                <span class="rule-icon">{{ !f(signUpForm,'password').errors?.['pwdUpper'] ? '✓' : '✗' }}</span>
+                6. Le mot de passe doit contenir au moins une lettre majuscule
+              </small>
+              <small class="rule" [class.ok]="!f(signUpForm,'password').errors?.['pwdDigit']">
+                <span class="rule-icon">{{ !f(signUpForm,'password').errors?.['pwdDigit'] ? '✓' : '✗' }}</span>
+                7. Le mot de passe doit contenir au moins un chiffre
+              </small>
+              <small class="rule" [class.ok]="!f(signUpForm,'password').errors?.['pwdSpecial']">
+                <span class="rule-icon">{{ !f(signUpForm,'password').errors?.['pwdSpecial'] ? '✓' : '✗' }}</span>
+                8. Le mot de passe doit contenir au moins un caractère spécial (!&#64;#$...)
+              </small>
+            </div>
+
             <div class="error" *ngIf="error()">{{ error() }}</div>
-            <button type="submit" class="btn btn-primary btn-lg full" [disabled]="signUpForm.invalid || busy()">
-              <span class="spinner" *ngIf="busy()"></span>{{ 'AUTH.SIGN_UP' | translate }}
+            <button type="submit" class="main-btn full" [disabled]="signUpForm.invalid || busy()">
+              <span class="spinner" *ngIf="busy()"></span>
+              {{ 'AUTH.SIGN_UP' | translate }}
             </button>
           </form>
         </div>
 
         <!-- Sign-in form -->
-        <div class="panel panel-signin">
+        <div class="form-container sign-in-container">
           <form [formGroup]="signInForm" (ngSubmit)="onSignIn()" class="form" novalidate>
             <h1>{{ 'AUTH.LOGIN' | translate }}</h1>
-            <button type="button" class="btn social" (click)="auth.googleLogin()">
-              <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
-                <path fill="#EA4335" d="M12 11v3.2h5.4c-.2 1.4-1.7 4-5.4 4-3.3 0-6-2.7-6-6s2.7-6 6-6c1.9 0 3.1.8 3.8 1.5l2.6-2.5C16.7 3.4 14.6 2.4 12 2.4 6.7 2.4 2.4 6.7 2.4 12s4.3 9.6 9.6 9.6c5.5 0 9.2-3.9 9.2-9.4 0-.6-.1-1.1-.2-1.6H12z"/>
-              </svg>
-              {{ 'AUTH.CONTINUE_GOOGLE' | translate }}
-            </button>
-            <span class="divider">{{ 'AUTH.OR_USE_EXISTING' | translate }}</span>
+            <div class="social-container">
+              <button type="button" class="social google-option" (click)="auth.googleLogin()" aria-label="Google">
+                <svg class="google-icon" viewBox="0 0 24 24" aria-hidden="true">
+                  <path fill="#EA4335" d="M12 11v3.2h5.4c-.2 1.4-1.7 4-5.4 4-3.3 0-6-2.7-6-6s2.7-6 6-6c1.9 0 3.1.8 3.8 1.5l2.6-2.5C16.7 3.4 14.6 2.4 12 2.4 6.7 2.4 2.4 6.7 2.4 12s4.3 9.6 9.6 9.6c5.5 0 9.2-3.9 9.2-9.4 0-.6-.1-1.1-.2-1.6H12z"/>
+                </svg>
+                {{ 'AUTH.CONTINUE_GOOGLE' | translate }}
+              </button>
+            </div>
             <input class="input" type="email" formControlName="email" [class.invalid]="touched(signInForm, 'email')"
                    [placeholder]="'AUTH.EMAIL' | translate" autocomplete="email"/>
             <input class="input" type="password" formControlName="password" [class.invalid]="touched(signInForm, 'password')"
                    [placeholder]="'AUTH.PASSWORD' | translate" autocomplete="current-password"/>
-            <a routerLink="/auth/forgot" class="link forgot">{{ 'AUTH.FORGOT_PASSWORD' | translate }}</a>
+            <a routerLink="/auth/forgot" class="link forgot-link">{{ 'AUTH.FORGOT_PASSWORD' | translate }}</a>
             <div class="error" *ngIf="error()">{{ error() }}</div>
-            <button type="submit" class="btn btn-primary btn-lg full" [disabled]="signInForm.invalid || busy()">
-              <span class="spinner" *ngIf="busy()"></span>{{ 'AUTH.SIGN_IN' | translate }}
+            <button type="submit" class="main-btn full" [disabled]="signInForm.invalid || busy()">
+              <span class="spinner" *ngIf="busy()"></span>
+              {{ 'AUTH.SIGN_IN' | translate }}
             </button>
           </form>
         </div>
 
         <!-- Sliding overlay -->
-        <div class="overlay-wrap" aria-hidden="true">
+        <div class="overlay-container" aria-hidden="true">
           <div class="overlay">
             <div class="overlay-panel overlay-left">
-              <h2>{{ 'AUTH.WELCOME_BACK' | translate }}</h2>
+              <h1>{{ 'AUTH.WELCOME_BACK' | translate }}</h1>
               <p>{{ 'AUTH.SIGNIN_DETAILS' | translate }}</p>
-              <button type="button" class="btn btn-ghost" (click)="step.set('signin'); error.set(null)">{{ 'AUTH.SIGN_IN' | translate }}</button>
+              <button type="button" class="ghost-btn" id="signIn" (click)="step.set('signin'); error.set(null)">
+                {{ 'AUTH.SIGN_IN' | translate }}
+              </button>
             </div>
             <div class="overlay-panel overlay-right">
-              <h2>{{ 'AUTH.HELLO_STUDENT' | translate }}</h2>
+              <h1>{{ 'AUTH.HELLO_STUDENT' | translate }}</h1>
               <p>{{ 'AUTH.SIGNUP_DETAILS' | translate }}</p>
-              <button type="button" class="btn btn-ghost" (click)="step.set('signup'); error.set(null)">{{ 'AUTH.SIGN_UP' | translate }}</button>
+              <button type="button" class="ghost-btn" id="signUp" (click)="step.set('signup'); error.set(null)">
+                {{ 'AUTH.SIGN_UP' | translate }}
+              </button>
             </div>
           </div>
         </div>
@@ -141,101 +208,536 @@ function emailNoPlus(c: AbstractControl) {
     </div>
   `,
   styles: [`
-    :host { display: block; }
-    .auth-shell { position: relative; min-height: 100vh; padding: 16px;
-      display: flex; flex-direction: column; align-items: center; gap: 24px; overflow: hidden; }
-    .bg-glow { position: fixed; pointer-events: none; z-index: 0; filter: blur(80px); border-radius: 50%; }
-    .bg-glow-1 { top: -120px; left: -100px; width: 460px; height: 460px;
-      background: radial-gradient(circle, rgba(99,102,241,0.5), transparent 70%); animation: glowFloat 12s ease-in-out infinite; }
-    .bg-glow-2 { bottom: -180px; right: -120px; width: 540px; height: 540px;
-      background: radial-gradient(circle, rgba(139,92,246,0.45), transparent 70%); animation: glowFloat 14s ease-in-out infinite reverse; }
-
-    .topbar { width: 100%; max-width: 920px; display: flex; align-items: center; justify-content: space-between; z-index: 5; }
-    .brand { display: flex; align-items: center; gap: 8px; font-family: var(--font-display); font-weight: 700; color: var(--color-foreground); font-size: 1.1rem; }
-    .topbar-actions { display: flex; gap: 8px; align-items: center; }
-
-    .auth-container {
-      position: relative; width: 100%; max-width: 920px; min-height: 540px;
-      background: var(--color-card); border-radius: var(--radius-xl);
-      box-shadow: var(--shadow-lg); overflow: hidden; z-index: 5;
-      border: 1px solid var(--color-border);
+    :host {
+      --primary: #5e43f3;
+      --bg: #eae5e5;
+      --card: #1a1a1a;
+      --input: #252525;
+      --text: #ffffff;
+      --text-dim: #a0a0a0;
+      display: block;
     }
-    html.dark .auth-container { backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); }
 
-    .panel { position: absolute; top: 0; height: 100%; width: 50%; transition: transform 600ms ease-in-out, opacity 600ms ease; }
-    .panel-signin { right: 0; z-index: 2; }
-    .panel-signup { left: 0; opacity: 0; z-index: 1; }
-    .auth-container.signup-active .panel-signin { transform: translateX(100%); opacity: 0; }
-    .auth-container.signup-active .panel-signup { transform: translateX(100%); opacity: 1; z-index: 5; }
-
-    .form { padding: 36px 36px; height: 100%; display: flex; flex-direction: column; gap: 10px; justify-content: center; }
-    .form h1 { font-size: 1.6rem; margin-bottom: 6px; }
-    .input + .input-error { margin-top: -4px; }
-    .full { width: 100%; }
-    .link { background: none; border: none; color: var(--color-primary); font-size: 0.85rem; cursor: pointer; text-decoration: none; }
-    .forgot { align-self: flex-end; margin: 4px 0; }
-    .error { color: var(--red-500); font-size: 0.85rem; min-height: 1.2em; }
-    .social { background: var(--color-card); border: 1px solid var(--color-border-strong); color: var(--color-foreground); width: 100%; }
-    .social:hover { background: var(--color-muted); }
-    .divider {
-      display: flex; align-items: center; gap: 8px; color: var(--color-muted-foreground);
-      font-size: 0.78rem; text-align: center; margin: 4px 0;
+    .auth-shell {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 18px;
+      padding: 16px;
+      background:
+        radial-gradient(circle at 12% 16%, rgba(94, 67, 243, 0.16), transparent 32%),
+        radial-gradient(circle at 88% 84%, rgba(94, 67, 243, 0.12), transparent 34%),
+        var(--bg);
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
-    .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--color-border); }
 
-    .overlay-wrap {
-      position: absolute; top: 0; left: 50%; width: 50%; height: 100%; overflow: hidden;
-      transition: transform 600ms ease-in-out; z-index: 10; border-radius: 150px 0 0 150px;
+    .topbar {
+      width: 100%;
+      max-width: 920px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 5;
     }
-    .auth-container.signup-active .overlay-wrap { transform: translateX(-100%); border-radius: 0 150px 150px 0; }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #1f1f1f;
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    .topbar-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .container {
+      background-color: var(--card);
+      border-radius: 30px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+      position: relative;
+      overflow: hidden;
+      width: 800px;
+      max-width: 100%;
+      min-height: 530px;
+    }
+
+    .form-container {
+      position: absolute;
+      top: 0;
+      height: 100%;
+      transition: all 0.6s ease-in-out;
+    }
+
+    .sign-in-container {
+      left: 0;
+      width: 50%;
+      z-index: 2;
+    }
+
+    .sign-up-container {
+      left: 0;
+      width: 50%;
+      opacity: 0;
+      z-index: 1;
+    }
+
+    .container.active .sign-in-container {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+
+    .container.active .sign-up-container {
+      transform: translateX(100%);
+      opacity: 1;
+      z-index: 5;
+      animation: show 0.6s;
+    }
+
+    @keyframes show {
+      0%, 49.99% { opacity: 0; z-index: 1; }
+      50%, 100% { opacity: 1; z-index: 5; }
+    }
+
+    form {
+      background-color: var(--card);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      padding: 0 40px;
+      height: 100%;
+      text-align: center;
+    }
+
+    h1 {
+      color: var(--text);
+      margin-bottom: 14px;
+      font-size: 1.8rem;
+      line-height: 1.15;
+    }
+
+    .social-container {
+      margin: 12px 0;
+      display: flex;
+      gap: 10px;
+      width: 100%;
+    }
+
+    .social {
+      border: 1px solid #333;
+      border-radius: 50%;
+      display: inline-flex;
+      justify-content: center;
+      align-items: center;
+      height: 35px;
+      width: 35px;
+      color: white;
+      background: transparent;
+      cursor: pointer;
+      transition: 0.25s ease;
+      font-size: 0.86rem;
+      font-weight: 700;
+      text-transform: lowercase;
+    }
+
+    .google-option {
+      width: 100%;
+      height: 44px;
+      border-radius: 12px;
+      justify-content: center;
+      gap: 10px;
+      text-transform: none;
+      font-weight: 600;
+      background: #202020;
+    }
+
+    .google-icon {
+      width: 18px;
+      height: 18px;
+      display: block;
+    }
+
+    .role-switch {
+      width: 100%;
+      background: #101010;
+      border-radius: 14px;
+      padding: 4px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      margin-top: 2px;
+      margin-bottom: 6px;
+    }
+
+    .role-option {
+      border: none;
+      border-radius: 10px;
+      padding: 9px 10px;
+      background: transparent;
+      color: #a0a0a0;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.4px;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      text-transform: uppercase;
+    }
+
+    .role-option.active {
+      color: #fff;
+      background: linear-gradient(135deg, #5e43f3, #7f6af8);
+      box-shadow: 0 8px 18px rgba(94, 67, 243, 0.35);
+      transform: translateY(-1px);
+    }
+
+    .social:hover:not(:disabled) {
+      transform: translateY(-1px);
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    .social:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    .name-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      width: 100%;
+    }
+
+    .input {
+      background-color: var(--input);
+      border: 1px solid transparent;
+      padding: 12px 15px;
+      margin: 8px 0;
+      width: 100%;
+      border-radius: 12px;
+      color: white;
+      outline: none;
+    }
+
+    .input.invalid {
+      border-color: #ef4444;
+    }
+
+    .input-error {
+      width: 100%;
+      text-align: left;
+      margin-top: -4px;
+      margin-bottom: 2px;
+      color: #fca5a5;
+      font-size: 12px;
+    }
+
+    .main-btn {
+      border-radius: 50px;
+      border: none;
+      background-color: var(--primary);
+      color: white;
+      font-size: 12px;
+      font-weight: bold;
+      padding: 12px 45px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      cursor: pointer;
+      margin-top: 15px;
+      transition: transform 0.1s ease, opacity 0.2s ease;
+    }
+
+    .main-btn:active {
+      transform: scale(0.95);
+    }
+
+    .main-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .full {
+      width: 100%;
+    }
+
+    .overlay-container {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      width: 50%;
+      height: 100%;
+      overflow: hidden;
+      transition: transform 0.6s ease-in-out;
+      z-index: 100;
+    }
+
+    .container.active .overlay-container {
+      transform: translateX(-100%);
+    }
+
     .overlay {
-      background: linear-gradient(135deg, var(--indigo-500), var(--violet-500));
-      color: #fff; height: 100%; width: 200%; position: relative; left: -100%;
-      transition: transform 600ms ease-in-out;
+      background: var(--primary);
+      color: #ffffff;
+      position: relative;
+      left: -100%;
+      height: 100%;
+      width: 200%;
+      transform: translateX(0);
+      transition: transform 0.6s ease-in-out;
     }
-    .auth-container.signup-active .overlay { transform: translateX(50%); }
+
+    .container.active .overlay {
+      transform: translateX(50%);
+    }
+
     .overlay-panel {
-      position: absolute; top: 0; height: 100%; width: 50%; padding: 40px 32px;
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      text-align: center; gap: 16px;
+      position: absolute;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      padding: 0 40px;
+      text-align: center;
+      top: 0;
+      height: 100%;
+      width: 50%;
+      transition: transform 0.6s ease-in-out;
     }
-    .overlay-left  { left: 0;  transform: translateX(-20%); }
-    .overlay-right { right: 0; transform: translateX(0); }
-    .auth-container.signup-active .overlay-left  { transform: translateX(0); }
-    .auth-container.signup-active .overlay-right { transform: translateX(20%); }
-    .overlay-panel h2 { font-size: 1.7rem; }
-    .overlay-panel p  { font-size: 0.92rem; line-height: 1.55; max-width: 280px; opacity: 0.95; }
 
-    .otp-card { padding: 32px; max-width: 440px; width: 100%; display: flex; flex-direction: column; gap: 12px; z-index: 5; }
-    .otp-card h1 { font-size: 1.5rem; }
-    .otp-card .muted { color: var(--color-muted-foreground); font-size: 0.9rem; }
-    .otp-input { font-family: var(--font-display); font-size: 1.6rem; letter-spacing: 0.6em; text-align: center; padding: 14px; }
-    .otp-meta { display: flex; justify-content: space-between; font-size: 0.78rem; color: var(--color-muted-foreground); }
-    .otp-meta .warn { color: var(--orange-500); font-weight: 600; }
+    .overlay-left {
+      transform: translateX(-20%);
+    }
 
-    @media (max-width: 720px) {
-      .auth-container { min-height: auto; }
-      .panel { position: relative; width: 100%; height: auto; }
-      .panel-signup { display: block; opacity: 1; }
-      .panel-signin { display: none; }
-      .auth-container.signup-active .panel-signin { display: none; }
-      .auth-container:not(.signup-active) .panel-signup { display: none; }
-      .auth-container:not(.signup-active) .panel-signin { display: block; }
-      .overlay-wrap { display: none; }
+    .container.active .overlay-left {
+      transform: translateX(0);
+    }
+
+    .overlay-right {
+      right: 0;
+      transform: translateX(0);
+    }
+
+    .container.active .overlay-right {
+      transform: translateX(20%);
+    }
+
+    .ghost-btn {
+      background-color: transparent;
+      border: 1px solid white;
+      border-radius: 50px;
+      color: white;
+      padding: 10px 40px;
+      cursor: pointer;
+      font-weight: bold;
+      text-transform: uppercase;
+      margin-top: 20px;
+    }
+
+    .overlay-panel p {
+      font-size: 14px;
+      margin: 20px 0;
+      opacity: 0.85;
+    }
+
+    .forgot-link {
+      align-self: flex-end;
+      color: var(--text-dim);
+      text-decoration: none;
+      margin: 6px 0 2px;
+      font-size: 13px;
+    }
+
+    .forgot-link:hover {
+      color: #fff;
+      text-decoration: underline;
+    }
+
+    .error {
+      color: #fca5a5;
+      font-size: 0.85rem;
+      min-height: 1.1rem;
+      width: 100%;
+      text-align: left;
+      margin-top: 2px;
+    }
+
+    .auth-otp-card {
+      width: 100%;
+      max-width: 460px;
+      background: var(--card);
+      border-radius: 24px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+      color: var(--text);
+      padding: 30px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .auth-otp-card .muted {
+      color: var(--text-dim);
+      font-size: 14px;
+    }
+
+    .otp-input {
+      font-size: 1.55rem;
+      letter-spacing: 0.45em;
+      text-align: center;
+    }
+
+    .otp-meta {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      color: var(--text-dim);
+      font-size: 12px;
+    }
+
+    .otp-meta .warn {
+      color: #f59e0b;
+      font-weight: 700;
+    }
+
+    .link {
+      border: none;
+      background: none;
+      color: #d1c8ff;
+      cursor: pointer;
+      text-align: left;
+      padding: 0;
+      margin-top: 4px;
+      font-size: 13px;
+    }
+
+    .pwd-rules {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin-top: -2px;
+      margin-bottom: 4px;
+    }
+
+    .rule {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11.5px;
+      color: #fca5a5;
+      text-align: left;
+      transition: color 0.2s ease;
+    }
+
+    .rule.ok {
+      color: #86efac;
+    }
+
+    .rule-icon {
+      font-weight: 700;
+      font-size: 13px;
+      min-width: 14px;
+    }
+
+    .spinner {
+      width: 13px;
+      height: 13px;
+      border: 2px solid rgba(255, 255, 255, 0.4);
+      border-top-color: #fff;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 8px;
+      vertical-align: -2px;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    @media (max-width: 900px) {
+      .container {
+        min-height: 560px;
+      }
+
+      form {
+        padding: 0 24px;
+      }
+    }
+
+    @media (max-width: 760px) {
+      .auth-shell {
+        padding: 12px;
+      }
+
+      .topbar {
+        max-width: 520px;
+      }
+
+      .container {
+        width: 100%;
+        min-height: auto;
+        border-radius: 24px;
+      }
+
+      .form-container {
+        position: relative;
+        width: 100%;
+        height: auto;
+      }
+
+      .sign-up-container {
+        opacity: 1;
+      }
+
+      .sign-in-container,
+      .sign-up-container,
+      .container.active .sign-in-container,
+      .container.active .sign-up-container {
+        transform: none;
+      }
+
+      .container:not(.active) .sign-up-container,
+      .container.active .sign-in-container {
+        display: none;
+      }
+
+      .overlay-container {
+        display: none;
+      }
+
+      form {
+        padding: 26px 20px;
+      }
+
+      .name-row {
+        grid-template-columns: 1fr;
+        gap: 0;
+      }
     }
   `],
 })
-export class AuthPageComponent {
+export class AuthPageComponent implements OnInit {
   private fb = inject(FormBuilder);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
   private translate = inject(TranslateService);
   readonly auth = inject(AuthService);
 
-  step = signal<'signin' | 'signup' | 'otp'>('signin');
+  step = signal<'signin' | 'signup' | 'otp' | 'otp2fa' | 'googleOptional'>('signin');
   busy = signal(false);
   error = signal<string | null>(null);
   pendingEmail = signal('');
   otpCode = signal('');
+  mfaTicket = signal('');
+  googleRegTicket = signal('');
+  optionalPwd = signal('');
   attempts = signal(0);
 
   private otpStartedAt = 0;
@@ -254,12 +756,53 @@ export class AuthPageComponent {
     prenom:   ['', [Validators.required, Validators.minLength(2)]],
     nom:      ['', [Validators.required, Validators.minLength(2)]],
     email:    ['', [Validators.required, Validators.email, emailNoPlus]],
-    password: ['', [Validators.required, Validators.pattern(PWD_REGEX)]],
+    password: ['', [Validators.required, pwdLength, pwdUpper, pwdDigit, pwdSpecial]],
     role:     ['ETUDIANT' as 'ETUDIANT' | 'ENSEIGNANT', [Validators.required]],
   });
 
   f(form: FormGroup, name: string): AbstractControl { return form.controls[name]; }
   touched(form: FormGroup, name: string): boolean { return this.f(form, name).touched && this.f(form, name).invalid; }
+
+  ngOnInit(): void {
+    const code = this.route.snapshot.queryParamMap.get('code');
+    const state = this.route.snapshot.queryParamMap.get('state');
+    const oauthError = this.route.snapshot.queryParamMap.get('error');
+    if (!code && !oauthError) return;
+
+    this.step.set('signin');
+    if (oauthError) {
+      this.error.set('Connexion Google annulée. Réessayez.');
+      this.router.navigate([], { queryParams: {}, replaceUrl: true });
+      return;
+    }
+
+    if (!this.auth.validateGoogleState(state)) {
+      this.error.set('Session Google invalide. Réessayez la connexion.');
+      this.router.navigate([], { queryParams: {}, replaceUrl: true });
+      return;
+    }
+
+    this.busy.set(true);
+    this.error.set(null);
+    const redirectUri = this.auth.consumeGoogleRedirectUri() ?? window.location.href.split('?')[0];
+    this.auth.loginWithGoogleCode({ code: code!, redirectUri }).subscribe({
+      next: (res: any) => {
+        this.busy.set(false);
+        if (res.requiresRegistration) {
+          this.googleRegTicket.set(res.registerTicket);
+          this.step.set('googleOptional');
+        } else {
+          this.router.navigateByUrl(this.auth.defaultRouteForRole(res.role));
+        }
+      },
+      error: e => {
+        this.busy.set(false);
+        const backendMessage = e?.error?.message;
+        this.error.set(backendMessage || this.translate.instant('ERRORS.GENERIC'));
+        this.router.navigate([], { queryParams: {}, replaceUrl: true });
+      },
+    });
+  }
 
   onSignIn(): void {
     this.signInForm.markAllAsTouched();
@@ -267,7 +810,16 @@ export class AuthPageComponent {
     const v = this.signInForm.getRawValue();
     this.busy.set(true); this.error.set(null);
     this.auth.login({ email: v.email!, password: v.password! }).subscribe({
-      next: u => { this.busy.set(false); this.router.navigateByUrl(this.auth.defaultRouteForRole(u.role)); },
+      next: (res: any) => { 
+        this.busy.set(false);
+        if (res.mfaRequired) {
+          this.mfaTicket.set(res.ticket);
+          this.otpCode.set('');
+          this.step.set('otp2fa');
+        } else {
+          this.router.navigateByUrl(this.auth.defaultRouteForRole(res.role)); 
+        }
+      },
       error: e => {
         this.busy.set(false);
         this.error.set(this.translateError(e?.error?.code) ?? this.translate.instant('AUTH.ERR_INVALID_CREDENTIALS'));
@@ -303,23 +855,76 @@ export class AuthPageComponent {
   }
 
   submitOtp(): void {
+    if (this.attempts() >= 5) {
+      this.error.set('31. Code incorrect. Nombre maximum de tentatives (5) atteint.');
+      return;
+    }
     this.busy.set(true); this.error.set(null);
     this.attempts.update(n => n + 1);
     this.auth.verifyOtp({ email: this.pendingEmail(), code: this.otpCode(), purpose: 'REGISTRATION' }).subscribe({
-      next: u => { this.busy.set(false); this.router.navigateByUrl(this.auth.defaultRouteForRole(u.role)); },
+      next: u => {
+        this.busy.set(false);
+        // Étape 28 du diagramme : Inscription terminée, connexion automatique
+        this.router.navigateByUrl(this.auth.defaultRouteForRole(u.role));
+      },
       error: e => {
         this.busy.set(false);
-        this.error.set(this.translateError(e?.error?.code) ?? this.translate.instant('AUTH.ERR_OTP_INVALID'));
+        if (this.attempts() >= 5) {
+          this.error.set('31. Code incorrect. Veuillez réessayer (tentative 5/5 atteinte). Renvoyez un nouveau code.');
+        } else {
+          this.error.set(`31. Code incorrect. Veuillez réessayer (tentative ${this.attempts()}/5).`);
+        }
       },
     });
   }
 
   resendOtp(): void {
     if (!this.pendingEmail()) return;
+    // Étape 33 du diagramme : demande de renvoi d'OTP via le bon endpoint
+    const v = this.signUpForm.getRawValue();
     this.busy.set(true); this.error.set(null);
-    this.auth.forgotPassword({ email: this.pendingEmail() }).subscribe({
-      next: () => { this.busy.set(false); this.startOtpTimer(); this.attempts.set(0); },
-      error: () => { this.busy.set(false); this.startOtpTimer(); },
+    this.auth.register({
+      email: this.pendingEmail(),
+      password: v.password ?? '',
+      prenom: v.prenom ?? '',
+      nom: v.nom ?? '',
+      role: v.role ?? 'ETUDIANT',
+    }).subscribe({
+      next: () => {
+        this.busy.set(false);
+        this.startOtpTimer();
+        this.attempts.set(0);
+        this.otpCode.set('');
+        this.error.set(null);
+      },
+      error: () => { this.busy.set(false); this.startOtpTimer(); }
+    });
+  }
+
+  onOptionalPwdInput(e: Event): void {
+    const v = (e.target as HTMLInputElement).value;
+    this.optionalPwd.set(v);
+  }
+
+  submit2fa(): void {
+    this.busy.set(true); this.error.set(null);
+    this.auth.verify2fa({ ticket: this.mfaTicket(), code: this.otpCode() }).subscribe({
+      next: u => { this.busy.set(false); this.router.navigateByUrl(this.auth.defaultRouteForRole(u.role)); },
+      error: e => {
+        this.busy.set(false);
+        this.error.set(e?.error?.message ?? "Code 2FA invalide ou expiré.");
+      },
+    });
+  }
+
+  completeGoogle(): void {
+    this.busy.set(true); this.error.set(null);
+    this.auth.completeGoogleRegistration({ registerTicket: this.googleRegTicket(), optionalPassword: this.optionalPwd() }).subscribe({
+      next: u => { this.busy.set(false); this.router.navigateByUrl(this.auth.defaultRouteForRole(u.role)); },
+      error: e => {
+        this.busy.set(false);
+        this.error.set(e?.error?.message ?? "Erreur lors de la finalisation.");
+      },
     });
   }
 

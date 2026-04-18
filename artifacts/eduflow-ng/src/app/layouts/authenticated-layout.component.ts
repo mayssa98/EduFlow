@@ -15,6 +15,7 @@ const ICON_CHART     = `<svg width="18" height="18" viewBox="0 0 24 24" fill="no
 const ICON_ZAP       = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>`;
 const ICON_LOGOUT    = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>`;
 const ICON_FILE      = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>`;
+const ICON_PROFILE   = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`;
 
 @Component({
   selector: 'app-authenticated-layout',
@@ -84,15 +85,33 @@ export class AuthenticatedLayoutComponent {
       role === 'ADMIN'      ? '/admin' :
       role === 'ENSEIGNANT' ? '/teacher' :
       '/student';
-    const base: SidebarItem[] = [
-      { route: home, labelKey: 'NAV.DASHBOARD', icon: ICON_HOME },
-      { route: home, labelKey: 'NAV.COURSES',   icon: ICON_BOOK },
-      { route: home, labelKey: 'DASHBOARD.OVERVIEW', icon: ICON_CHART },
+
+    if (role === 'ADMIN') {
+      return [
+        { route: '/admin',       labelKey: 'NAV.DASHBOARD',  icon: ICON_HOME },
+        { route: '/admin/users', labelKey: 'NAV.STUDENTS',   icon: ICON_USERS },
+        { route: '/admin',       labelKey: 'NAV.COURSES',    icon: ICON_BOOK },
+        { route: '/admin',       labelKey: 'DASHBOARD.OVERVIEW', icon: ICON_CHART },
+        { route: '/profile',     labelKey: 'NAV.PROFILE',    icon: ICON_PROFILE },
+      ];
+    }
+    if (role === 'ENSEIGNANT') {
+      return [
+        { route: '/teacher',  labelKey: 'NAV.DASHBOARD',  icon: ICON_HOME },
+        { route: '/teacher/courses',  labelKey: 'NAV.COURSES',    icon: ICON_BOOK },
+        { route: '/teacher/assignments',  labelKey: 'ASSIGNMENTS.MENU', icon: ICON_FILE },
+        { route: '/teacher/ai-analysis',  labelKey: 'AI.MENU',        icon: ICON_ZAP },
+        { route: '/profile',  labelKey: 'NAV.PROFILE',    icon: ICON_PROFILE },
+      ];
+    }
+    // ETUDIANT
+    return [
+      { route: '/student',  labelKey: 'NAV.DASHBOARD',    icon: ICON_HOME },
+      { route: '/student/courses',  labelKey: 'NAV.COURSES',      icon: ICON_BOOK },
+      { route: '/student/assignments',  labelKey: 'ASSIGNMENTS.MENU', icon: ICON_FILE },
+      { route: '/student',  labelKey: 'DASHBOARD.OVERVIEW', icon: ICON_CHART },
+      { route: '/profile',  labelKey: 'NAV.PROFILE',      icon: ICON_PROFILE },
     ];
-    if (role === 'ADMIN') base.splice(1, 0, { route: home, labelKey: 'NAV.STUDENTS', icon: ICON_USERS });
-    if (role === 'ENSEIGNANT') base.push({ route: home, labelKey: 'AI.MENU', icon: ICON_ZAP });
-    if (role === 'ETUDIANT') base.push({ route: home, labelKey: 'ASSIGNMENTS.MENU', icon: ICON_FILE });
-    return base;
   });
 
   logout(): void { this.auth.logout().subscribe(); }

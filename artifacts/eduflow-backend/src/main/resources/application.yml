@@ -8,9 +8,9 @@ spring:
   application:
     name: eduflow-backend
   datasource:
-    url: jdbc:postgresql://${PGHOST}:${PGPORT}/${PGDATABASE}?sslmode=disable
-    username: ${PGUSER}
-    password: ${PGPASSWORD}
+    url: jdbc:postgresql://${PGHOST:localhost}:${PGPORT:5432}/${PGDATABASE:eduflow}?sslmode=disable
+    username: ${PGUSER:postgres}
+    password: ${PGPASSWORD:eduflow2026}
     driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 10
@@ -45,12 +45,12 @@ management:
 
 eduflow:
   jwt:
-    access-secret: ${JWT_SECRET}
-    refresh-secret: ${JWT_REFRESH_SECRET}
-    access-expiry-minutes: ${JWT_ACCESS_EXPIRY_MIN:15}
+    access-secret: ${JWT_SECRET:eduflow-local-jwt-access-secret-key-min32bytes}
+    refresh-secret: ${JWT_REFRESH_SECRET:eduflow-local-jwt-refresh-secret-key-min32bytes}
+    access-expiry-minutes: ${JWT_ACCESS_EXPIRY_MIN:60}
     refresh-expiry-days: ${JWT_REFRESH_EXPIRY_DAYS:7}
   cors:
-    allowed-origin: ${APP_FRONTEND_ORIGIN:http://localhost:5000}
+    allowed-origin: ${APP_FRONTEND_ORIGIN:http://localhost:4200}
   otp:
     expiry-minutes: ${OTP_EXPIRY_MIN:10}
     max-attempts: 5
@@ -61,15 +61,15 @@ eduflow:
     default-password: ${ADMIN_DEFAULT_PASSWORD:Admin@EduFlow2026}
   email:
     resend-api-key: ${RESEND_API_KEY:}
-    from-address: ${EMAIL_FROM:noreply@eduflow.com}
+    from-address: ${EMAIL_FROM:onboarding@resend.dev}
     from-name: EduFlow
   google:
     client-id: ${GOOGLE_CLIENT_ID:}
     client-secret: ${GOOGLE_CLIENT_SECRET:}
-    redirect-uri: ${GOOGLE_REDIRECT_URI:${APP_FRONTEND_ORIGIN:http://localhost:5000}/auth/google/callback}
+    redirect-uri: ${GOOGLE_REDIRECT_URI:http://localhost:4200/auth/google/callback}
   cookie:
-    secure: ${COOKIE_SECURE:true}
-    same-site: Strict
+    secure: ${COOKIE_SECURE:false}
+    same-site: ${COOKIE_SAME_SITE:Lax}
   upload:
     dir: ${UPLOAD_DIR:./uploads}
     pdf-max-bytes: 26214400      # 25 MB

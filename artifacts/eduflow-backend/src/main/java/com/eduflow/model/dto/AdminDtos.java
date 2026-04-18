@@ -81,4 +81,29 @@ public class AdminDtos {
             double averageGrade,
             long courseConsultations
     ) {}
+
+    // ---- Profil commun à tous les rôles ----
+    public record UpdateProfileRequest(
+            @NotBlank @Size(max = 120) String nom,
+            @NotBlank @Size(max = 120) String prenom
+    ) {}
+
+    public record ChangePasswordRequest(
+            @NotBlank String currentPassword,
+            @NotBlank @Size(min = 8, max = 128)
+            @jakarta.validation.constraints.Pattern(regexp = "^(?=.*[A-Z])(?=.*\\d)(?=.*[^A-Za-z0-9]).+$")
+            String newPassword
+    ) {}
+
+    public record ProfileResponse(
+            Long id,
+            String email,
+            String nom,
+            String prenom,
+            String role,
+            String statutCompte,
+            String photoUrl,
+            java.time.OffsetDateTime dateCreation,
+            java.time.OffsetDateTime derniereConnexion
+    ) {}
 }
