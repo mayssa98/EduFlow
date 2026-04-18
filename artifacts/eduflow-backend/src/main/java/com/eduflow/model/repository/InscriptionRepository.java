@@ -11,5 +11,7 @@ public interface InscriptionRepository extends JpaRepository<Inscription, Long> 
     List<Inscription> findByEtudiantId(Long etudiantId);
     List<Inscription> findByCoursId(Long coursId);
 
+    java.util.Optional<Inscription> findByEtudiantIdAndCoursId(Long etudiantId, Long coursId);
+
     long countByCoursId(Long coursId);
 }

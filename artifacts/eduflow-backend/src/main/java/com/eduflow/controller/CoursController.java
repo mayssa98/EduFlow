@@ -111,4 +111,27 @@ public class CoursController {
         service.deleteFile(id, fileId);
         return ResponseEntity.noContent().build();
     }
+
+    @PostMapping("/{id}/enroll")
+    @PreAuthorize("hasRole('ETUDIANT')")
+    @Operation(summary = "Enroll the current student in a published course")
+    public ResponseEntity<Void> enroll(@PathVariable Long id) {
+        service.enroll(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/{id}/enroll")
+    @PreAuthorize("hasRole('ETUDIANT')")
+    @Operation(summary = "Unenroll the current student from a course")
+    public ResponseEntity<Void> unenroll(@PathVariable Long id) {
+        service.unenroll(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/{id}/enrolled")
+    @PreAuthorize("hasRole('ETUDIANT')")
+    @Operation(summary = "Check if the current student is enrolled in a course")
+    public java.util.Map<String, Boolean> enrolled(@PathVariable Long id) {
+        return java.util.Map.of("enrolled", service.isEnrolled(id));
+    }
 }

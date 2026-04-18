@@ -2,6 +2,7 @@ package com.eduflow.service;
 
 import com.eduflow.model.dto.AdminDtos.*;
 import com.eduflow.model.entity.*;
+import com.eduflow.util.EmailNormalizer;
 import com.eduflow.model.entity.enums.Role;
 import com.eduflow.model.entity.enums.StatutCompte;
 import com.eduflow.model.repository.*;

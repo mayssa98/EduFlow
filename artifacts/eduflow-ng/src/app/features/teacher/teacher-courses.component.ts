@@ -1,7 +1,8 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { CourseService, Course, SupportFile } from '../../core/services/course.service';
+import { CourseService } from '../../core/services/api.services';
+import { CourseResponse, SupportResponse } from '../../core/models/api.models';
 import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
@@ -29,7 +30,7 @@ import { TranslateModule } from '@ngx-translate/core';
           <tbody>
             <tr *ngFor="let c of courses()">
               <td><strong>{{ c.titre }}</strong></td>
-              <td class="muted">{{ truncate(c.description) }}</td>
+              <td class="muted">{{ truncate(c.description ?? '') }}</td>
               <td>
                 <span class="status-badge" [class]="'status-' + c.statut.toLowerCase()">
                   {{ c.statut }}
@@ -169,15 +170,15 @@ export class TeacherCoursesComponent implements OnInit {
   private courseSvc = inject(CourseService);
   private fb = inject(FormBuilder);
 
-  courses = signal<Course[]>([]);
+  courses = signal<CourseResponse[]>([]);
   loading = signal(true);
   
   showModal = signal(false);
-  editingCourse = signal<Course | null>(null);
+  editingCourse = signal<CourseResponse | null>(null);
   
   showFilesModal = signal(false);
-  selectedCourse = signal<Course | null>(null);
-  files = signal<SupportFile[]>([]);
+  selectedCourse = signal<CourseResponse | null>(null);
+  files = signal<SupportResponse[]>([]);
   uploading = signal(false);
 
   courseForm = this.fb.nonNullable.group({
@@ -201,7 +202,7 @@ export class TeacherCoursesComponent implements OnInit {
     this.showModal.set(true);
   }
 
-  openEditModal(c: Course) {
+  openEditModal(c: CourseResponse) {
     this.editingCourse.set(c);
     this.courseForm.patchValue({ titre: c.titre, description: c.description });
     this.showModal.set(true);
@@ -238,7 +239,7 @@ export class TeacherCoursesComponent implements OnInit {
   }
 
   // --- Files Management ---
-  openFilesModal(c: Course) {
+  openFilesModal(c: CourseResponse) {
     this.selectedCourse.set(c);
     this.loadFiles(c.id);
     this.showFilesModal.set(true);
@@ -247,7 +248,7 @@ export class TeacherCoursesComponent implements OnInit {
   closeFilesModal() { this.showFilesModal.set(false); }
 
   loadFiles(courseId: number) {
-    this.courseSvc.listFiles(courseId).subscribe(res => this.files.set(res));
+    this.courseSvc.files(courseId).subscribe(res => this.files.set(res));
   }
 
   onFileSelected(event: Event) {

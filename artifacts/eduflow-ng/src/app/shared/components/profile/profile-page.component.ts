@@ -1,7 +1,8 @@
 import { Component, inject, signal, OnInit, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators, AbstractControl } from '@angular/forms';
-import { UserService, ProfileResponse } from '../../../core/services/user.service';
+import { UserService } from '../../../core/services/api.services';
+import { ProfileResponse } from '../../../core/models/api.models';
 import { AuthService } from '../../../core/services/auth.service';
 
 function pwdLength(c: AbstractControl)  { return c.value && c.value.length >= 8 ? null : { pwdLength: true }; }

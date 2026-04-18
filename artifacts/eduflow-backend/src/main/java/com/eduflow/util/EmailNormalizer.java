@@ -1,4 +1,4 @@
-package com.eduflow.service;
+package com.eduflow.util;
 
 public final class EmailNormalizer {
     private EmailNormalizer() {}
