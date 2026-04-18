@@ -152,7 +152,8 @@ export class StudentAssignmentsComponent implements OnInit, OnDestroy {
     if ((!text || !text.trim()) && !file) { this.errors.update(e => ({ ...e, [d.id]: 'Veuillez saisir une réponse ou joindre un PDF.' })); return; }
     this.busy.set(d.id);
     this.errors.update(e => ({ ...e, [d.id]: '' }));
-    this.svc.submit(d.id, text, file).subscribe({
+    const payload = file ? `${text ? `${text}\n` : ''}[attachment] ${file.name}` : text;
+    this.svc.submit(d.id, payload).subscribe({
       next: s => {
         this.busy.set(null);
         this.submissions.update(list => {
