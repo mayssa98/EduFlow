@@ -85,4 +85,9 @@ public class DevoirController {
     @PreAuthorize("hasRole('ETUDIANT')")
     @Operation(summary = "List the current student's submissions")
     public List<SoumissionResponse> mySubmissions() { return service.mySubmissions(); }
+
+    @GetMapping("/me")
+    @PreAuthorize("hasRole('ETUDIANT')")
+    @Operation(summary = "List assignments from courses the current student is enrolled in")
+    public List<DevoirResponse> myAssignments() { return service.myAssignments(); }
 }

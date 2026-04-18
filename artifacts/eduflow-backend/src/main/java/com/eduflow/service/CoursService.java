@@ -23,13 +23,15 @@ public class CoursService {
     private final MatiereRepository matiereRepo;
     private final SupportPedagogiqueRepository supportRepo;
     private final FileStorageService storage;
-    private final com.eduflow.model.repository.InscriptionRepository inscriptionRepo;
+    private final InscriptionRepository inscriptionRepo;
+    private final EtudiantRepository etudiantRepo;
 
     public CoursService(CoursRepository c, EnseignantRepository e, MatiereRepository m,
                         SupportPedagogiqueRepository s, FileStorageService st,
-                        com.eduflow.model.repository.InscriptionRepository ir) {
+                        InscriptionRepository ir, EtudiantRepository et) {
         this.coursRepo = c; this.enseignantRepo = e; this.matiereRepo = m;
         this.supportRepo = s; this.storage = st; this.inscriptionRepo = ir;
+        this.etudiantRepo = et;
     }
 
     @Transactional(readOnly = true)
@@ -151,6 +153,36 @@ public class CoursService {
             throw new AccessDeniedException("You do not own this course");
         }
         return c;
+    }
+
+    // ---- Enrollment ----
+
+    public void enroll(Long coursId) {
+        SecurityUtils.requireRole("ETUDIANT");
+        Cours c = coursRepo.findById(coursId)
+                .orElseThrow(() -> new com.eduflow.exception.NotFoundException("Course not found"));
+        if (c.getStatut() != StatutCours.PUBLISHED)
+            throw new IllegalStateException("Course is not published");
+        Long uid = SecurityUtils.currentUserId();
+        if (inscriptionRepo.findByEtudiantIdAndCoursId(uid, coursId).isPresent()) return; // idempotent
+        Inscription ins = new Inscription();
+        ins.setEtudiant(etudiantRepo.getReferenceById(uid));
+        ins.setCours(c);
+        inscriptionRepo.save(ins);
+    }
+
+    public void unenroll(Long coursId) {
+        SecurityUtils.requireRole("ETUDIANT");
+        Long uid = SecurityUtils.currentUserId();
+        inscriptionRepo.findByEtudiantIdAndCoursId(uid, coursId)
+                .ifPresent(inscriptionRepo::delete);
+    }
+
+    @Transactional(readOnly = true)
+    public boolean isEnrolled(Long coursId) {
+        if (!"ETUDIANT".equals(SecurityUtils.currentRole())) return false;
+        Long uid = SecurityUtils.currentUserId();
+        return inscriptionRepo.findByEtudiantIdAndCoursId(uid, coursId).isPresent();
     }
 
     private void ensureVisible(Cours c) {

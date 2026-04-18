@@ -1,8 +1,10 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, FormsModule, Validators } from '@angular/forms';
-import { AssignmentService, Assignment, Submission } from '../../core/services/assignment.service';
-import { CourseService, Course } from '../../core/services/course.service';
+import { AssignmentService } from '../../core/services/api.services';
+import { DevoirResponse, SoumissionResponse } from '../../core/models/api.models';
+import { CourseService } from '../../core/services/api.services';
+import { CourseResponse } from '../../core/models/api.models';
 import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
@@ -38,9 +40,9 @@ import { TranslateModule } from '@ngx-translate/core';
           <tbody>
             <tr *ngFor="let a of assignments()">
               <td><strong>{{ a.titre }}</strong></td>
-              <td class="muted">{{ truncate(a.description) }}</td>
-              <td [class.overdue]="isOverdue(a.dateEcheance)">{{ formatDate(a.dateEcheance) }}</td>
-              <td><span class="badge">{{ a.nbSoumissions }} rendues</span></td>
+              <td class="muted">{{ truncate(a.consigne ?? '') }}</td>
+              <td [class.overdue]="isOverdue(a.dateFin)">{{ formatDate(a.dateFin) }}</td>
+              <td><span class="badge">{{ 0 }} rendues</span></td>
               <td>
                 <div class="action-row">
                   <button class="btn-icon" title="Modifier" (click)="openEditModal(a)">✏️</button>
@@ -81,12 +83,12 @@ import { TranslateModule } from '@ngx-translate/core';
               <input type="text" formControlName="titre" class="form-control" />
             </div>
             <div class="form-group">
-              <label>Description des consignes</label>
-              <textarea formControlName="description" class="form-control" rows="4"></textarea>
+              <label>Consignes</label>
+              <textarea formControlName="consigne" class="form-control" rows="4"></textarea>
             </div>
             <div class="form-group">
-              <label>Date & Heure d'échéance</label>
-              <input type="datetime-local" formControlName="dateEcheance" class="form-control" />
+              <label>Date de fin</label>
+              <input type="datetime-local" formControlName="dateFin" class="form-control" />
             </div>
             <div class="modal-actions">
               <button type="button" class="btn-cancel" (click)="closeModal()">Annuler</button>
@@ -116,8 +118,8 @@ import { TranslateModule } from '@ngx-translate/core';
                   <td><strong>{{ sub.etudiantNom }}</strong></td>
                   <td>
                     <div class="sub-date">{{ formatDate(sub.dateSoumission) }}</div>
-                    <a [href]="getFileUrl(sub.cheminFichier)" target="_blank" class="btn btn-outline btn-sm mt-2">
-                       {{ sub.typeFichier === 'PDF' ? '📄' : '🎥' }} Ouvrir le rendu
+                    <a [href]="getFileUrl(sub.cheminFichier ?? '')" target="_blank" class="btn btn-outline btn-sm mt-2">
+                       {{ sub.cheminFichier ? '📄' : '🎥' }} Ouvrir le rendu
                     </a>
                   </td>
                   <td>
@@ -210,24 +212,24 @@ export class TeacherAssignmentsComponent implements OnInit {
   private crsSvc = inject(CourseService);
   private fb = inject(FormBuilder);
 
-  courses = signal<Course[]>([]);
+  courses = signal<CourseResponse[]>([]);
   loading = signal(false);
   
   selectedCourseFilter = signal<number | null>(null);
-  assignments = signal<Assignment[]>([]);
+  assignments = signal<DevoirResponse[]>([]);
 
   showModal = signal(false);
-  editingAssignment = signal<Assignment | null>(null);
+  editingAssignment = signal<DevoirResponse | null>(null);
 
   showSubModal = signal(false);
-  selectedAssignment = signal<Assignment | null>(null);
-  submissions = signal<Submission[]>([]);
+  selectedAssignment = signal<DevoirResponse | null>(null);
+  submissions = signal<SoumissionResponse[]>([]);
   loadingSubs = signal(false);
 
   assignForm = this.fb.nonNullable.group({
     titre: ['', [Validators.required]],
-    description: [''],
-    dateEcheance: ['', [Validators.required]],
+    consigne: [''],
+    dateFin: ['', [Validators.required]],
     coursId: [0, [Validators.min(1)]]
   });
 
@@ -257,7 +259,7 @@ export class TeacherAssignmentsComponent implements OnInit {
     const cid = this.selectedCourseFilter();
     if (!cid) return;
     this.loading.set(true);
-    this.asgSvc.listForCourse(cid).subscribe({
+    this.asgSvc.list(cid).subscribe({
       next: (res) => { this.assignments.set(res); this.loading.set(false); },
       error: () => this.loading.set(false)
     });
@@ -273,18 +275,18 @@ export class TeacherAssignmentsComponent implements OnInit {
     this.showModal.set(true);
   }
 
-  openEditModal(a: Assignment) {
+  openEditModal(a: DevoirResponse) {
     this.editingAssignment.set(a);
     // Format date for 'datetime-local' input
-    const d = new Date(a.dateEcheance);
+    const d = new Date(a.dateFin);
     const tzOffset = d.getTimezoneOffset() * 60000;
     const localISOTime = (new Date(d.getTime() - tzOffset)).toISOString().slice(0, 16);
 
     this.assignForm.patchValue({
       coursId: a.coursId,
       titre: a.titre,
-      description: a.description,
-      dateEcheance: localISOTime
+      consigne: a.consigne,
+      dateFin: localISOTime
     });
     this.showModal.set(true);
   }
@@ -294,19 +296,21 @@ export class TeacherAssignmentsComponent implements OnInit {
   saveAssignment() {
     if (this.assignForm.invalid) return;
     const val = this.assignForm.getRawValue();
-    // Convert local back to UTC string format for server
-    const serverDate = new Date(val.dateEcheance).toISOString();
-
-    const payload = {
-      ...val,
-      dateEcheance: serverDate
-    };
+    const serverDate = new Date(val.dateFin).toISOString();
+    const now = new Date().toISOString();
 
     const isEdit = this.editingAssignment();
-    const obs$ = isEdit 
-      ? this.asgSvc.update(isEdit.id, payload)
-      : this.asgSvc.create(payload);
-      
+    const obs$ = isEdit
+      ? this.asgSvc.update(isEdit.id, { titre: val.titre, consigne: val.consigne, dateFin: serverDate })
+      : this.asgSvc.create({
+          coursId: val.coursId,
+          titre: val.titre,
+          consigne: val.consigne,
+          dateDebut: now,
+          dateFin: serverDate,
+          noteMax: 20,
+        });
+
     obs$.subscribe(() => {
       this.closeModal();
       this.loadAssignments();
@@ -320,11 +324,11 @@ export class TeacherAssignmentsComponent implements OnInit {
   }
 
   // --- Submissions ---
-  openSubmissionsModal(a: Assignment) {
+  openSubmissionsModal(a: DevoirResponse) {
     this.selectedAssignment.set(a);
     this.loadingSubs.set(true);
     this.showSubModal.set(true);
-    this.asgSvc.listSubmissions(a.id).subscribe({
+    this.asgSvc.submissions(a.id).subscribe({
       next: (res) => { this.submissions.set(res); this.loadingSubs.set(false); },
       error: () => this.loadingSubs.set(false)
     });
@@ -339,7 +343,7 @@ export class TeacherAssignmentsComponent implements OnInit {
       return;
     }
     const com = prompt('Un commentaire facultatif pour cette note ?');
-    this.asgSvc.gradeSubmission(subId, noteNum, com || undefined).subscribe(() => {
+    this.asgSvc.grade(subId, { note: noteNum, commentaire: com || undefined }).subscribe(() => {
       // Reload submissions
       this.openSubmissionsModal(this.selectedAssignment()!);
     });

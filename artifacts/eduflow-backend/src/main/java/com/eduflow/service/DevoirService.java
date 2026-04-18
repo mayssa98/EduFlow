@@ -159,6 +159,20 @@ public class DevoirService {
                 .stream().map(this::toResponse).toList();
     }
 
+    @Transactional(readOnly = true)
+    public List<DevoirResponse> myAssignments() {
+        SecurityUtils.requireRole("ETUDIANT");
+        Long uid = SecurityUtils.currentUserId();
+        List<Long> enrolledCourseIds = inscriptionRepo.findByEtudiantId(uid).stream()
+                .map(i -> i.getCours().getId())
+                .toList();
+        if (enrolledCourseIds.isEmpty()) return List.of();
+        return devoirRepo.findByCourseIds(enrolledCourseIds).stream()
+                .filter(d -> d.getCours().getStatut() == StatutCours.PUBLISHED)
+                .map(this::toResponse)
+                .toList();
+    }
+
     private void ensureCourseVisible(Long coursId) {
         Cours c = coursRepo.findById(coursId).orElseThrow(() -> new com.eduflow.exception.NotFoundException("Course not found"));
         String role = SecurityUtils.currentRole();

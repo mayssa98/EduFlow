@@ -1,6 +1,8 @@
 package com.eduflow.service;
 
 import com.eduflow.config.AppProperties;
+import com.eduflow.util.EmailNormalizer;
+import com.eduflow.util.HashUtil;
 import org.springframework.security.authentication.BadCredentialsException;
 import com.eduflow.model.dto.AuthDtos.*;
 import com.eduflow.model.entity.*;

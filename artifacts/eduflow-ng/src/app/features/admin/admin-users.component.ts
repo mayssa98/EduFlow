@@ -1,6 +1,7 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { UserService, UserSummary } from '../../core/services/user.service';
+import { UserService, ApprovalService } from '../../core/services/api.services';
+import { UserSummary } from '../../core/models/api.models';
 
 @Component({
   selector: 'app-admin-users',
@@ -211,6 +212,7 @@ import { UserService, UserSummary } from '../../core/services/user.service';
 })
 export class AdminUsersComponent implements OnInit {
   private userSvc = inject(UserService);
+  private approvalSvc = inject(ApprovalService);
 
   users          = signal<UserSummary[]>([]);
   pendingTeachers = signal<UserSummary[]>([]);
@@ -222,11 +224,11 @@ export class AdminUsersComponent implements OnInit {
 
   private loadAll(): void {
     this.loading.set(true);
-    this.userSvc.listUsers(this.roleFilter() || undefined).subscribe({
+    this.userSvc.list(this.roleFilter() || undefined).subscribe({
       next: u => { this.users.set(u); this.loading.set(false); },
       error: () => this.loading.set(false),
     });
-    this.userSvc.getPendingTeachers().subscribe({
+    this.approvalSvc.list().subscribe({
       next: t => this.pendingTeachers.set(t),
     });
   }
@@ -234,11 +236,11 @@ export class AdminUsersComponent implements OnInit {
   setRole(r: string): void { this.roleFilter.set(r); this.loadAll(); }
 
   block(id: number): void {
-    this.userSvc.blockUser(id).subscribe({ next: () => this.loadAll() });
+    this.userSvc.block(id).subscribe({ next: () => this.loadAll() });
   }
 
   unblock(id: number): void {
-    this.userSvc.unblockUser(id).subscribe({ next: () => this.loadAll() });
+    this.userSvc.unblock(id).subscribe({ next: () => this.loadAll() });
   }
 
   confirmDelete(u: UserSummary): void { this.deleteTarget.set(u); }
@@ -247,11 +249,11 @@ export class AdminUsersComponent implements OnInit {
     const t = this.deleteTarget();
     if (!t) return;
     this.deleteTarget.set(null);
-    this.userSvc.deleteUser(t.id).subscribe({ next: () => this.loadAll() });
+    this.userSvc.delete(t.id).subscribe({ next: () => this.loadAll() });
   }
 
   decide(id: number, decision: 'APPROVE' | 'REJECT'): void {
-    this.userSvc.approveTeacher(id, decision).subscribe({ next: () => this.loadAll() });
+    this.approvalSvc.decide(id, decision).subscribe({ next: () => this.loadAll() });
   }
 
   initials(u: UserSummary): string {
