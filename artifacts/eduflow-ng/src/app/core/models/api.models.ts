@@ -83,4 +83,3 @@ export interface AnalyseResponse {
   summary: string;
   risques: StudentRisk[];
 }
-

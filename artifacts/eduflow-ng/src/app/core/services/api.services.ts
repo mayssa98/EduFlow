@@ -20,8 +20,8 @@ export class ApprovalService {
     return this.http.get<UserSummary[]>(`${API_BASE}/admin/approvals`, { withCredentials: true });
   }
 
-  decide(id: number, decision: 'APPROVE' | 'REJECT', _motif?: string): Observable<UserSummary> {
-    return this.http.patch<UserSummary>(`${API_BASE}/admin/approvals/${id}`, { decision }, { withCredentials: true });
+  decide(id: number, decision: 'APPROVE' | 'REJECT', motif?: string): Observable<UserSummary> {
+    return this.http.patch<UserSummary>(`${API_BASE}/admin/approvals/${id}`, { decision, motif }, { withCredentials: true });
   }
 }
 
@@ -61,9 +61,10 @@ export class CourseService {
     return this.http.get<SupportResponse[]>(`${API_BASE}/courses/${id}/files`, { withCredentials: true });
   }
 
-  uploadFile(id: number, file: File, _title?: string): Observable<SupportResponse> {
+  uploadFile(id: number, file: File, title?: string): Observable<SupportResponse> {
     const fd = new FormData();
     fd.append('file', file);
+    if (title) fd.append('title', title);
     return this.http.post<SupportResponse>(`${API_BASE}/courses/${id}/files`, fd, { withCredentials: true });
   }
 
@@ -94,15 +95,13 @@ export class AssignmentService {
 
   create(req: {
     courseId?: number;
-    coursId?: number;
     titre: string;
     consigne?: string;
     dateDebut: string;
     dateFin: string;
     noteMax: number;
   }): Observable<DevoirResponse> {
-    const coursId = req.coursId ?? req.courseId;
-    return this.http.post<DevoirResponse>(`${API_BASE}/assignments`, { ...req, coursId }, { withCredentials: true });
+    return this.http.post<DevoirResponse>(`${API_BASE}/assignments`, { ...req, coursId: req.courseId }, { withCredentials: true });
   }
 
   get(id: number): Observable<DevoirResponse> {
@@ -138,8 +137,9 @@ export class AssignmentService {
     return this.http.get<SoumissionResponse[]>(`${API_BASE}/assignments/me/submissions`, { withCredentials: true });
   }
 
-  submit(id: number, text?: string, _file?: File | null): Observable<SoumissionResponse> {
-    return this.http.post<SoumissionResponse>(`${API_BASE}/assignments/${id}/submissions`, { contenuTexte: text || null }, { withCredentials: true });
+  submit(id: number, text?: string, file?: File | null): Observable<SoumissionResponse> {
+    const contenuTexte = text || (file ? `[attachment] ${file.name}` : null);
+    return this.http.post<SoumissionResponse>(`${API_BASE}/assignments/${id}/submissions`, { contenuTexte }, { withCredentials: true });
   }
 }
 
