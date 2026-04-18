@@ -225,7 +225,7 @@ export class TeacherCourseDetailComponent implements OnInit {
     const v = this.assignForm.getRawValue();
     if (new Date(v.dateFin!) <= new Date(v.dateDebut!)) { alert('La date de fin doit être postérieure à la date de début.'); return; }
     this.assignSvc.create({
-      courseId: c.id,
+      coursId: c.id,
       titre: v.titre!,
       consigne: v.consigne || undefined,
       dateDebut: new Date(v.dateDebut!).toISOString(),

@@ -94,14 +94,14 @@ export class AssignmentService {
   }
 
   create(req: {
-    courseId?: number;
+    coursId: number;
     titre: string;
     consigne?: string;
     dateDebut: string;
     dateFin: string;
     noteMax: number;
   }): Observable<DevoirResponse> {
-    return this.http.post<DevoirResponse>(`${API_BASE}/assignments`, { ...req, coursId: req.courseId }, { withCredentials: true });
+    return this.http.post<DevoirResponse>(`${API_BASE}/assignments`, req, { withCredentials: true });
   }
 
   get(id: number): Observable<DevoirResponse> {
@@ -137,9 +137,8 @@ export class AssignmentService {
     return this.http.get<SoumissionResponse[]>(`${API_BASE}/assignments/me/submissions`, { withCredentials: true });
   }
 
-  submit(id: number, text?: string, file?: File | null): Observable<SoumissionResponse> {
-    const contenuTexte = text || (file ? `[attachment] ${file.name}` : null);
-    return this.http.post<SoumissionResponse>(`${API_BASE}/assignments/${id}/submissions`, { contenuTexte }, { withCredentials: true });
+  submit(id: number, text?: string): Observable<SoumissionResponse> {
+    return this.http.post<SoumissionResponse>(`${API_BASE}/assignments/${id}/submissions`, { contenuTexte: text || null }, { withCredentials: true });
   }
 }
 
@@ -147,7 +146,7 @@ export class AssignmentService {
 export class AiAnalysisService {
   private http = inject(HttpClient);
 
-  analyseCourse(courseId: number): Observable<AnalyseResponse> {
-    return this.http.post<AnalyseResponse>(`${API_BASE}/ai/pedagogical-risk-analysis`, { coursId: courseId }, { withCredentials: true });
+  analyseCourse(coursId: number): Observable<AnalyseResponse> {
+    return this.http.post<AnalyseResponse>(`${API_BASE}/ai/pedagogical-risk-analysis`, { coursId }, { withCredentials: true });
   }
 }
