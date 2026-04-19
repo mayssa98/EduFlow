@@ -3,6 +3,7 @@
   "NAV": {
     "HOME": "الرئيسية", "DASHBOARD": "لوحة التحكم", "COURSES": "المقررات",
     "STUDENTS": "الطلاب", "TEACHERS": "الأساتذة", "REPORTS": "التقارير",
+    "USERS": "المستخدمون", "APPROVALS": "الموافقات",
     "SETTINGS": "الإعدادات", "PROFILE": "الملف الشخصي", "LOGOUT": "تسجيل الخروج"
   },
   "AUTH": {
@@ -76,6 +77,14 @@
   },
   "AI":          { "MENU": "تحليل الذكاء الاصطناعي" },
   "ASSIGNMENTS": { "MENU": "الواجبات" },
+  "APPROVALS": {
+    "TITLE": "موافقات المستخدمين",
+    "SUBTITLE": "وافق أو ارفض حسابات الأساتذة المعلّقة.",
+    "REGISTERED_ON": "تاريخ التسجيل",
+    "APPROVE": "موافقة",
+    "REJECT": "رفض",
+    "EMPTY": "لا توجد طلبات معلّقة."
+  },
   "BUTTONS": {
     "SAVE": "حفظ", "CANCEL": "إلغاء", "DELETE": "حذف", "EDIT": "تعديل",
     "ADD": "إضافة", "SUBMIT": "إرسال", "BACK": "رجوع", "NEXT": "التالي",
@@ -95,7 +104,7 @@
   "THEME":     { "LIGHT": "الوضع الفاتح", "DARK": "الوضع الداكن", "TOGGLE": "تبديل المظهر" },
   "LANGUAGE":  { "SELECT": "اختر اللغة", "ENGLISH": "الإنجليزية", "FRENCH": "الفرنسية", "ARABIC": "العربية" },
   "ROLES":     { "ADMIN": "مسؤول", "TEACHER": "أستاذ", "STUDENT": "طالب" },
-  "STATUS":    { "ACTIVE": "نشط", "INACTIVE": "غير نشط", "PENDING": "قيد الانتظار", "COMPLETED": "مكتمل", "IN_PROGRESS": "قيد التنفيذ", "FAILED": "فشل" },
+  "STATUS":    { "ACTIVE": "نشط", "INACTIVE": "غير نشط", "PENDING": "قيد الانتظار", "PENDING_APPROVAL": "بانتظار الموافقة", "COMPLETED": "مكتمل", "IN_PROGRESS": "قيد التنفيذ", "FAILED": "فشل" },
   "LANDING": {
     "HERO_TITLE": "المنصة الذكية للتعليم الحديث",
     "HERO_SUBTITLE": "أدِر الطلاب والمقررات والأداء بفضل لوحات تحكم متقدمة وتحليلات بالذكاء الاصطناعي.",

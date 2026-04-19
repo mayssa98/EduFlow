@@ -3,6 +3,7 @@
   "NAV": {
     "HOME": "Accueil", "DASHBOARD": "Tableau de bord", "COURSES": "Cours",
     "STUDENTS": "Étudiants", "TEACHERS": "Enseignants", "REPORTS": "Rapports",
+    "USERS": "Utilisateurs", "APPROVALS": "Approbations",
     "SETTINGS": "Paramètres", "PROFILE": "Profil", "LOGOUT": "Se déconnecter"
   },
   "AUTH": {
@@ -76,6 +77,14 @@
   },
   "AI":          { "MENU": "Analyse IA" },
   "ASSIGNMENTS": { "MENU": "Devoirs" },
+  "APPROVALS": {
+    "TITLE": "Approbations des utilisateurs",
+    "SUBTITLE": "Validez ou rejetez les comptes enseignants en attente.",
+    "REGISTERED_ON": "Inscrit le",
+    "APPROVE": "Approuver",
+    "REJECT": "Rejeter",
+    "EMPTY": "Aucune demande en attente."
+  },
   "BUTTONS": {
     "SAVE": "Enregistrer", "CANCEL": "Annuler", "DELETE": "Supprimer", "EDIT": "Modifier",
     "ADD": "Ajouter", "SUBMIT": "Envoyer", "BACK": "Retour", "NEXT": "Suivant",
@@ -95,7 +104,7 @@
   "THEME":     { "LIGHT": "Mode clair", "DARK": "Mode sombre", "TOGGLE": "Basculer le thème" },
   "LANGUAGE":  { "SELECT": "Choisir la langue", "ENGLISH": "Anglais", "FRENCH": "Français", "ARABIC": "Arabe" },
   "ROLES":     { "ADMIN": "Administrateur", "TEACHER": "Enseignant", "STUDENT": "Étudiant" },
-  "STATUS":    { "ACTIVE": "Actif", "INACTIVE": "Inactif", "PENDING": "En attente", "COMPLETED": "Terminé", "IN_PROGRESS": "En cours", "FAILED": "Échec" },
+  "STATUS":    { "ACTIVE": "Actif", "INACTIVE": "Inactif", "PENDING": "En attente", "PENDING_APPROVAL": "En attente d'approbation", "COMPLETED": "Terminé", "IN_PROGRESS": "En cours", "FAILED": "Échec" },
   "LANDING": {
     "HERO_TITLE": "La plateforme intelligente pour l'éducation moderne",
     "HERO_SUBTITLE": "Gérez étudiants, cours et performances grâce à des tableaux de bord puissants et des analyses IA.",

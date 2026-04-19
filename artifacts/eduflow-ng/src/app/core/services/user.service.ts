@@ -69,7 +69,7 @@ export class UserService {
     return this.http.get<UserSummary[]>(`${API_BASE}/admin/approvals`, { withCredentials: true });
   }
 
-  approveTeacher(id: number, decision: 'APPROVE' | 'REJECT'): Observable<UserSummary> {
+  decideTeacherApproval(id: number, decision: 'APPROVE' | 'REJECT'): Observable<UserSummary> {
     return this.http.patch<UserSummary>(`${API_BASE}/admin/approvals/${id}`, { decision }, { withCredentials: true });
   }
 
