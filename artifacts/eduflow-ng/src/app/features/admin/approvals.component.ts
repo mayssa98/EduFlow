@@ -2,8 +2,7 @@ import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
 
-import { ApprovalService } from '../../core/services/api.services';
-import { UserSummary } from '../../core/models/api.models';
+import { UserService, UserSummary } from '../../core/services/user.service';
 import { StatusChipComponent } from '../../shared/components/status-chip/status-chip.component';
 
 @Component({
@@ -32,24 +31,13 @@ import { StatusChipComponent } from '../../shared/components/status-chip/status-
           <span class="muted">{{ 'APPROVALS.REGISTERED_ON' | translate }}</span>
           <span>{{ u.dateCreation | date:'mediumDate' }}</span>
         </div>
-        <textarea *ngIf="rejectingId() === u.id" class="input motif" rows="2"
-                  [value]="motif()" (input)="motif.set($any($event.target).value)"
-                  placeholder="Motif du rejet (optionnel)…"></textarea>
         <footer>
-          <ng-container *ngIf="rejectingId() !== u.id">
-            <button class="btn btn-outline btn-sm" (click)="rejectingId.set(u.id); motif.set('')" [disabled]="busy() === u.id">
+            <button class="btn btn-outline btn-sm" (click)="decide(u, 'REJECT')" [disabled]="busy() === u.id">
               {{ 'APPROVALS.REJECT' | translate }}
             </button>
             <button class="btn btn-primary btn-sm" (click)="decide(u, 'APPROVE')" [disabled]="busy() === u.id">
               {{ 'APPROVALS.APPROVE' | translate }}
             </button>
-          </ng-container>
-          <ng-container *ngIf="rejectingId() === u.id">
-            <button class="btn btn-outline btn-sm" (click)="rejectingId.set(null)">Annuler</button>
-            <button class="btn btn-danger btn-sm" (click)="decide(u, 'REJECT', motif())" [disabled]="busy() === u.id">
-              Confirmer le rejet
-            </button>
-          </ng-container>
         </footer>
       </article>
 
@@ -81,12 +69,10 @@ import { StatusChipComponent } from '../../shared/components/status-chip/status-
   `],
 })
 export class AdminApprovalsComponent implements OnInit {
-  private svc = inject(ApprovalService);
+  private userSvc = inject(UserService);
   pending = signal<UserSummary[]>([]);
   busy = signal<number | null>(null);
   error = signal<string | null>(null);
-  rejectingId = signal<number | null>(null);
-  motif = signal<string>('');
 
   ngOnInit(): void { this.refresh(); }
 
@@ -96,25 +82,22 @@ export class AdminApprovalsComponent implements OnInit {
 
   refresh(): void {
     this.error.set(null);
-    this.svc.list().subscribe({
+    this.userSvc.getPendingTeachers().subscribe({
       next: us => this.pending.set(us),
       error: e => this.error.set(e?.error?.message || 'Erreur'),
     });
   }
 
-  decide(u: UserSummary, decision: 'APPROVE' | 'REJECT', motif?: string): void {
+  decide(u: UserSummary, decision: 'APPROVE' | 'REJECT'): void {
     this.busy.set(u.id);
-    this.svc.decide(u.id, decision, motif).subscribe({
+    this.userSvc.approveTeacher(u.id, decision).subscribe({
       next: () => {
         this.busy.set(null);
-        this.rejectingId.set(null);
-        this.motif.set('');
         this.pending.update(list => list.filter(x => x.id !== u.id));
       },
       error: e => {
         this.busy.set(null);
-        if (e?.error?.code === 'ALREADY_PROCESSED') alert('Cette demande a déjà été traitée.');
-        else alert(e?.error?.message || 'Erreur');
+        alert(e?.error?.message || 'Erreur');
         this.refresh();
       },
     });

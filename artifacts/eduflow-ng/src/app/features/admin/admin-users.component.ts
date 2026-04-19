@@ -18,31 +18,6 @@ import { UserService, UserSummary } from '../../core/services/user.service';
         </div>
       </div>
 
-      <!-- Approbations en attente -->
-      <div class="section" *ngIf="pendingTeachers().length > 0">
-        <h2 class="section-title warn">⚠️ Enseignants en attente d'approbation ({{ pendingTeachers().length }})</h2>
-        <div class="table-wrap">
-          <table>
-            <thead><tr>
-              <th>Nom</th><th>Email</th><th>Date inscription</th><th>Actions</th>
-            </tr></thead>
-            <tbody>
-              <tr *ngFor="let u of pendingTeachers()">
-                <td><span class="name">{{ u.prenom }} {{ u.nom }}</span></td>
-                <td class="muted">{{ u.email }}</td>
-                <td class="muted">{{ formatDate(u.dateCreation) }}</td>
-                <td>
-                  <div class="action-row">
-                    <button class="btn-approve" (click)="decide(u.id, 'APPROVE')">✓ Approuver</button>
-                    <button class="btn-reject"  (click)="decide(u.id, 'REJECT')">✗ Rejeter</button>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
       <!-- Table principale -->
       <div class="section">
         <h2 class="section-title">Utilisateurs ({{ users().length }})</h2>
@@ -124,8 +99,6 @@ import { UserService, UserSummary } from '../../core/services/user.service';
 
     .section { background: var(--card); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
     .section-title { margin: 0; padding: 18px 24px; font-size: 1rem; color: var(--text); border-bottom: 1px solid var(--border); }
-    .section-title.warn { color: #fde68a; }
-
     .table-wrap { overflow-x: auto; }
 
     table { width: 100%; border-collapse: collapse; }
@@ -167,13 +140,6 @@ import { UserService, UserSummary } from '../../core/services/user.service';
     .btn-icon.ok:hover     { background: rgba(134,239,172,0.15); border-color: #86efac; }
     .btn-icon.danger:hover { background: rgba(239,68,68,0.15); border-color: #fca5a5; }
 
-    .btn-approve {
-      background: rgba(134,239,172,0.15); border: 1px solid #86efac;
-      color: #86efac; border-radius: 8px; padding: 6px 14px; font-size: 12px;
-      font-weight: 600; cursor: pointer; transition: all 0.2s;
-    }
-    .btn-approve:hover { background: rgba(134,239,172,0.3); }
-
     .btn-reject {
       background: rgba(239,68,68,0.15); border: 1px solid #fca5a5;
       color: #fca5a5; border-radius: 8px; padding: 6px 14px; font-size: 12px;
@@ -213,7 +179,6 @@ export class AdminUsersComponent implements OnInit {
   private userSvc = inject(UserService);
 
   users          = signal<UserSummary[]>([]);
-  pendingTeachers = signal<UserSummary[]>([]);
   loading        = signal(true);
   roleFilter     = signal('');
   deleteTarget   = signal<UserSummary | null>(null);
@@ -225,9 +190,6 @@ export class AdminUsersComponent implements OnInit {
     this.userSvc.listUsers(this.roleFilter() || undefined).subscribe({
       next: u => { this.users.set(u); this.loading.set(false); },
       error: () => this.loading.set(false),
-    });
-    this.userSvc.getPendingTeachers().subscribe({
-      next: t => this.pendingTeachers.set(t),
     });
   }
 
@@ -248,10 +210,6 @@ export class AdminUsersComponent implements OnInit {
     if (!t) return;
     this.deleteTarget.set(null);
     this.userSvc.deleteUser(t.id).subscribe({ next: () => this.loadAll() });
-  }
-
-  decide(id: number, decision: 'APPROVE' | 'REJECT'): void {
-    this.userSvc.approveTeacher(id, decision).subscribe({ next: () => this.loadAll() });
   }
 
   initials(u: UserSummary): string {

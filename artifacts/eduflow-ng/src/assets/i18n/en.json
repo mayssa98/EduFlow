@@ -3,6 +3,7 @@
   "NAV": {
     "HOME": "Home", "DASHBOARD": "Dashboard", "COURSES": "Courses",
     "STUDENTS": "Students", "TEACHERS": "Teachers", "REPORTS": "Reports",
+    "USERS": "Users", "APPROVALS": "Approvals",
     "SETTINGS": "Settings", "PROFILE": "Profile", "LOGOUT": "Log out"
   },
   "AUTH": {
@@ -76,6 +77,14 @@
   },
   "AI":          { "MENU": "AI risk analysis" },
   "ASSIGNMENTS": { "MENU": "Assignments" },
+  "APPROVALS": {
+    "TITLE": "User approvals",
+    "SUBTITLE": "Approve or reject pending teacher accounts.",
+    "REGISTERED_ON": "Registered on",
+    "APPROVE": "Approve",
+    "REJECT": "Reject",
+    "EMPTY": "No pending approvals."
+  },
   "BUTTONS": {
     "SAVE": "Save", "CANCEL": "Cancel", "DELETE": "Delete", "EDIT": "Edit",
     "ADD": "Add", "SUBMIT": "Submit", "BACK": "Back", "NEXT": "Next",
@@ -95,7 +104,7 @@
   "THEME":     { "LIGHT": "Light mode", "DARK": "Dark mode", "TOGGLE": "Toggle theme" },
   "LANGUAGE":  { "SELECT": "Select language", "ENGLISH": "English", "FRENCH": "French", "ARABIC": "Arabic" },
   "ROLES":     { "ADMIN": "Administrator", "TEACHER": "Teacher", "STUDENT": "Student" },
-  "STATUS":    { "ACTIVE": "Active", "INACTIVE": "Inactive", "PENDING": "Pending", "COMPLETED": "Completed", "IN_PROGRESS": "In progress", "FAILED": "Failed" },
+  "STATUS":    { "ACTIVE": "Active", "INACTIVE": "Inactive", "PENDING": "Pending", "PENDING_APPROVAL": "Pending approval", "COMPLETED": "Completed", "IN_PROGRESS": "In progress", "FAILED": "Failed" },
   "LANDING": {
     "HERO_TITLE": "The smart platform for modern education",
     "HERO_SUBTITLE": "Manage students, courses, and performance with powerful analytics and AI-driven insights.",

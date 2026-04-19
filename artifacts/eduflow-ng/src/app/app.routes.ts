@@ -37,6 +37,11 @@ export const routes: Routes = [
         loadComponent: () => import('./features/admin/admin-users.component').then(m => m.AdminUsersComponent),
       },
       {
+        path: 'admin/approvals',
+        canActivate: [roleGuard(['ADMIN'])],
+        loadComponent: () => import('./features/admin/approvals.component').then(m => m.AdminApprovalsComponent),
+      },
+      {
         path: 'teacher',
         canActivate: [roleGuard(['ENSEIGNANT'])],
         loadComponent: () => import('./features/teacher/teacher-dashboard.component').then(m => m.TeacherDashboardComponent),
