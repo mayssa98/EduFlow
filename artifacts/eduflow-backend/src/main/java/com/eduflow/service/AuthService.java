@@ -75,6 +75,8 @@ public class AuthService {
             // User is still pending. We will just update their info and resend the OTP!
             user.setNom(req.nom().trim());
             user.setPrenom(req.prenom().trim());
+            user.setAge(req.age());
+            user.setAdresse(req.adresse().trim());
             user.setMotDePasseHash(encoder.encode(req.password()));
         } else {
             user = switch (req.role()) {
@@ -94,6 +96,8 @@ public class AuthService {
             user.setEmailNormalized(normalized);
             user.setNom(req.nom().trim());
             user.setPrenom(req.prenom().trim());
+            user.setAge(req.age());
+            user.setAdresse(req.adresse().trim());
             user.setRole(req.role());
             user.setMotDePasseHash(encoder.encode(req.password()));
         }
@@ -108,21 +112,12 @@ public class AuthService {
         Utilisateur user = userRepo.findByEmailNormalized(EmailNormalizer.normalize(req.email()))
                 .orElseThrow(() -> new IllegalArgumentException("Invalid OTP"));
         OtpCode otp = consumeOtp(user, req.code(), OtpPurpose.ACCOUNT_VERIFY);
-        // Email verified — teachers go to PENDING_APPROVAL until an admin reviews,
-        // others are activated. We still don't issue session tokens for teachers
-        // until they are approved.
+        // Product requirement: every email-based registration (students and teachers)
+        // must be reviewed by an administrator before normal account activation.
         user.setNbTentativesLogin(0);
-        if (user.getRole() == com.eduflow.model.entity.enums.Role.ENSEIGNANT) {
-            user.setStatutCompte(StatutCompte.PENDING_APPROVAL);
-            userRepo.save(user);
-            otpRepo.save(otp);
-            return toResponse(user);
-        }
-        user.setStatutCompte(StatutCompte.ACTIVE);
+        user.setStatutCompte(StatutCompte.PENDING_APPROVAL);
         userRepo.save(user);
         otpRepo.save(otp);
-
-        issueTokens(user, resp);
         return toResponse(user);
     }
 
@@ -145,9 +140,6 @@ public class AuthService {
         }
         if (user.getStatutCompte() == StatutCompte.PENDING) {
             throw new IllegalStateException("Account not verified");
-        }
-        if (user.getStatutCompte() == StatutCompte.PENDING_APPROVAL) {
-            throw new IllegalStateException("Account awaiting admin approval");
         }
         user.setNbTentativesLogin(0);
         user.setDerniereConnexion(OffsetDateTime.now());
@@ -404,6 +396,6 @@ public class AuthService {
 
     private AuthUserResponse toResponse(Utilisateur u) {
         return new AuthUserResponse(u.getId(), u.getEmail(), u.getNom(), u.getPrenom(),
-                u.getRole(), u.getStatutCompte().name(), u.getPhotoUrl());
+                u.getRole(), u.getStatutCompte().name(), u.getPhotoUrl(), Boolean.TRUE.equals(u.getOnboardingCompleted()));
     }
 }

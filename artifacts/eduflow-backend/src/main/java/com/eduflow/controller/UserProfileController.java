@@ -51,4 +51,13 @@ public class UserProfileController {
         userService.changePassword(principal.userId(), req);
         return ResponseEntity.noContent().build();
     }
+
+    @PatchMapping("/me/onboarding")
+    @Operation(summary = "Finaliser l'onboarding (niveau et spécialité)")
+    public ResponseEntity<ProfileResponse> completeOnboarding(
+            @AuthenticationPrincipal JwtAuthFilter.AuthPrincipal principal,
+            @Valid @RequestBody CompleteOnboardingRequest req) {
+        if (principal == null) return ResponseEntity.status(401).build();
+        return ResponseEntity.ok(userService.completeOnboarding(principal.userId(), req));
+    }
 }

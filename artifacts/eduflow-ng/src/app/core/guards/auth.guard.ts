@@ -21,7 +21,7 @@ export const roleGuard = (allowed: UserRole[]): CanActivateFn => () => {
   const router = inject(Router);
   const proceed = (role: UserRole | null) => {
     if (role && allowed.includes(role)) return true;
-    router.navigateByUrl(auth.defaultRouteForRole(role));
+    router.navigateByUrl(auth.defaultRouteForRole(role, auth.user()));
     return false;
   };
   if (auth.isAuthenticated()) return of(proceed(auth.role()));
@@ -33,7 +33,7 @@ export const guestGuard: CanActivateFn = () => {
   const auth = inject(AuthService);
   const router = inject(Router);
   const redirect = (role: UserRole | null) => {
-    if (role) { router.navigateByUrl(auth.defaultRouteForRole(role)); return false; }
+    if (role) { router.navigateByUrl(auth.defaultRouteForRole(role, auth.user())); return false; }
     return true;
   };
   if (auth.isAuthenticated()) return redirect(auth.role());

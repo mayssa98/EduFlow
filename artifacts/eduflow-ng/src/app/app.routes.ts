@@ -22,6 +22,16 @@ export const routes: Routes = [
     loadComponent: () => import('./features/auth/forgot-password.component').then(m => m.ForgotPasswordComponent),
   },
   {
+    path: 'pending',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/auth/pending-approval.component').then(m => m.PendingApprovalComponent),
+  },
+  {
+    path: 'welcome',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/auth/welcome-onboarding.component').then(m => m.WelcomeOnboardingComponent),
+  },
+  {
     path: '',
     canActivate: [authGuard],
     loadComponent: () => import('./layouts/authenticated-layout.component').then(m => m.AuthenticatedLayoutComponent),

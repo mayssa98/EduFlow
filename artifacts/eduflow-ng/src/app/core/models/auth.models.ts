@@ -1,5 +1,5 @@
 export type UserRole = 'ADMIN' | 'ENSEIGNANT' | 'ETUDIANT';
-export type UserStatus = 'ACTIVE' | 'PENDING' | 'BLOCKED';
+export type UserStatus = 'ACTIVE' | 'PENDING' | 'BLOCKED' | 'PENDING_APPROVAL';
 
 export interface AuthUser {
   id: number;
@@ -8,6 +8,7 @@ export interface AuthUser {
   nom: string;
   role: UserRole;
   status: UserStatus;
+  onboardingCompleted?: boolean;
 }
 
 export interface AuthUserResponse {
@@ -20,6 +21,8 @@ export interface RegisterRequest {
   password: string;
   prenom: string;
   nom: string;
+  age: number;
+  adresse: string;
   role: 'ENSEIGNANT' | 'ETUDIANT';
 }
 export interface OtpVerifyRequest { email: string; code: string; purpose: 'REGISTRATION' | 'PASSWORD_RESET'; }

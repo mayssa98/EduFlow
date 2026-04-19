@@ -100,10 +100,20 @@ public class AdminDtos {
             String email,
             String nom,
             String prenom,
+            Integer age,
+            String adresse,
+            String niveau,
+            String specialiteChoisie,
+            Boolean onboardingCompleted,
             String role,
             String statutCompte,
             String photoUrl,
             java.time.OffsetDateTime dateCreation,
             java.time.OffsetDateTime derniereConnexion
+    ) {}
+
+    public record CompleteOnboardingRequest(
+            @NotBlank @Size(max = 120) String niveau,
+            @NotBlank @Size(max = 160) String specialite
     ) {}
 }

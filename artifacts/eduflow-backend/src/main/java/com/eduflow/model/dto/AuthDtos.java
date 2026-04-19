@@ -5,6 +5,7 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import java.util.List;
 
@@ -18,6 +19,8 @@ public class AuthDtos {
             String password,
             @NotBlank @Size(max = 120) String nom,
             @NotBlank @Size(max = 120) String prenom,
+            @NotNull @Positive Integer age,
+            @NotBlank @Size(max = 255) String adresse,
             @NotNull Role role
     ) {}
 
@@ -60,7 +63,8 @@ public class AuthDtos {
             String prenom,
             Role role,
             String statutCompte,
-            String photoUrl
+            String photoUrl,
+            Boolean onboardingCompleted
     ) {}
 
     public record MfaChallengeResponse(
