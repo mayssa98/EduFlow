@@ -1,4 +1,4 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 
@@ -21,6 +21,6 @@ import { ActivatedRoute } from '@angular/router';
 export class PlaceholderPageComponent {
   private route = inject(ActivatedRoute);
 
-  readonly title = computed(() => this.route.snapshot.data['title'] ?? 'Page');
-  readonly subtitle = computed(() => this.route.snapshot.data['subtitle'] ?? 'Cette page sera complétée dans le prochain lot.');
+  readonly title = this.route.snapshot.data['title'] ?? 'Page';
+  readonly subtitle = this.route.snapshot.data['subtitle'] ?? 'Cette page sera complétée dans le prochain lot.';
 }
