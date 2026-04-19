@@ -37,6 +37,11 @@ export const routes: Routes = [
         loadComponent: () => import('./features/admin/admin-users.component').then(m => m.AdminUsersComponent),
       },
       {
+        path: 'admin/approvals',
+        canActivate: [roleGuard(['ADMIN'])],
+        loadComponent: () => import('./features/admin/approvals.component').then(m => m.AdminApprovalsComponent),
+      },
+      {
         path: 'teacher',
         canActivate: [roleGuard(['ENSEIGNANT'])],
         loadComponent: () => import('./features/teacher/teacher-dashboard.component').then(m => m.TeacherDashboardComponent),
@@ -47,9 +52,19 @@ export const routes: Routes = [
         loadComponent: () => import('./features/teacher/teacher-courses.component').then(m => m.TeacherCoursesComponent),
       },
       {
+        path: 'teacher/courses/:id',
+        canActivate: [roleGuard(['ENSEIGNANT'])],
+        loadComponent: () => import('./features/teacher/course-detail.component').then(m => m.TeacherCourseDetailComponent),
+      },
+      {
         path: 'teacher/assignments',
         canActivate: [roleGuard(['ENSEIGNANT'])],
         loadComponent: () => import('./features/teacher/teacher-assignments.component').then(m => m.TeacherAssignmentsComponent),
+      },
+      {
+        path: 'teacher/assignments/:id/submissions',
+        canActivate: [roleGuard(['ENSEIGNANT'])],
+        loadComponent: () => import('./features/teacher/submissions-grade.component').then(m => m.TeacherSubmissionsGradeComponent),
       },
       {
         path: 'teacher/ai-analysis',
@@ -65,6 +80,11 @@ export const routes: Routes = [
         path: 'student/courses',
         canActivate: [roleGuard(['ETUDIANT'])],
         loadComponent: () => import('./features/student/student-courses.component').then(m => m.StudentCoursesComponent),
+      },
+      {
+        path: 'student/courses/:id',
+        canActivate: [roleGuard(['ETUDIANT'])],
+        loadComponent: () => import('./features/student/course-detail.component').then(m => m.StudentCourseDetailComponent),
       },
       {
         path: 'student/assignments',
