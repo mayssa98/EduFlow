@@ -1,0 +1,11 @@
+{
+  "installCommand": "cd artifacts/eduflow-ng && npm ci",
+  "buildCommand": "cd artifacts/eduflow-ng && npm run build",
+  "outputDirectory": "artifacts/eduflow-ng/dist/eduflow-ng/browser",
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
