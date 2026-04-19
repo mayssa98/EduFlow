@@ -16,6 +16,21 @@ import {
   UserSummary,
 } from '../models/api.models';
 
+interface AssignmentCreatePayload {
+  coursId: number;
+  titre: string;
+  consigne?: string;
+  dateDebut: string;
+  dateFin: string;
+  noteMax: number;
+}
+
+interface AssignmentUpdatePayload {
+  titre?: string;
+  consigne?: string;
+  dateFin?: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class CourseService {
   private modern = inject(ModernCourseService);
@@ -96,7 +111,7 @@ export class AssignmentService {
     noteMax?: number;
     description?: string;
   }): Observable<DevoirResponse> {
-    const payload: any = {
+    const payload: AssignmentCreatePayload = {
       coursId: req.coursId,
       titre: req.titre,
       consigne: req.consigne ?? req.description,
@@ -108,7 +123,7 @@ export class AssignmentService {
   }
 
   update(id: number, req: { titre?: string; description?: string; dateEcheance?: string }): Observable<DevoirResponse> {
-    const payload: any = {
+    const payload: AssignmentUpdatePayload = {
       titre: req.titre,
       consigne: req.description,
       dateFin: req.dateEcheance,
@@ -179,7 +194,7 @@ export class AiAnalysisService {
           const niveau = p.niveauRisque === 'MOYEN' ? 'MODERE' : p.niveauRisque === 'CRITIQUE' ? 'ELEVE' : p.niveauRisque;
           return {
             etudiantId: p.etudiantId,
-            prenom: prenom || 'Étudiant',
+            prenom: (prenom ?? '').trim() || 'Étudiant',
             nom: rest.join(' ') || '',
             niveauRisque: (niveau as 'FAIBLE' | 'MODERE' | 'ELEVE'),
             score: p.probabiliteEchec ?? 0,
