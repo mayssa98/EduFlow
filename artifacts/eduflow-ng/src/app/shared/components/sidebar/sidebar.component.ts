@@ -14,13 +14,7 @@ export interface SidebarItem { route: string; labelKey: string; icon: string; }
     <aside class="sidebar">
       <div class="brand">
         <span class="logo">
-          <svg width="22" height="22" viewBox="0 0 28 28" fill="none">
-            <rect width="28" height="28" rx="7" fill="url(#sg)"/>
-            <defs><linearGradient id="sg" x1="0" y1="0" x2="28" y2="28">
-              <stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#8b5cf6"/>
-            </linearGradient></defs>
-            <path d="M8 14l4 4 8-9" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-          </svg>
+          <img src="assets/logo.png" alt="EduFlow" width="28" height="28" style="border-radius:7px" />
         </span>
       </div>
       <nav>
