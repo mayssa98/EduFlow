@@ -2,8 +2,9 @@ import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
+import { SafeHtml } from '@angular/platform-browser';
 
-export interface SidebarItem { route: string; labelKey: string; icon: string; }
+export interface SidebarItem { route: string; labelKey: string; icon: SafeHtml; }
 
 @Component({
   selector: 'app-sidebar',
