@@ -1,6 +1,6 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
 import { UserService, UserSummary } from '../../core/services/user.service';
 import { StatusChipComponent } from '../../shared/components/status-chip/status-chip.component';
@@ -70,6 +70,7 @@ import { StatusChipComponent } from '../../shared/components/status-chip/status-
 })
 export class AdminApprovalsComponent implements OnInit {
   private userSvc = inject(UserService);
+  private translate = inject(TranslateService);
   pending = signal<UserSummary[]>([]);
   busy = signal<number | null>(null);
   error = signal<string | null>(null);
@@ -84,20 +85,20 @@ export class AdminApprovalsComponent implements OnInit {
     this.error.set(null);
     this.userSvc.getPendingTeachers().subscribe({
       next: us => this.pending.set(us),
-      error: e => this.error.set(e?.error?.message || 'Erreur'),
+      error: e => this.error.set(e?.error?.message || this.translate.instant('ERRORS.GENERIC')),
     });
   }
 
   decide(u: UserSummary, decision: 'APPROVE' | 'REJECT'): void {
     this.busy.set(u.id);
-    this.userSvc.approveTeacher(u.id, decision).subscribe({
+    this.userSvc.decideTeacherApproval(u.id, decision).subscribe({
       next: () => {
         this.busy.set(null);
         this.pending.update(list => list.filter(x => x.id !== u.id));
       },
       error: e => {
         this.busy.set(null);
-        alert(e?.error?.message || 'Erreur');
+        alert(e?.error?.message || this.translate.instant('ERRORS.GENERIC'));
         this.refresh();
       },
     });
