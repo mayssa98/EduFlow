@@ -133,14 +133,14 @@ function pwdSpecial(c: AbstractControl)   { return c.value && /[!@#$%^&*()_\-+={
                 <input class="input" formControlName="nom" [class.invalid]="touched(signUpForm, 'nom')"
                       [placeholder]="'AUTH.LAST_NAME' | translate" autocomplete="family-name"/>
               </div>
-              <input class="input" type="number" formControlName="age" [class.invalid]="touched(signUpForm, 'age')" placeholder="Âge" />
+              <input class="input" type="number" formControlName="age" [class.invalid]="touched(signUpForm, 'age')" placeholder="Âge" aria-label="Âge" />
               <button type="submit" class="main-btn full" [disabled]="busy()">
                 Continuer
               </button>
             </div>
 
             <div *ngIf="signUpStage() === 2" class="full">
-              <input class="input" formControlName="adresse" [class.invalid]="touched(signUpForm, 'adresse')" placeholder="Adresse" />
+              <input class="input" formControlName="adresse" [class.invalid]="touched(signUpForm, 'adresse')" placeholder="Adresse" aria-label="Adresse" />
               <input class="input" type="email" formControlName="email" [class.invalid]="touched(signUpForm, 'email')"
                     [placeholder]="'AUTH.EMAIL' | translate" autocomplete="email"/>
               <small class="input-error" *ngIf="touched(signUpForm, 'email') && f(signUpForm,'email').errors?.['email']">

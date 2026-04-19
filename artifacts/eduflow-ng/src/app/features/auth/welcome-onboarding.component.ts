@@ -28,18 +28,18 @@ import { UserService } from '../../core/services/user.service';
 
       <article class="card" *ngIf="step() === 2">
         <h2>Niveau et spécialité</h2>
-        <label>Niveau</label>
-        <select [(ngModel)]="niveau">
+        <label for="niveau-select">Niveau</label>
+        <select id="niveau-select" [(ngModel)]="niveau">
           <option *ngFor="let n of niveaux" [ngValue]="n">{{ n }}</option>
         </select>
-        <input placeholder="Ajouter un niveau" [(ngModel)]="customNiveau" />
+        <input placeholder="Ajouter un niveau" [(ngModel)]="customNiveau" aria-label="Ajouter un niveau" />
         <button class="mini" (click)="addNiveau()">Ajouter niveau</button>
 
-        <label>Spécialité</label>
-        <select [(ngModel)]="specialite">
+        <label for="specialite-select">Spécialité</label>
+        <select id="specialite-select" [(ngModel)]="specialite">
           <option *ngFor="let s of specialites" [ngValue]="s">{{ s }}</option>
         </select>
-        <input placeholder="Ajouter une spécialité" [(ngModel)]="customSpecialite" />
+        <input placeholder="Ajouter une spécialité" [(ngModel)]="customSpecialite" aria-label="Ajouter une spécialité" />
         <button class="mini" (click)="addSpecialite()">Ajouter spécialité</button>
 
         <p class="error" *ngIf="error()">{{ error() }}</p>

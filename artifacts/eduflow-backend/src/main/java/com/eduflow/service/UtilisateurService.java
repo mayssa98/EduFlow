@@ -10,7 +10,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.OffsetDateTime;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
@@ -112,7 +111,6 @@ public class UtilisateurService {
     @Transactional(readOnly = true)
     public List<UserSummary> pendingTeachers() {
         return userRepo.findByStatutCompteOrderByDateCreationDesc(StatutCompte.PENDING_APPROVAL).stream()
-                .sorted(Comparator.comparing(Utilisateur::getDateCreation).reversed())
                 .map(this::toSummary)
                 .toList();
     }
