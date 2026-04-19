@@ -2,6 +2,7 @@ import { Component, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 
 import { AuthService } from '../core/services/auth.service';
 import { SidebarComponent, SidebarItem } from '../shared/components/sidebar/sidebar.component';
@@ -71,8 +72,20 @@ const ICON_PROFILE   = `<svg width="18" height="18" viewBox="0 0 24 24" fill="no
 })
 export class AuthenticatedLayoutComponent {
   private auth = inject(AuthService);
+  private sanitizer = inject(DomSanitizer);
 
-  readonly logoutIcon = ICON_LOGOUT;
+  readonly icons = {
+    home: this.toSafeIcon(ICON_HOME),
+    users: this.toSafeIcon(ICON_USERS),
+    book: this.toSafeIcon(ICON_BOOK),
+    chart: this.toSafeIcon(ICON_CHART),
+    zap: this.toSafeIcon(ICON_ZAP),
+    logout: this.toSafeIcon(ICON_LOGOUT),
+    file: this.toSafeIcon(ICON_FILE),
+    profile: this.toSafeIcon(ICON_PROFILE),
+  };
+
+  readonly logoutIcon = this.icons.logout;
   readonly user = this.auth.user;
   readonly roleKey = computed(() => {
     const r = this.auth.role();
@@ -88,31 +101,35 @@ export class AuthenticatedLayoutComponent {
 
     if (role === 'ADMIN') {
       return [
-        { route: '/admin',       labelKey: 'NAV.DASHBOARD',  icon: ICON_HOME },
-        { route: '/admin/users', labelKey: 'NAV.STUDENTS',   icon: ICON_USERS },
-        { route: '/admin',       labelKey: 'NAV.COURSES',    icon: ICON_BOOK },
-        { route: '/admin',       labelKey: 'DASHBOARD.OVERVIEW', icon: ICON_CHART },
-        { route: '/profile',     labelKey: 'NAV.PROFILE',    icon: ICON_PROFILE },
+        { route: '/admin',       labelKey: 'NAV.DASHBOARD',  icon: this.icons.home },
+        { route: '/admin/users', labelKey: 'NAV.STUDENTS',   icon: this.icons.users },
+        { route: '/admin',       labelKey: 'NAV.COURSES',    icon: this.icons.book },
+        { route: '/admin',       labelKey: 'DASHBOARD.OVERVIEW', icon: this.icons.chart },
+        { route: '/profile',     labelKey: 'NAV.PROFILE',    icon: this.icons.profile },
       ];
     }
     if (role === 'ENSEIGNANT') {
       return [
-        { route: '/teacher',  labelKey: 'NAV.DASHBOARD',  icon: ICON_HOME },
-        { route: '/teacher/courses',  labelKey: 'NAV.COURSES',    icon: ICON_BOOK },
-        { route: '/teacher/assignments',  labelKey: 'ASSIGNMENTS.MENU', icon: ICON_FILE },
-        { route: '/teacher/ai-analysis',  labelKey: 'AI.MENU',        icon: ICON_ZAP },
-        { route: '/profile',  labelKey: 'NAV.PROFILE',    icon: ICON_PROFILE },
+        { route: '/teacher',  labelKey: 'NAV.DASHBOARD',  icon: this.icons.home },
+        { route: '/teacher/courses',  labelKey: 'NAV.COURSES',    icon: this.icons.book },
+        { route: '/teacher/assignments',  labelKey: 'ASSIGNMENTS.MENU', icon: this.icons.file },
+        { route: '/teacher/ai-analysis',  labelKey: 'AI.MENU',        icon: this.icons.zap },
+        { route: '/profile',  labelKey: 'NAV.PROFILE',    icon: this.icons.profile },
       ];
     }
     // ETUDIANT
     return [
-      { route: '/student',  labelKey: 'NAV.DASHBOARD',    icon: ICON_HOME },
-      { route: '/student/courses',  labelKey: 'NAV.COURSES',      icon: ICON_BOOK },
-      { route: '/student/assignments',  labelKey: 'ASSIGNMENTS.MENU', icon: ICON_FILE },
-      { route: '/student',  labelKey: 'DASHBOARD.OVERVIEW', icon: ICON_CHART },
-      { route: '/profile',  labelKey: 'NAV.PROFILE',      icon: ICON_PROFILE },
+      { route: '/student',  labelKey: 'NAV.DASHBOARD',    icon: this.icons.home },
+      { route: '/student/courses',  labelKey: 'NAV.COURSES',      icon: this.icons.book },
+      { route: '/student/assignments',  labelKey: 'ASSIGNMENTS.MENU', icon: this.icons.file },
+      { route: '/student',  labelKey: 'DASHBOARD.OVERVIEW', icon: this.icons.chart },
+      { route: '/profile',  labelKey: 'NAV.PROFILE',      icon: this.icons.profile },
     ];
   });
+
+  private toSafeIcon(iconSvg: string): SafeHtml {
+    return this.sanitizer.bypassSecurityTrustHtml(iconSvg);
+  }
 
   logout(): void { this.auth.logout().subscribe(); }
 }
