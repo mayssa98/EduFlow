@@ -112,7 +112,8 @@ public class AuthService {
         Utilisateur user = userRepo.findByEmailNormalized(EmailNormalizer.normalize(req.email()))
                 .orElseThrow(() -> new IllegalArgumentException("Invalid OTP"));
         OtpCode otp = consumeOtp(user, req.code(), OtpPurpose.ACCOUNT_VERIFY);
-        // Email verified — all users wait for admin approval.
+        // Product requirement: every email-based registration (students and teachers)
+        // must be reviewed by an administrator before normal account activation.
         user.setNbTentativesLogin(0);
         user.setStatutCompte(StatutCompte.PENDING_APPROVAL);
         userRepo.save(user);

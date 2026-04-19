@@ -4,52 +4,53 @@ import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../core/services/auth.service';
 import { UserService } from '../../core/services/user.service';
+import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-welcome-onboarding',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TranslateModule],
   template: `
     <section class="welcome-shell">
       <article class="card" *ngIf="step() === 1">
-        <h1>Bienvenue sur EduFlow</h1>
-        <p>Retrouvez-nous aussi ici :</p>
+        <h1>{{ 'ONBOARDING.TITLE' | translate }}</h1>
+        <p>{{ 'ONBOARDING.FIND_US' | translate }}</p>
         <ul>
-          <li>Site : https://eduflow.app</li>
-          <li>Facebook : EduFlow</li>
-          <li>Instagram : &#64;eduflow</li>
-          <li>X : &#64;eduflow</li>
+          <li>{{ 'ONBOARDING.SITE' | translate }}: {{ links.site }}</li>
+          <li>{{ 'ONBOARDING.FACEBOOK' | translate }}: {{ links.facebook }}</li>
+          <li>{{ 'ONBOARDING.INSTAGRAM' | translate }}: {{ links.instagram }}</li>
+          <li>{{ 'ONBOARDING.X' | translate }}: {{ links.x }}</li>
         </ul>
         <div class="actions">
-          <button class="btn btn-ghost" (click)="goStep2()">Ignorer</button>
-          <button class="btn" (click)="goStep2()">Continuer</button>
+          <button class="btn btn-ghost" (click)="goStep2()">{{ 'ONBOARDING.SKIP' | translate }}</button>
+          <button class="btn" (click)="goStep2()">{{ 'ONBOARDING.CONTINUE' | translate }}</button>
         </div>
       </article>
 
       <article class="card" *ngIf="step() === 2">
-        <h2>Niveau et spécialité</h2>
-        <label for="niveau-select">Niveau</label>
+        <h2>{{ 'ONBOARDING.LEVEL_SPECIALTY_TITLE' | translate }}</h2>
+        <label for="niveau-select">{{ 'ONBOARDING.LEVEL' | translate }}</label>
         <select id="niveau-select" [(ngModel)]="niveau">
           <option *ngFor="let n of niveaux" [ngValue]="n">{{ n }}</option>
         </select>
-        <input placeholder="Ajouter un niveau" [(ngModel)]="customNiveau" aria-label="Ajouter un niveau" />
-        <button class="mini" (click)="addNiveau()">Ajouter niveau</button>
+        <input [placeholder]="'ONBOARDING.ADD_LEVEL' | translate" [(ngModel)]="customNiveau" [attr.aria-label]="'ONBOARDING.ADD_LEVEL' | translate" />
+        <button class="mini" (click)="addNiveau()">{{ 'ONBOARDING.ADD_LEVEL_ACTION' | translate }}</button>
 
-        <label for="specialite-select">Spécialité</label>
+        <label for="specialite-select">{{ 'ONBOARDING.SPECIALTY' | translate }}</label>
         <select id="specialite-select" [(ngModel)]="specialite">
           <option *ngFor="let s of specialites" [ngValue]="s">{{ s }}</option>
         </select>
-        <input placeholder="Ajouter une spécialité" [(ngModel)]="customSpecialite" aria-label="Ajouter une spécialité" />
-        <button class="mini" (click)="addSpecialite()">Ajouter spécialité</button>
+        <input [placeholder]="'ONBOARDING.ADD_SPECIALTY' | translate" [(ngModel)]="customSpecialite" [attr.aria-label]="'ONBOARDING.ADD_SPECIALTY' | translate" />
+        <button class="mini" (click)="addSpecialite()">{{ 'ONBOARDING.ADD_SPECIALTY_ACTION' | translate }}</button>
 
         <p class="error" *ngIf="error()">{{ error() }}</p>
-        <button class="btn" (click)="finish()">Continuer</button>
+        <button class="btn" (click)="finish()">{{ 'ONBOARDING.CONTINUE' | translate }}</button>
       </article>
 
       <article class="card" *ngIf="step() === 3">
-        <h2>Bienvenue 🎉</h2>
-        <p>Votre compte est maintenant activé normalement.</p>
-        <button class="btn" (click)="goDashboard()">Continuer</button>
+        <h2>{{ 'ONBOARDING.SUCCESS_TITLE' | translate }}</h2>
+        <p>{{ 'ONBOARDING.SUCCESS_SUBTITLE' | translate }}</p>
+        <button class="btn" (click)="goDashboard()">{{ 'ONBOARDING.CONTINUE' | translate }}</button>
       </article>
     </section>
   `,
@@ -73,6 +74,12 @@ export class WelcomeOnboardingComponent {
 
   step = signal(1);
   error = signal<string | null>(null);
+  links = {
+    site: 'https://eduflow.app',
+    facebook: 'EduFlow',
+    instagram: '@eduflow',
+    x: '@eduflow',
+  };
   niveaux = ['L1', 'L2', 'L3', 'M1', 'M2'];
   specialites = ['Informatique', 'Mathématiques', 'Physique', 'Économie'];
   niveau = this.niveaux[0];
