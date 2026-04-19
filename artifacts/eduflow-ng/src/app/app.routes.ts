@@ -73,7 +73,7 @@ export const routes: Routes = [
         path: 'admin/change-requests',
         canActivate: [roleGuard(['ADMIN'])],
         loadComponent: () => import('./shared/components/placeholder/placeholder-page.component').then(m => m.PlaceholderPageComponent),
-        data: { title: 'Demandes de changement de classe', subtitle: 'Traitement des demandes approuver/rejeter.' },
+        data: { title: 'Demandes de changement de classe', subtitle: 'Traitement des demandes à approuver / rejeter.' },
       },
       {
         path: 'admin/stats',

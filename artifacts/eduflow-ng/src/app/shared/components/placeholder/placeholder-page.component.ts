@@ -8,8 +8,8 @@ import { ActivatedRoute } from '@angular/router';
   imports: [CommonModule],
   template: `
     <section class="card glass wrap">
-      <h1>{{ title() }}</h1>
-      <p class="muted">{{ subtitle() }}</p>
+      <h1>{{ title }}</h1>
+      <p class="muted">{{ subtitle }}</p>
     </section>
   `,
   styles: [`
