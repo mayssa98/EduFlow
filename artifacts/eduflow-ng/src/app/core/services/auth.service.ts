@@ -29,6 +29,18 @@ export class AuthService {
   readonly isAuthenticated = computed(() => this._user() !== null);
   readonly role = computed<UserRole | null>(() => this._user()?.role ?? null);
 
+  private normalizeUser(raw: any): AuthUser {
+    return {
+      id: raw.id,
+      email: raw.email,
+      prenom: raw.prenom,
+      nom: raw.nom,
+      role: raw.role,
+      status: raw.status ?? raw.statutCompte,
+      onboardingCompleted: raw.onboardingCompleted ?? false,
+    };
+  }
+
   private setUser(user: AuthUser | null): void {
     this._user.set(user);
     this.currentUser$.next(user);
@@ -36,14 +48,21 @@ export class AuthService {
 
   /** Bootstrap: try /auth/me to restore session from cookie. */
   bootstrap(): Observable<AuthUser | null> {
-    return this.http.get<AuthUser>(`${API_BASE}/auth/me`, { withCredentials: true }).pipe(
+    return this.http.get<any>(`${API_BASE}/auth/me`, { withCredentials: true }).pipe(
+      map(u => this.normalizeUser(u)),
       tap(u => this.setUser(u)),
       catchError(() => { this.setUser(null); return of(null); }),
     );
   }
 
   login(body: LoginRequest): Observable<AuthUser | MfaChallengeResponse> {
-    return this.http.post<AuthUser | MfaChallengeResponse>(`${API_BASE}/auth/login`, body, { withCredentials: true }).pipe(
+    return this.http.post<any>(`${API_BASE}/auth/login`, body, { withCredentials: true }).pipe(
+      map(res => {
+        if ('id' in res) {
+          return this.normalizeUser(res);
+        }
+        return res as MfaChallengeResponse;
+      }),
       tap(res => {
         if ('id' in res) { // It's an AuthUser
           this.setUser(res as AuthUser);
@@ -54,7 +73,8 @@ export class AuthService {
   }
 
   verify2fa(body: VerifyMfaRequest): Observable<AuthUser> {
-    return this.http.post<AuthUser>(`${API_BASE}/auth/verify-2fa`, body, { withCredentials: true }).pipe(
+    return this.http.post<any>(`${API_BASE}/auth/verify-2fa`, body, { withCredentials: true }).pipe(
+      map(u => this.normalizeUser(u)),
       tap(u => this.setUser(u))
     );
   }
@@ -64,7 +84,8 @@ export class AuthService {
   }
 
   verifyOtp(body: OtpVerifyRequest): Observable<AuthUser> {
-    return this.http.post<AuthUser>(`${API_BASE}/auth/verify-otp`, body, { withCredentials: true }).pipe(
+    return this.http.post<any>(`${API_BASE}/auth/verify-otp`, body, { withCredentials: true }).pipe(
+      map(u => this.normalizeUser(u)),
       tap(u => this.setUser(u)),
     );
   }
@@ -78,7 +99,13 @@ export class AuthService {
   }
 
   loginWithGoogleCode(body: GoogleAuthRequest): Observable<AuthUser | GoogleRegistrationChallenge> {
-    return this.http.post<AuthUser | GoogleRegistrationChallenge>(`${API_BASE}/auth/google`, body, { withCredentials: true }).pipe(
+    return this.http.post<any>(`${API_BASE}/auth/google`, body, { withCredentials: true }).pipe(
+      map(res => {
+        if ('id' in res) {
+          return this.normalizeUser(res);
+        }
+        return res as GoogleRegistrationChallenge;
+      }),
       tap(res => {
         if ('id' in res) {
           this.setUser(res as AuthUser);
@@ -88,13 +115,15 @@ export class AuthService {
   }
 
   completeGoogleRegistration(body: GoogleCompleteRequest): Observable<AuthUser> {
-    return this.http.post<AuthUser>(`${API_BASE}/auth/google/complete`, body, { withCredentials: true }).pipe(
+    return this.http.post<any>(`${API_BASE}/auth/google/complete`, body, { withCredentials: true }).pipe(
+      map(u => this.normalizeUser(u)),
       tap(u => this.setUser(u))
     );
   }
 
   refresh(): Observable<AuthUser | null> {
-    return this.http.post<AuthUser>(`${API_BASE}/auth/refresh`, {}, { withCredentials: true }).pipe(
+    return this.http.post<any>(`${API_BASE}/auth/refresh`, {}, { withCredentials: true }).pipe(
+      map(u => this.normalizeUser(u)),
       tap(u => this.setUser(u)),
       catchError(() => { this.setUser(null); return of(null); }),
     );
@@ -151,7 +180,10 @@ export class AuthService {
     return Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
   }
 
-  defaultRouteForRole(role: UserRole | null | undefined): string {
+  defaultRouteForRole(role: UserRole | null | undefined, user?: AuthUser | null): string {
+    if (user?.status === 'PENDING') return '/auth';
+    if (user?.status === 'PENDING_APPROVAL') return '/pending';
+    if (user?.status === 'ACTIVE' && !user?.onboardingCompleted) return '/welcome';
     switch (role) {
       case 'ADMIN':      return '/admin';
       case 'ENSEIGNANT': return '/teacher';

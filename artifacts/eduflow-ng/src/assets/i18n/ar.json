@@ -95,7 +95,7 @@
   "THEME":     { "LIGHT": "الوضع الفاتح", "DARK": "الوضع الداكن", "TOGGLE": "تبديل المظهر" },
   "LANGUAGE":  { "SELECT": "اختر اللغة", "ENGLISH": "الإنجليزية", "FRENCH": "الفرنسية", "ARABIC": "العربية" },
   "ROLES":     { "ADMIN": "مسؤول", "TEACHER": "أستاذ", "STUDENT": "طالب" },
-  "STATUS":    { "ACTIVE": "نشط", "INACTIVE": "غير نشط", "PENDING": "قيد الانتظار", "COMPLETED": "مكتمل", "IN_PROGRESS": "قيد التنفيذ", "FAILED": "فشل" },
+  "STATUS":    { "ACTIVE": "نشط", "INACTIVE": "غير نشط", "PENDING": "قيد الانتظار", "PENDING_APPROVAL": "بانتظار موافقة الإدارة", "BLOCKED": "محظور", "COMPLETED": "مكتمل", "IN_PROGRESS": "قيد التنفيذ", "FAILED": "فشل" },
   "LANDING": {
     "HERO_TITLE": "المنصة الذكية للتعليم الحديث",
     "HERO_SUBTITLE": "أدِر الطلاب والمقررات والأداء بفضل لوحات تحكم متقدمة وتحليلات بالذكاء الاصطناعي.",

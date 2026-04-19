@@ -44,6 +44,24 @@ public class EmailService {
         send(to, subject, body);
     }
 
+    public void sendApprovalDecisionEmail(String to, boolean approved) {
+        String subject = approved
+                ? "EduFlow — Compte approuvé"
+                : "EduFlow — Compte refusé";
+        String body = approved
+                ? "<div style='font-family:Inter,sans-serif;background:#0a0a14;color:#e2e8f0;padding:32px;border-radius:12px'>" +
+                "<h2 style='color:#8b5cf6'>EduFlow</h2>" +
+                "<p>Bonne nouvelle ! Votre compte a été approuvé par l'administrateur.</p>" +
+                "<p>Vous pouvez maintenant finaliser votre accueil et commencer à utiliser la plateforme.</p>" +
+                "</div>"
+                : "<div style='font-family:Inter,sans-serif;background:#0a0a14;color:#e2e8f0;padding:32px;border-radius:12px'>" +
+                "<h2 style='color:#8b5cf6'>EduFlow</h2>" +
+                "<p>Votre inscription a été refusée par l'administrateur.</p>" +
+                "<p>Votre compte est bloqué jusqu'à un éventuel déblocage par un administrateur.</p>" +
+                "</div>";
+        send(to, subject, body);
+    }
+
     private void send(String to, String subject, String html) {
         String apiKey = props.getEmail().getResendApiKey();
         if (apiKey == null || apiKey.isBlank()) {

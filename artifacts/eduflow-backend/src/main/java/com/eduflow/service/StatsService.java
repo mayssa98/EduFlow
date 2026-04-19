@@ -42,7 +42,7 @@ public class StatsService {
         Map<String, Long> byCourse = new LinkedHashMap<>();
         for (StatutCours sc : StatutCours.values()) byCourse.put(sc.name(), coursRepo.countByStatut(sc));
 
-        long pendingTeachers = userRepo.countByRoleAndStatutCompte(Role.ENSEIGNANT, StatutCompte.PENDING_APPROVAL);
+        long pendingTeachers = userRepo.countByStatutCompte(StatutCompte.PENDING_APPROVAL);
         long pendingSubs = soumissionRepo.countByStatut(StatutDevoir.SUBMITTED);
 
         // Top courses: still iterates published courses, but uses count queries

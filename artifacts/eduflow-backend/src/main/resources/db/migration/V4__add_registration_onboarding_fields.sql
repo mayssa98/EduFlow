@@ -1,0 +1,6 @@
+ALTER TABLE utilisateur
+ADD COLUMN age INT,
+ADD COLUMN adresse VARCHAR(255),
+ADD COLUMN niveau VARCHAR(120),
+ADD COLUMN specialite_choisie VARCHAR(160),
+ADD COLUMN onboarding_completed BOOLEAN NOT NULL DEFAULT FALSE;

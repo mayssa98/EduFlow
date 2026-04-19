@@ -40,6 +40,21 @@ public abstract class Utilisateur {
     @Column(length = 40)
     private String telephone;
 
+    @Column(name = "age")
+    private Integer age;
+
+    @Column(name = "adresse", length = 255)
+    private String adresse;
+
+    @Column(name = "niveau", length = 120)
+    private String niveau;
+
+    @Column(name = "specialite_choisie", length = 160)
+    private String specialiteChoisie;
+
+    @Column(name = "onboarding_completed", nullable = false)
+    private Boolean onboardingCompleted = false;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private Role role;

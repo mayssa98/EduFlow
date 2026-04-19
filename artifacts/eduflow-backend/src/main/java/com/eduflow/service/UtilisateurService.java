@@ -19,11 +19,11 @@ import java.util.Optional;
 public class UtilisateurService {
 
     private final UtilisateurRepository userRepo;
-    private final EnseignantRepository teacherRepo;
     private final PasswordEncoder encoder;
+    private final EmailService emailService;
 
-    public UtilisateurService(UtilisateurRepository u, EnseignantRepository t, PasswordEncoder e) {
-        this.userRepo = u; this.teacherRepo = t; this.encoder = e;
+    public UtilisateurService(UtilisateurRepository u, PasswordEncoder e, EmailService emailService) {
+        this.userRepo = u; this.encoder = e; this.emailService = emailService;
     }
 
     @Transactional(readOnly = true)
@@ -111,22 +111,28 @@ public class UtilisateurService {
 
     @Transactional(readOnly = true)
     public List<UserSummary> pendingTeachers() {
-        return teacherRepo.findByStatutCompte(StatutCompte.PENDING_APPROVAL).stream()
-                .map(this::toSummary).toList();
+        return userRepo.findByStatutCompteOrderByDateCreationDesc(StatutCompte.PENDING_APPROVAL).stream()
+                .sorted(Comparator.comparing(Utilisateur::getDateCreation).reversed())
+                .map(this::toSummary)
+                .toList();
     }
 
     public UserSummary decideApproval(Long id, ApprovalRequest.Decision decision) {
-        Enseignant t = teacherRepo.findById(id)
-                .orElseThrow(() -> new com.eduflow.exception.NotFoundException("Teacher not found"));
+        Utilisateur t = userRepo.findById(id)
+                .orElseThrow(() -> new com.eduflow.exception.NotFoundException("User not found"));
         if (t.getStatutCompte() != StatutCompte.PENDING_APPROVAL)
-            throw new IllegalStateException("Teacher is not awaiting approval");
+            throw new IllegalStateException("User is not awaiting approval");
         if (decision == ApprovalRequest.Decision.APPROVE) {
             t.setStatutCompte(StatutCompte.ACTIVE);
-            t.setDateValidation(OffsetDateTime.now());
+            if (t instanceof Enseignant enseignant) {
+                enseignant.setDateValidation(OffsetDateTime.now());
+            }
+            emailService.sendApprovalDecisionEmail(t.getEmail(), true);
         } else {
             t.setStatutCompte(StatutCompte.BLOCKED);
+            emailService.sendApprovalDecisionEmail(t.getEmail(), false);
         }
-        return toSummary(teacherRepo.save(t));
+        return toSummary(userRepo.save(t));
     }
 
     public ProfileResponse updateProfile(Long userId, UpdateProfileRequest req) {
@@ -150,6 +156,14 @@ public class UtilisateurService {
         return toProfile(require(userId));
     }
 
+    public ProfileResponse completeOnboarding(Long userId, CompleteOnboardingRequest req) {
+        Utilisateur u = require(userId);
+        u.setNiveau(req.niveau().trim());
+        u.setSpecialiteChoisie(req.specialite().trim());
+        u.setOnboardingCompleted(true);
+        return toProfile(userRepo.save(u));
+    }
+
     private Utilisateur require(Long id) {
 
         return userRepo.findById(id).orElseThrow(() -> new com.eduflow.exception.NotFoundException("User not found"));
@@ -162,6 +176,7 @@ public class UtilisateurService {
 
     public ProfileResponse toProfile(Utilisateur u) {
         return new ProfileResponse(u.getId(), u.getEmail(), u.getNom(), u.getPrenom(),
+                u.getAge(), u.getAdresse(), u.getNiveau(), u.getSpecialiteChoisie(), u.getOnboardingCompleted(),
                 u.getRole().name(), u.getStatutCompte().name(), u.getPhotoUrl(),
                 u.getDateCreation(), u.getDerniereConnexion());
     }

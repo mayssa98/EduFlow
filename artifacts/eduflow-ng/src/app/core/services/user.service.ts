@@ -8,6 +8,11 @@ export interface ProfileResponse {
   email: string;
   nom: string;
   prenom: string;
+  age?: number;
+  adresse?: string;
+  niveau?: string;
+  specialiteChoisie?: string;
+  onboardingCompleted?: boolean;
   role: string;
   statutCompte: string;
   photoUrl?: string;
@@ -17,6 +22,7 @@ export interface ProfileResponse {
 
 export interface UpdateProfileRequest { nom: string; prenom: string; }
 export interface ChangePasswordRequest { currentPassword: string; newPassword: string; }
+export interface CompleteOnboardingRequest { niveau: string; specialite: string; }
 
 export interface UserSummary {
   id: number;
@@ -43,6 +49,10 @@ export class UserService {
 
   changePassword(req: ChangePasswordRequest): Observable<void> {
     return this.http.patch<void>(`${API_BASE}/users/me/password`, req, { withCredentials: true });
+  }
+
+  completeOnboarding(req: CompleteOnboardingRequest): Observable<ProfileResponse> {
+    return this.http.patch<ProfileResponse>(`${API_BASE}/users/me/onboarding`, req, { withCredentials: true });
   }
 
   // --- Admin endpoints ---
