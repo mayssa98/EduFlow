@@ -17,8 +17,8 @@ import { UserService } from '../../core/services/user.service';
         <ul>
           <li>Site : https://eduflow.app</li>
           <li>Facebook : EduFlow</li>
-          <li>Instagram : @eduflow</li>
-          <li>X : @eduflow</li>
+          <li>Instagram : &#64;eduflow</li>
+          <li>X : &#64;eduflow</li>
         </ul>
         <div class="actions">
           <button class="btn btn-ghost" (click)="goStep2()">Ignorer</button>
