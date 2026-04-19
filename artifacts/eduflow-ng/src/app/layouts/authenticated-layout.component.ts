@@ -8,14 +8,16 @@ import { SidebarComponent, SidebarItem } from '../shared/components/sidebar/side
 import { LanguageSwitcherComponent } from '../shared/components/language-switcher/language-switcher.component';
 import { ThemeToggleComponent } from '../shared/components/theme-toggle/theme-toggle.component';
 
-const ICON_HOME      = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12L12 3l9 9"/><path d="M5 10v10h14V10"/></svg>`;
-const ICON_USERS     = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`;
-const ICON_BOOK      = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4h7a4 4 0 0 1 4 4v12"/><path d="M22 4h-7a4 4 0 0 0-4 4v12"/><line x1="2" y1="20" x2="13" y2="20"/><line x1="11" y1="20" x2="22" y2="20"/></svg>`;
-const ICON_CHART     = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>`;
-const ICON_ZAP       = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>`;
-const ICON_LOGOUT    = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>`;
-const ICON_FILE      = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>`;
-const ICON_PROFILE   = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`;
+import { ICONS } from '../shared/icons';
+
+const ICON_HOME      = ICONS.home;
+const ICON_USERS     = ICONS.users;
+const ICON_BOOK      = ICONS.book;
+const ICON_ZAP       = ICONS.sparkles;
+const ICON_LOGOUT    = ICONS.logout;
+const ICON_FILE      = ICONS.file;
+const ICON_PROFILE   = ICONS.user;
+const ICON_INBOX     = ICONS.inbox;
 
 @Component({
   selector: 'app-authenticated-layout',
@@ -88,29 +90,27 @@ export class AuthenticatedLayoutComponent {
 
     if (role === 'ADMIN') {
       return [
-        { route: '/admin',       labelKey: 'NAV.DASHBOARD',  icon: ICON_HOME },
-        { route: '/admin/users', labelKey: 'NAV.STUDENTS',   icon: ICON_USERS },
-        { route: '/admin',       labelKey: 'NAV.COURSES',    icon: ICON_BOOK },
-        { route: '/admin',       labelKey: 'DASHBOARD.OVERVIEW', icon: ICON_CHART },
-        { route: '/profile',     labelKey: 'NAV.PROFILE',    icon: ICON_PROFILE },
+        { route: '/admin',           labelKey: 'NAV.DASHBOARD', icon: ICON_HOME },
+        { route: '/admin/users',     labelKey: 'NAV.USERS',     icon: ICON_USERS },
+        { route: '/admin/approvals', labelKey: 'NAV.APPROVALS', icon: ICON_INBOX },
+        { route: '/profile',         labelKey: 'NAV.PROFILE',   icon: ICON_PROFILE },
       ];
     }
     if (role === 'ENSEIGNANT') {
       return [
-        { route: '/teacher',  labelKey: 'NAV.DASHBOARD',  icon: ICON_HOME },
-        { route: '/teacher/courses',  labelKey: 'NAV.COURSES',    icon: ICON_BOOK },
-        { route: '/teacher/assignments',  labelKey: 'ASSIGNMENTS.MENU', icon: ICON_FILE },
-        { route: '/teacher/ai-analysis',  labelKey: 'AI.MENU',        icon: ICON_ZAP },
-        { route: '/profile',  labelKey: 'NAV.PROFILE',    icon: ICON_PROFILE },
+        { route: '/teacher',             labelKey: 'NAV.DASHBOARD',    icon: ICON_HOME },
+        { route: '/teacher/courses',     labelKey: 'NAV.COURSES',      icon: ICON_BOOK },
+        { route: '/teacher/assignments', labelKey: 'ASSIGNMENTS.MENU', icon: ICON_FILE },
+        { route: '/teacher/ai-analysis', labelKey: 'AI.MENU',          icon: ICON_ZAP },
+        { route: '/profile',             labelKey: 'NAV.PROFILE',      icon: ICON_PROFILE },
       ];
     }
     // ETUDIANT
     return [
-      { route: '/student',  labelKey: 'NAV.DASHBOARD',    icon: ICON_HOME },
-      { route: '/student/courses',  labelKey: 'NAV.COURSES',      icon: ICON_BOOK },
-      { route: '/student/assignments',  labelKey: 'ASSIGNMENTS.MENU', icon: ICON_FILE },
-      { route: '/student',  labelKey: 'DASHBOARD.OVERVIEW', icon: ICON_CHART },
-      { route: '/profile',  labelKey: 'NAV.PROFILE',      icon: ICON_PROFILE },
+      { route: '/student',             labelKey: 'NAV.DASHBOARD',    icon: ICON_HOME },
+      { route: '/student/courses',     labelKey: 'NAV.COURSES',      icon: ICON_BOOK },
+      { route: '/student/assignments', labelKey: 'ASSIGNMENTS.MENU', icon: ICON_FILE },
+      { route: '/profile',             labelKey: 'NAV.PROFILE',      icon: ICON_PROFILE },
     ];
   });
 

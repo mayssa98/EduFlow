@@ -1,240 +1,177 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, FormsModule, Validators } from '@angular/forms';
-import { AssignmentService, Assignment, Submission } from '../../core/services/assignment.service';
+import { RouterLink } from '@angular/router';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
+
+import { AssignmentService, Assignment } from '../../core/services/assignment.service';
 import { CourseService, Course } from '../../core/services/course.service';
-import { TranslateModule } from '@ngx-translate/core';
+import { ICONS } from '../../shared/icons';
 
 @Component({
   selector: 'app-teacher-assignments',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, TranslateModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, RouterLink, TranslateModule],
   template: `
-    <div class="assign-shell">
-      <div class="header-row">
-        <h1>📝 Gestion des devoirs</h1>
-        <button class="btn btn-primary" (click)="openCreateModal()" [disabled]="courses().length === 0">+ Nouveau Devoir</button>
+    <div class="page-head">
+      <div>
+        <h1>{{ 'ASSIGNMENTS.MANAGE_TITLE' | translate }}</h1>
+        <p class="muted">{{ 'ASSIGNMENTS.MENU' | translate }}</p>
       </div>
-      
-      <div class="filter-row">
-        <label class="muted">Filtrer par cours :</label>
-        <select class="form-control" [ngModel]="selectedCourseFilter()" (ngModelChange)="onCourseFilterChange($event)">
-          <option [value]="null">Sélectionnez un cours d'abord...</option>
-          <option *ngFor="let c of courses()" [value]="c.id">{{ c.titre }}</option>
-        </select>
-      </div>
+      <button class="btn btn-primary" (click)="openCreateModal()" [disabled]="courses().length === 0">
+        <span [innerHTML]="iconPlus"></span>
+        {{ 'ASSIGNMENTS.NEW' | translate }}
+      </button>
+    </div>
 
-      <div class="table-wrap" *ngIf="!loading(); else spinner">
-        <table *ngIf="selectedCourseFilter(); else noCourse">
-          <thead>
-            <tr>
-              <th>Titre</th>
-              <th>Description</th>
-              <th>Échéance</th>
-              <th>Soumissions</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let a of assignments()">
-              <td><strong>{{ a.titre }}</strong></td>
-              <td class="muted">{{ truncate(a.description) }}</td>
-              <td [class.overdue]="isOverdue(a.dateEcheance)">{{ formatDate(a.dateEcheance) }}</td>
-              <td><span class="badge">{{ a.nbSoumissions }} rendues</span></td>
-              <td>
-                <div class="action-row">
-                  <button class="btn-icon" title="Modifier" (click)="openEditModal(a)">✏️</button>
-                  <button class="btn-icon ok" title="Voir les copies" (click)="openSubmissionsModal(a)">📥</button>
-                  <button class="btn-icon danger" title="Supprimer" (click)="delete(a.id)">🗑️</button>
-                </div>
-              </td>
-            </tr>
-            <tr *ngIf="assignments().length === 0">
-              <td colspan="5" class="center muted py-4">Aucun devoir pour ce cours.</td>
-            </tr>
-          </tbody>
-        </table>
-        <ng-template #noCourse>
-          <div class="empty-state">
-            <p>Veuillez sélectionner un cours ci-dessus pour gérer ses devoirs.</p>
-          </div>
-        </ng-template>
+    <div class="card toolbar">
+      <label class="muted">{{ 'ASSIGNMENTS.FILTER_COURSE' | translate }}</label>
+      <select class="input select" [ngModel]="selectedCourseFilter()" (ngModelChange)="onCourseFilterChange($event)">
+        <option [ngValue]="null">{{ 'ASSIGNMENTS.SELECT_COURSE' | translate }}</option>
+        <option *ngFor="let c of courses()" [ngValue]="c.id">{{ c.titre }}</option>
+      </select>
+    </div>
+
+    <div class="loading-center" *ngIf="loading()">
+      <div class="spinner spinner-lg"></div>
+    </div>
+
+    <ng-container *ngIf="!loading()">
+      <div class="empty-state fade-up" *ngIf="!selectedCourseFilter()">
+        {{ 'ASSIGNMENTS.EMPTY_COURSE' | translate }}
       </div>
 
-      <ng-template #spinner>
-        <div class="center-spinner"><div class="big-spinner"></div></div>
-      </ng-template>
-
-      <!-- Modal Create/Edit Assignment -->
-      <div class="modal-overlay" *ngIf="showModal()">
-        <div class="modal">
-          <h3>{{ editingAssignment() ? 'Modifier le devoir' : 'Créer un nouveau devoir' }}</h3>
-          <form [formGroup]="assignForm" (ngSubmit)="saveAssignment()">
-            <div class="form-group" *ngIf="!editingAssignment()">
-              <label>Cours concerné</label>
-              <select formControlName="coursId" class="form-control">
-                <option *ngFor="let c of courses()" [value]="c.id">{{ c.titre }}</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label>Titre</label>
-              <input type="text" formControlName="titre" class="form-control" />
-            </div>
-            <div class="form-group">
-              <label>Description des consignes</label>
-              <textarea formControlName="description" class="form-control" rows="4"></textarea>
-            </div>
-            <div class="form-group">
-              <label>Date & Heure d'échéance</label>
-              <input type="datetime-local" formControlName="dateEcheance" class="form-control" />
-            </div>
-            <div class="modal-actions">
-              <button type="button" class="btn-cancel" (click)="closeModal()">Annuler</button>
-              <button type="submit" class="btn btn-primary" [disabled]="assignForm.invalid">Enregistrer</button>
-            </div>
-          </form>
-        </div>
-      </div>
-
-      <!-- Modal Submissions / Grading -->
-      <div class="modal-overlay" *ngIf="showSubModal()">
-        <div class="modal large">
-          <h3>📥 Copies : {{ selectedAssignment()?.titre }}</h3>
-
-          <div class="table-wrap no-border" *ngIf="!loadingSubs(); else spinner">
-            <table>
-              <thead>
-                <tr>
-                  <th>Étudiant</th>
-                  <th>Date & Fichier</th>
-                  <th>Note (/20)</th>
-                  <th>Commentaire</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr *ngFor="let sub of submissions()">
-                  <td><strong>{{ sub.etudiantNom }}</strong></td>
-                  <td>
-                    <div class="sub-date">{{ formatDate(sub.dateSoumission) }}</div>
-                    <a [href]="getFileUrl(sub.cheminFichier)" target="_blank" class="btn btn-outline btn-sm mt-2">
-                       {{ sub.typeFichier === 'PDF' ? '📄' : '🎥' }} Ouvrir le rendu
+      <section class="card table-card fade-up" *ngIf="selectedCourseFilter() && assignments().length > 0">
+        <div class="table-scroll">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>{{ 'ASSIGNMENTS.TH_TITLE' | translate }}</th>
+                <th>{{ 'ASSIGNMENTS.DESCRIPTION' | translate }}</th>
+                <th>{{ 'ASSIGNMENTS.TH_DEADLINE' | translate }}</th>
+                <th>{{ 'ASSIGNMENTS.TH_SUBMISSIONS' | translate }}</th>
+                <th class="right">{{ 'ADMIN.TH_ACTIONS' | translate }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let a of assignments()">
+                <td><strong>{{ a.titre }}</strong></td>
+                <td class="muted">{{ truncate(a.description) }}</td>
+                <td>
+                  <span class="badge" [ngClass]="isOverdue(a.dateEcheance) ? 'badge-danger' : 'badge-info'">
+                    {{ formatDate(a.dateEcheance) }}
+                  </span>
+                </td>
+                <td>
+                  <span class="badge badge-info">
+                    {{ 'ASSIGNMENTS.SUBMITTED_COUNT' | translate: { count: a.nbSoumissions } }}
+                  </span>
+                </td>
+                <td class="right">
+                  <div class="action-row">
+                    <a [routerLink]="['/teacher/assignments', a.id, 'submissions']" class="btn-icon-only success"
+                       [title]="'ASSIGNMENTS.VIEW_SUBMISSIONS' | translate">
+                      <span [innerHTML]="iconInbox"></span>
                     </a>
-                  </td>
-                  <td>
-                    <ng-container *ngIf="sub.note !== null && sub.note !== undefined">
-                      <span class="badge" [class.warn]="sub.note < 10" [class.success]="sub.note >= 10">{{ sub.note }} / 20</span>
-                    </ng-container>
-                    <ng-container *ngIf="sub.note === null || sub.note === undefined">
-                       <input type="number" class="form-control sm-control inline-number" min="0" max="20" #noteInput placeholder="---" />
-                       <button class="btn btn-primary btn-sm ml-2" (click)="grade(sub.id, noteInput.value)">Valider</button>
-                    </ng-container>
-                  </td>
-                  <td>
-                    <ng-container *ngIf="sub.note !== null && sub.note !== undefined">
-                      <span class="muted small">{{ sub.commentaire || '—' }}</span>
-                    </ng-container>
-                  </td>
-                </tr>
-                <tr *ngIf="submissions().length === 0">
-                  <td colspan="4" class="center muted py-4">Personne n'a encore rendu ce devoir.</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          <div class="modal-actions">
-            <button class="btn-cancel" (click)="closeSubModal()">Fermer</button>
-          </div>
+                    <button class="btn-icon-only" [title]="'BUTTONS.EDIT' | translate" (click)="openEditModal(a)">
+                      <span [innerHTML]="iconEdit"></span>
+                    </button>
+                    <button class="btn-icon-only danger" [title]="'BUTTONS.DELETE' | translate" (click)="delete(a.id)">
+                      <span [innerHTML]="iconTrash"></span>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
+      </section>
+
+      <div class="empty-state fade-up" *ngIf="selectedCourseFilter() && assignments().length === 0">
+        {{ 'ASSIGNMENTS.EMPTY' | translate }}
+      </div>
+    </ng-container>
+
+    <!-- Create/Edit modal -->
+    <div class="modal-overlay" *ngIf="showModal()" (click)="closeModal()">
+      <div class="modal glass modal-lg" (click)="$event.stopPropagation()">
+        <h3>{{ (editingAssignment() ? 'ASSIGNMENTS.EDIT' : 'ASSIGNMENTS.CREATE') | translate }}</h3>
+        <form [formGroup]="assignForm" (ngSubmit)="saveAssignment()" class="form">
+          <div class="field" *ngIf="!editingAssignment()">
+            <label>{{ 'COURSES.MENU' | translate }}</label>
+            <select formControlName="coursId" class="input select">
+              <option *ngFor="let c of courses()" [ngValue]="c.id">{{ c.titre }}</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>{{ 'ASSIGNMENTS.TITLE_LABEL' | translate }}</label>
+            <input type="text" formControlName="titre" class="input" />
+          </div>
+          <div class="field">
+            <label>{{ 'ASSIGNMENTS.DESCRIPTION' | translate }}</label>
+            <textarea formControlName="description" class="input" rows="3"></textarea>
+          </div>
+          <div class="field">
+            <label>{{ 'ASSIGNMENTS.DEADLINE' | translate }}</label>
+            <input type="datetime-local" formControlName="dateEcheance" class="input" />
+          </div>
+          <div class="modal-actions">
+            <button type="button" class="btn btn-outline btn-sm" (click)="closeModal()">
+              {{ 'BUTTONS.CANCEL' | translate }}
+            </button>
+            <button type="submit" class="btn btn-primary btn-sm" [disabled]="assignForm.invalid || busy()">
+              {{ 'BUTTONS.SAVE' | translate }}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   `,
   styles: [`
-    :host { --card: #1a1a2e; --border: rgba(99,102,241,0.2); --text: #e2e8f0; --muted: #94a3b8; }
-    .assign-shell { padding: 28px; display: flex; flex-direction: column; gap: 24px; }
-    .header-row { display: flex; justify-content: space-between; align-items: center; }
-    .header-row h1 { margin: 0; font-size: 1.5rem; color: var(--text); }
-    
-    .filter-row { display: flex; align-items: center; gap: 12px; background: rgba(0,0,0,0.2); padding: 16px; border-radius: 12px; }
-    .filter-row select { max-width: 300px; }
-    
-    .table-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 16px; overflow-x: auto; }
-    .table-wrap.no-border { border: none; background: transparent; }
-    .empty-state { padding: 40px; text-align: center; color: var(--muted); }
-    table { width: 100%; border-collapse: collapse; }
-    th { padding: 12px 16px; text-align: left; font-size: 12px; color: var(--muted); font-weight: 600; text-transform: uppercase; border-bottom: 1px solid var(--border); }
-    td { padding: 14px 16px; border-bottom: 1px solid rgba(99,102,241,0.08); vertical-align: middle; }
-    tr:last-child td { border: none; }
-    
-    .status-badge { padding: 2px 10px; border-radius: 12px; font-size: 11px; font-weight: 700; white-space: nowrap; }
-    .badge { background: rgba(99,102,241,0.15); color: #c4b5fd; padding: 4px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: 600; white-space: nowrap; }
-    .badge.warn { background: rgba(239,68,68,0.15); color: #fca5a5; }
-    .badge.success { background: rgba(134,239,172,0.15); color: #86efac; }
-    
-    .action-row { display: flex; gap: 6px; }
-    .btn-icon { background: none; border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; cursor: pointer; color: var(--text); transition: all 0.2s;}
-    .btn-icon.ok:hover { border-color: #86efac; background: rgba(134,239,172,0.1); }
-    .btn-icon.danger:hover { border-color: #fca5a5; background: rgba(239,68,68,0.1); }
-    
-    .center { text-align: center; } .py-4 { padding-top: 2rem; padding-bottom: 2rem; }
-    .muted { color: var(--muted); } .small { font-size: 0.85rem; }
-    .overdue { color: #fca5a5; font-weight: 600; }
-    
-    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 1000; }
-    .modal { background: #1e1e35; border: 1px solid var(--border); border-radius: 16px; padding: 28px; max-width: 480px; width: 90%; display: flex; flex-direction: column; gap: 16px; max-height: 90vh; overflow-y: auto;}
-    .modal.large { max-width: 800px; }
-    .modal h3 { margin: 0; color: var(--text); }
-    .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 8px; }
-    
-    .form-group { display: flex; flex-direction: column; gap: 6px; }
-    .form-control { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #fff; padding: 10px; border-radius: 8px; font-family: inherit; }
-    .form-control:focus { outline: none; border-color: #6366f1; background: rgba(255,255,255,0.08); }
-    .sm-control { padding: 6px; font-size: 0.85rem; }
-    .inline-number { width: 70px; display: inline-block; }
-    
-    .btn-cancel { background: none; border: 1px solid var(--border); color: var(--muted); border-radius: 8px; padding: 8px 16px; cursor: pointer; }
-    .btn-primary { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; border: none; padding: 8px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; }
-    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
-    .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); border-radius: 8px; padding: 6px 12px; cursor: pointer; text-decoration: none; display: inline-block;}
-    .btn-outline:hover { background: rgba(255,255,255,0.1); }
-    .btn-sm { padding: 4px 10px; font-size: 0.8rem; }
-    .mt-2 { margin-top: 8px; } .ml-2 { margin-left: 8px; }
-    
-    .center-spinner { display: flex; justify-content: center; padding: 40px; }
-    .big-spinner { width: 32px; height: 32px; border: 3px solid rgba(99,102,241,0.3); border-top-color: #6366f1; border-radius: 50%; animation: spin 0.8s linear infinite; }
-    @keyframes spin { to { transform: rotate(360deg); } }
-  `]
+    .toolbar {
+      display: flex; align-items: center; gap: 12px; padding: 14px 18px; margin-bottom: 16px; flex-wrap: wrap;
+    }
+    .toolbar .muted { color: var(--color-muted-foreground); font-size: 0.85rem; }
+    .select { min-width: 260px; }
+
+    .table-card { padding: 0; overflow: hidden; }
+    .table-scroll { overflow-x: auto; }
+    .data-table thead th.right, .data-table tbody td.right { text-align: end; }
+    .action-row { display: inline-flex; gap: 6px; justify-content: flex-end; }
+    .muted { color: var(--color-muted-foreground); }
+    .form { display: flex; flex-direction: column; gap: 12px; }
+  `],
 })
 export class TeacherAssignmentsComponent implements OnInit {
   private asgSvc = inject(AssignmentService);
   private crsSvc = inject(CourseService);
   private fb = inject(FormBuilder);
+  private translate = inject(TranslateService);
+
+  readonly iconPlus = ICONS.plus;
+  readonly iconEdit = ICONS.edit;
+  readonly iconTrash = ICONS.trash;
+  readonly iconInbox = ICONS.inbox;
 
   courses = signal<Course[]>([]);
   loading = signal(false);
-  
+  busy = signal(false);
+
   selectedCourseFilter = signal<number | null>(null);
   assignments = signal<Assignment[]>([]);
 
   showModal = signal(false);
   editingAssignment = signal<Assignment | null>(null);
 
-  showSubModal = signal(false);
-  selectedAssignment = signal<Assignment | null>(null);
-  submissions = signal<Submission[]>([]);
-  loadingSubs = signal(false);
-
   assignForm = this.fb.nonNullable.group({
     titre: ['', [Validators.required]],
     description: [''],
     dateEcheance: ['', [Validators.required]],
-    coursId: [0, [Validators.min(1)]]
+    coursId: [0, [Validators.min(1)]],
   });
 
-  ngOnInit() {
+  ngOnInit(): void {
     this.crsSvc.list().subscribe(res => {
-      // Only keep courses where the teacher is the owner (in real app we verify server side too)
-      // Wait, listVisible() or courses endpoint ? The teacher gets their courses.
       this.courses.set(res);
       if (res.length > 0) {
         this.selectedCourseFilter.set(res[0].id);
@@ -243,129 +180,78 @@ export class TeacherAssignmentsComponent implements OnInit {
     });
   }
 
-  onCourseFilterChange(val: string) {
-    if (!val || val === 'null') {
+  onCourseFilterChange(val: number | null): void {
+    if (!val) {
       this.selectedCourseFilter.set(null);
       this.assignments.set([]);
       return;
     }
-    this.selectedCourseFilter.set(Number(val));
+    this.selectedCourseFilter.set(val);
     this.loadAssignments();
   }
 
-  loadAssignments() {
+  loadAssignments(): void {
     const cid = this.selectedCourseFilter();
     if (!cid) return;
     this.loading.set(true);
     this.asgSvc.listForCourse(cid).subscribe({
-      next: (res) => { this.assignments.set(res); this.loading.set(false); },
-      error: () => this.loading.set(false)
+      next: res => { this.assignments.set(res); this.loading.set(false); },
+      error: () => { this.assignments.set([]); this.loading.set(false); },
     });
   }
 
-  openCreateModal() {
+  openCreateModal(): void {
     this.editingAssignment.set(null);
     this.assignForm.reset();
     const cid = this.selectedCourseFilter();
-    if (cid) {
-      this.assignForm.patchValue({ coursId: cid });
-    }
+    if (cid) this.assignForm.patchValue({ coursId: cid });
     this.showModal.set(true);
   }
 
-  openEditModal(a: Assignment) {
+  openEditModal(a: Assignment): void {
     this.editingAssignment.set(a);
-    // Format date for 'datetime-local' input
     const d = new Date(a.dateEcheance);
     const tzOffset = d.getTimezoneOffset() * 60000;
-    const localISOTime = (new Date(d.getTime() - tzOffset)).toISOString().slice(0, 16);
-
+    const localISOTime = new Date(d.getTime() - tzOffset).toISOString().slice(0, 16);
     this.assignForm.patchValue({
-      coursId: a.coursId,
-      titre: a.titre,
-      description: a.description,
-      dateEcheance: localISOTime
+      coursId: a.coursId, titre: a.titre, description: a.description, dateEcheance: localISOTime,
     });
     this.showModal.set(true);
   }
 
-  closeModal() { this.showModal.set(false); }
+  closeModal(): void { this.showModal.set(false); }
 
-  saveAssignment() {
+  saveAssignment(): void {
     if (this.assignForm.invalid) return;
     const val = this.assignForm.getRawValue();
-    // Convert local back to UTC string format for server
     const serverDate = new Date(val.dateEcheance).toISOString();
-
-    const payload = {
-      ...val,
-      dateEcheance: serverDate
-    };
-
+    const payload = { ...val, dateEcheance: serverDate };
     const isEdit = this.editingAssignment();
-    const obs$ = isEdit 
-      ? this.asgSvc.update(isEdit.id, payload)
-      : this.asgSvc.create(payload);
-      
-    obs$.subscribe(() => {
-      this.closeModal();
-      this.loadAssignments();
+    this.busy.set(true);
+    const obs$ = isEdit ? this.asgSvc.update(isEdit.id, payload) : this.asgSvc.create(payload);
+    obs$.subscribe({
+      next: () => { this.busy.set(false); this.closeModal(); this.loadAssignments(); },
+      error: e => { this.busy.set(false); alert(e?.error?.message || this.translate.instant('ERRORS.GENERIC')); },
     });
   }
 
-  delete(id: number) {
-    if (confirm('Voulez-vous vraiment supprimer ce devoir ?')) {
-      this.asgSvc.delete(id).subscribe(() => this.loadAssignments());
-    }
+  delete(id: number): void {
+    if (!confirm(this.translate.instant('ASSIGNMENTS.DELETE_CONFIRM'))) return;
+    this.asgSvc.delete(id).subscribe(() => this.loadAssignments());
   }
 
-  // --- Submissions ---
-  openSubmissionsModal(a: Assignment) {
-    this.selectedAssignment.set(a);
-    this.loadingSubs.set(true);
-    this.showSubModal.set(true);
-    this.asgSvc.listSubmissions(a.id).subscribe({
-      next: (res) => { this.submissions.set(res); this.loadingSubs.set(false); },
-      error: () => this.loadingSubs.set(false)
-    });
-  }
-
-  closeSubModal() { this.showSubModal.set(false); }
-
-  grade(subId: number, noteVal: string) {
-    const noteNum = parseFloat(noteVal);
-    if (isNaN(noteNum) || noteNum < 0 || noteNum > 20) {
-      alert('La note doit être un nombre entre 0 et 20.');
-      return;
-    }
-    const com = prompt('Un commentaire facultatif pour cette note ?');
-    this.asgSvc.gradeSubmission(subId, noteNum, com || undefined).subscribe(() => {
-      // Reload submissions
-      this.openSubmissionsModal(this.selectedAssignment()!);
-    });
-  }
-
-  getFileUrl(path: string): string {
-    // Basic formatting for file url
-    return `http://localhost:8081/uploads/${path.split('/').pop()}`; // If static serving is enabled. With current backend it's restricted.
-    // Wait, backend /assignments/files/ ? actually backend doesn't have an endpoint to download submissions natively shown in DevoirController, it just stores path.
-    // We'll return a placeholder or local URL because downloading submission files usually need an endpoint.
-  }
-
-  // Utils
   truncate(text: string): string {
-    if (!text) return '';
-    return text.length > 50 ? text.substring(0, 50) + '...' : text;
+    if (!text) return '—';
+    return text.length > 60 ? text.substring(0, 60) + '…' : text;
   }
 
-  formatDate(d?: string): string {
-    if (!d) return '—';
-    return new Date(d).toLocaleString('fr-FR', {
-      day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
+  formatDate(d: string): string {
+    return new Date(d).toLocaleString(this.translate.currentLang || 'en', {
+      day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit',
     });
   }
 
   isOverdue(d: string): boolean {
-    return new Date(d).getTime() < new Date().getTime();
+    return new Date(d).getTime() < Date.now();
   }
 }
