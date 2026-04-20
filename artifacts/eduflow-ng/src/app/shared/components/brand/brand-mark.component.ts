@@ -35,9 +35,10 @@ import { RouterLink } from '@angular/router';
     .brand-mark {
       display: inline-flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
       color: inherit;
       text-decoration: none;
+      min-height: 40px;
     }
 
     .brand-mark__logo {
@@ -46,32 +47,28 @@ import { RouterLink } from '@angular/router';
       justify-content: center;
       flex-shrink: 0;
       overflow: hidden;
-      padding: 4px;
-      background:
-        linear-gradient(135deg, rgba(99, 102, 241, 0.18), rgba(59, 130, 246, 0.1)),
-        rgba(255, 255, 255, 0.65);
-      border: 1px solid rgba(99, 102, 241, 0.2);
+      padding: 0;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
       box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.65),
-        0 14px 28px rgba(15, 23, 42, 0.12);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
+        inset 0 1px 0 rgba(255, 255, 255, 0.06),
+        0 10px 24px rgba(15, 23, 42, 0.18);
     }
 
     .brand-mark__logo img {
       width: 100%;
       height: 100%;
-      object-fit: contain;
+      object-fit: cover;
       border-radius: inherit;
       display: block;
     }
 
     .brand-mark__text {
       font-family: var(--font-display);
-      font-size: 1.02rem;
+      font-size: 1.08rem;
       font-weight: 800;
       letter-spacing: -0.02em;
-      line-height: 1;
+      line-height: 1.02;
       color: inherit;
     }
   `],

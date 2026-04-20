@@ -32,23 +32,25 @@ import { ThemeService } from '../../../core/services/theme.service';
       display: flex;
       align-items: center;
       justify-content: center;
-      width: 36px;
-      height: 36px;
-      border-radius: var(--radius);
-      border: 1px solid var(--color-border);
-      background: var(--color-card);
-      color: var(--color-foreground);
+      width: 40px;
+      height: 40px;
+      border-radius: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.04);
+      color: rgba(245, 245, 250, 0.92);
       cursor: pointer;
       transition: background 0.15s, border-color 0.15s, color 0.15s, transform 0.1s;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
     }
 
     .theme-toggle:hover {
-      background: var(--color-muted);
-      transform: scale(1.05);
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(129, 140, 248, 0.2);
+      transform: translateY(-1px);
     }
 
     .theme-toggle:active {
-      transform: scale(0.95);
+      transform: translateY(0);
     }
 
     .icon {

@@ -22,6 +22,36 @@ export const APP_ICONS = {
     <path d="M7.25 9.75V19h9.5V9.75"/>
     <path d="M10 19v-4.25h4V19"/>
   `),
+  navHome: buildIcon(`
+    <path d="M6.25 10 12 5.4 17.75 10v8.1h-11.5Z" fill="currentColor" opacity="0.13" stroke="none"/>
+    <path d="M5 10.3 12 4.75l7 5.55"/>
+    <path d="M7.1 9.6v8.5h9.8V9.6"/>
+    <path d="M10.1 18.1v-4.1c0-.7.57-1.25 1.27-1.25h1.26c.7 0 1.26.55 1.26 1.25v4.1"/>
+  `),
+  navOverview: buildIcon(`
+    <rect x="4.75" y="5.5" width="6.2" height="5.7" rx="1.55" fill="currentColor" opacity="0.14" stroke="none"/>
+    <rect x="13.05" y="5.5" width="6.2" height="9.1" rx="1.55" fill="currentColor" opacity="0.1" stroke="none"/>
+    <rect x="4.75" y="12.8" width="6.2" height="5.7" rx="1.55" fill="currentColor" opacity="0.1" stroke="none"/>
+    <rect x="13.05" y="16.2" width="6.2" height="2.3" rx="1.15" fill="currentColor" opacity="0.16" stroke="none"/>
+    <rect x="4.75" y="5.5" width="6.2" height="5.7" rx="1.55"/>
+    <rect x="13.05" y="5.5" width="6.2" height="9.1" rx="1.55"/>
+    <rect x="4.75" y="12.8" width="6.2" height="5.7" rx="1.55"/>
+    <rect x="13.05" y="16.2" width="6.2" height="2.3" rx="1.15"/>
+  `),
+  navFeatures: buildIcon(`
+    <path d="M12 4.9 14 6.1l2.35-.2.7 2.2 2 1.2-.9 2.12.9 2.12-2 1.2-.7 2.2-2.35-.2-2 1.2-2-1.2-2.35.2-.7-2.2-2-1.2.9-2.12-.9-2.12 2-1.2.7-2.2 2.35.2 2-1.2Z" fill="currentColor" opacity="0.12" stroke="none"/>
+    <path d="M12 4.9 14 6.1l2.35-.2.7 2.2 2 1.2-.9 2.12.9 2.12-2 1.2-.7 2.2-2.35-.2-2 1.2-2-1.2-2.35.2-.7-2.2-2-1.2.9-2.12-.9-2.12 2-1.2.7-2.2 2.35.2 2-1.2Z"/>
+    <path d="m9.45 12.15 1.6 1.6 3.5-3.95"/>
+  `),
+  navJourney: buildIcon(`
+    <path d="M7.25 18.25c0-1.82 1.48-3.3 3.3-3.3h2.55c1.44 0 2.6-1.16 2.6-2.6 0-1.44-1.16-2.6-2.6-2.6H10" stroke-dasharray="1.6 0"/>
+    <path d="M7.25 18.25c0-1.82 1.48-3.3 3.3-3.3h2.55c1.44 0 2.6-1.16 2.6-2.6 0-1.44-1.16-2.6-2.6-2.6H10"/>
+    <circle cx="7.25" cy="18.25" r="1.75" fill="currentColor" opacity="0.14" stroke="none"/>
+    <circle cx="7.25" cy="18.25" r="1.75"/>
+    <circle cx="16.3" cy="9.75" r="1.75" fill="currentColor" opacity="0.14" stroke="none"/>
+    <circle cx="16.3" cy="9.75" r="1.75"/>
+    <path d="m8.4 7.2 2.9-2.45a1.3 1.3 0 0 1 1.68 0l2.9 2.45" opacity="0.85"/>
+  `),
   users: buildIcon(`
     <path d="M6.5 18.5c0-2.35 2.12-4.25 4.75-4.25S16 16.15 16 18.5" fill="currentColor" opacity="0.12" stroke="none"/>
     <circle cx="11.25" cy="8.25" r="3.25"/>

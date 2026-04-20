@@ -17,7 +17,11 @@ import { LanguageService, LanguageOption } from '../../../core/services/language
         aria-haspopup="listbox"
         type="button"
       >
-        <span class="lang-flag">{{ current.flag }}</span>
+        <svg class="lang-globe" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.7"/>
+          <path d="M4 12h16" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+          <path d="M12 4c2.7 2.6 4.15 5.25 4.15 8S14.7 17.4 12 20c-2.7-2.6-4.15-5.25-4.15-8S9.3 6.6 12 4Z" stroke="currentColor" stroke-width="1.7"/>
+        </svg>
         <span class="lang-code">{{ current.code.toUpperCase() }}</span>
         <svg class="lang-chevron" [class.rotated]="open()" width="12" height="12" viewBox="0 0 12 12" fill="none">
           <path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
@@ -36,8 +40,8 @@ import { LanguageService, LanguageOption } from '../../../core/services/language
               (keydown.enter)="selectLang(lang)"
               tabindex="0"
             >
-              <span class="lang-flag">{{ lang.flag }}</span>
-              <span class="lang-native">{{ lang.nativeLabel }}</span>
+              <span class="lang-native">{{ getLabelKey(lang) | translate }}</span>
+              <span class="lang-pill">{{ lang.code.toUpperCase() }}</span>
               @if (lang.code === current.code) {
                 <svg class="lang-check" width="14" height="14" viewBox="0 0 14 14" fill="none">
                   <path d="M2.5 7L5.5 10L11.5 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
@@ -59,37 +63,41 @@ import { LanguageService, LanguageOption } from '../../../core/services/language
     .lang-trigger {
       display: flex;
       align-items: center;
-      gap: 6px;
-      padding: 6px 10px;
-      border-radius: var(--radius);
-      border: 1px solid var(--color-border);
-      background: var(--color-card);
-      color: var(--color-foreground);
+      gap: 8px;
+      min-height: 40px;
+      padding: 0 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.04);
+      color: rgba(245, 245, 250, 0.92);
       cursor: pointer;
       font-size: 0.8125rem;
-      font-weight: 500;
-      transition: background 0.15s, border-color 0.15s;
+      font-weight: 600;
+      transition: background 0.15s, border-color 0.15s, transform 0.15s;
       white-space: nowrap;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
     }
 
     .lang-trigger:hover {
-      background: var(--color-muted);
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(129, 140, 248, 0.2);
+      transform: translateY(-1px);
     }
 
-    .lang-flag {
-      font-size: 1rem;
-      line-height: 1;
+    .lang-globe {
+      color: rgba(226, 232, 240, 0.82);
+      flex-shrink: 0;
     }
 
     .lang-code {
-      font-size: 0.75rem;
-      font-weight: 600;
-      letter-spacing: 0.04em;
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
     }
 
     .lang-chevron {
       transition: transform 0.2s;
-      color: var(--color-muted-foreground);
+      color: rgba(226, 232, 240, 0.62);
       flex-shrink: 0;
     }
 
@@ -101,44 +109,64 @@ import { LanguageService, LanguageOption } from '../../../core/services/language
       position: absolute;
       top: calc(100% + 6px);
       inset-inline-end: 0;
-      min-width: 160px;
-      background: var(--color-popover);
-      border: 1px solid var(--color-border);
-      border-radius: var(--radius-md);
-      box-shadow: 0 8px 24px rgba(0,0,0,.15);
+      min-width: 180px;
+      background: rgba(15, 23, 42, 0.92);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
+      box-shadow: 0 18px 42px rgba(0, 0, 0, 0.28);
       list-style: none;
       margin: 0;
-      padding: 4px;
+      padding: 6px;
       z-index: 50;
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
     }
 
     .lang-option {
       display: flex;
       align-items: center;
       gap: 8px;
-      padding: 8px 12px;
-      border-radius: calc(var(--radius) - 2px);
+      padding: 10px 12px;
+      border-radius: 12px;
       cursor: pointer;
-      color: var(--color-popover-foreground);
+      color: rgba(245, 245, 250, 0.92);
       font-size: 0.875rem;
       transition: background 0.12s;
     }
 
     .lang-option:hover,
     .lang-option:focus {
-      background: var(--color-accent);
+      background: rgba(99, 102, 241, 0.12);
       outline: none;
     }
 
     .lang-option.active {
       font-weight: 600;
-      color: var(--color-primary);
+      color: #ffffff;
     }
 
-    .lang-native { flex: 1; }
+    .lang-native {
+      flex: 1;
+    }
+
+    .lang-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 38px;
+      min-height: 24px;
+      padding: 0 8px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: rgba(224, 231, 255, 0.7);
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+    }
 
     .lang-check {
-      color: var(--color-primary);
+      color: rgba(129, 140, 248, 0.92);
       flex-shrink: 0;
     }
 
@@ -169,5 +197,11 @@ export class LanguageSwitcherComponent {
   selectLang(lang: LanguageOption): void {
     this.langService.setLanguage(lang.code);
     this.close();
+  }
+
+  getLabelKey(lang: LanguageOption): string {
+    if (lang.code === 'fr') return 'LANGUAGE.FRENCH';
+    if (lang.code === 'ar') return 'LANGUAGE.ARABIC';
+    return 'LANGUAGE.ENGLISH';
   }
 }
