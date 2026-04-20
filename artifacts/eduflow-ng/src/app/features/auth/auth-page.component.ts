@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, OnInit } from '@angular/core';
+import { Component, inject, signal, computed, OnInit, OnDestroy, ElementRef, QueryList, ViewChildren } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators, FormGroup, AbstractControl } from '@angular/forms';
 import { Router, RouterLink, ActivatedRoute } from '@angular/router';
@@ -58,7 +58,7 @@ function pwdSpecial(c: AbstractControl)   { return c.value && /[!@#$%^&*()_\-+={
         </button>
         <p class="error" *ngIf="remaining() <= 0 && step() === 'otp'">⏳ Le code a expiré. Veuillez en renvoyer un nouveau.</p>
         <p class="error" *ngIf="attempts() >= 5">🚫 Nombre maximum de tentatives atteint. Renvoyez un nouveau code.</p>
-        <button class="btn btn-outline full" (click)="resendOtp()" [disabled]="busy() || remaining() > 540">
+        <button class="btn btn-outline full" (click)="resendOtp()" [disabled]="busy() || remaining() > otpResendCooldownSeconds">
           {{ 'AUTH.OTP_RESEND' | translate }}
         </button>
         <button class="link" (click)="step.set('signin'); error.set(null)">← {{ 'BUTTONS.BACK' | translate }}</button>
@@ -114,7 +114,7 @@ function pwdSpecial(c: AbstractControl)   { return c.value && /[!@#$%^&*()_\-+={
             <div class="wiz-panel" *ngIf="regStep() === 1">
               <p class="step-label">Êtes-vous étudiant ou enseignant ?</p>
               <div class="social-container">
-                <button type="button" class="social google-option" (click)="auth.googleLogin()" aria-label="Google">
+                <button type="button" class="social google-option" (click)="onGoogleLogin()" aria-label="Google">
                   <svg class="google-icon" viewBox="0 0 24 24" aria-hidden="true">
                     <path fill="#EA4335" d="M12 11v3.2h5.4c-.2 1.4-1.7 4-5.4 4-3.3 0-6-2.7-6-6s2.7-6 6-6c1.9 0 3.1.8 3.8 1.5l2.6-2.5C16.7 3.4 14.6 2.4 12 2.4 6.7 2.4 2.4 6.7 2.4 12s4.3 9.6 9.6 9.6c5.5 0 9.2-3.9 9.2-9.4 0-.6-.1-1.1-.2-1.6H12z"/>
                   </svg>
@@ -228,8 +228,21 @@ function pwdSpecial(c: AbstractControl)   { return c.value && /[!@#$%^&*()_\-+={
             <div class="wiz-panel" *ngIf="regStep() === 4">
               <p class="step-label">Dernière étape : vérification de l'email</p>
               <p class="step-label" style="font-size:12.5px; opacity: 0.8; margin-top:-8px">Un code OTP a été envoyé à <strong>{{ pendingEmail() }}</strong></p>
-              <input class="input otp-input" maxlength="6" inputmode="numeric" [value]="otpCode()"
-                     (input)="onOtpInput($event)" placeholder="••••••"/>
+              <div class="otp-grid">
+                <input
+                  *ngFor="let digit of regOtpSlots(); let i = index"
+                  #regOtpBox
+                  class="otp-box"
+                  type="text"
+                  inputmode="numeric"
+                  maxlength="1"
+                  autocomplete="one-time-code"
+                  [value]="digit"
+                  (input)="onRegOtpBoxInput(i, $event)"
+                  (keydown)="onRegOtpKeyDown(i, $event)"
+                  (paste)="onRegOtpPaste(i, $event)"
+                />
+              </div>
               <div class="otp-meta">
                 <span [class.warn]="remaining() < 60">Expire dans {{ formatRemaining() }}</span>
                 <span>Tentative {{ attempts() }}/5</span>
@@ -238,11 +251,11 @@ function pwdSpecial(c: AbstractControl)   { return c.value && /[!@#$%^&*()_\-+={
               <div class="wiz-nav">
                 <!-- Return to Step 3 allows fixing email or password if needed -->
                 <button type="button" class="nav-back" (click)="regStep.set(3); error.set(null)">← Modifier</button>
-                <button type="button" class="main-btn" [disabled]="otpCode().length !== 6 || busy() || attempts() >= 5" (click)="verifyOtpForReg()">
+                <button type="button" class="main-btn" [disabled]="otpCode().length !== 6 || busy() || attempts() >= 5 || remaining() <= 0" (click)="verifyOtpForReg()">
                   <span class="spinner" *ngIf="busy()"></span>Vérifier ✓
                 </button>
               </div>
-              <button type="button" class="link" (click)="resendOtp()" [disabled]="busy() || remaining() > 540">Renvoyer le code</button>
+              <button type="button" class="link" (click)="resendOtp()" [disabled]="busy() || remaining() > otpResendCooldownSeconds">Renvoyer le code</button>
             </div>
 
             <!-- Step 5: Success -->
@@ -275,7 +288,7 @@ function pwdSpecial(c: AbstractControl)   { return c.value && /[!@#$%^&*()_\-+={
             <h1>{{ 'AUTH.LOGIN' | translate }}</h1>
             <p class="step-label" style="margin-bottom:6px">Ravi de vous revoir sur EduFlow</p>
             <div class="social-container">
-              <button type="button" class="social google-option" (click)="auth.googleLogin()" aria-label="Google">
+              <button type="button" class="social google-option" (click)="onGoogleLogin()" aria-label="Google">
                 <svg class="google-icon" viewBox="0 0 24 24" aria-hidden="true">
                   <path fill="#EA4335" d="M12 11v3.2h5.4c-.2 1.4-1.7 4-5.4 4-3.3 0-6-2.7-6-6s2.7-6 6-6c1.9 0 3.1.8 3.8 1.5l2.6-2.5C16.7 3.4 14.6 2.4 12 2.4 6.7 2.4 2.4 6.7 2.4 12s4.3 9.6 9.6 9.6c5.5 0 9.2-3.9 9.2-9.4 0-.6-.1-1.1-.2-1.6H12z"/>
                 </svg>
@@ -737,6 +750,7 @@ function pwdSpecial(c: AbstractControl)   { return c.value && /[!@#$%^&*()_\-+={
       border-radius: 50%;
       background: rgba(255,255,255,0.04);
       top: -100px; left: -80px;
+      pointer-events: none;
     }
 
     .overlay::after {
@@ -746,6 +760,7 @@ function pwdSpecial(c: AbstractControl)   { return c.value && /[!@#$%^&*()_\-+={
       border-radius: 50%;
       background: rgba(255,255,255,0.04);
       bottom: -60px; right: 40px;
+      pointer-events: none;
     }
 
     .container.active .overlay {
@@ -763,6 +778,7 @@ function pwdSpecial(c: AbstractControl)   { return c.value && /[!@#$%^&*()_\-+={
       top: 0;
       height: 100%;
       width: 50%;
+      z-index: 1;
       transition: transform 0.6s cubic-bezier(0.77,0,0.175,1);
     }
 
@@ -873,6 +889,38 @@ function pwdSpecial(c: AbstractControl)   { return c.value && /[!@#$%^&*()_\-+={
       letter-spacing: 0.5em;
       text-align: center;
       font-weight: 700;
+    }
+
+    .otp-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 42px);
+      justify-content: center;
+      gap: 8px;
+      width: fit-content;
+      max-width: 100%;
+      margin: 4px auto 0;
+    }
+
+    .otp-box {
+      width: 42px;
+      height: 50px;
+      padding: 0;
+      border-radius: 12px;
+      border: 1px solid rgba(108,71,255,0.35);
+      background: var(--input-bg);
+      color: var(--text);
+      font-size: 1.2rem;
+      font-weight: 700;
+      text-align: center;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s;
+      box-sizing: border-box;
+    }
+
+    .otp-box:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(108,71,255,0.18);
+      transform: translateY(-1px);
     }
 
     .otp-meta {
@@ -1166,7 +1214,8 @@ function pwdSpecial(c: AbstractControl)   { return c.value && /[!@#$%^&*()_\-+={
     }
   `],
 })
-export class AuthPageComponent implements OnInit {
+export class AuthPageComponent implements OnInit, OnDestroy {
+  @ViewChildren('regOtpBox') private regOtpBoxes?: QueryList<ElementRef<HTMLInputElement>>;
   private fb = inject(FormBuilder);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
@@ -1181,6 +1230,8 @@ export class AuthPageComponent implements OnInit {
   showPwdConfirm = signal(false);
   pendingEmail = signal('');
   otpCode = signal('');
+  regOtpDigits = signal<string[]>(Array.from({ length: 6 }, () => ''));
+  regOtpSlots = computed(() => this.regOtpDigits());
   mfaTicket = signal('');
   googleRegTicket = signal('');
   optionalPwd = signal('');
@@ -1189,8 +1240,11 @@ export class AuthPageComponent implements OnInit {
   regStep = signal(1);
   emailVerified = signal(false);
   otpSent = signal(false);
+  readonly otpExpirySeconds = 180;
+  readonly otpResendCooldownSeconds = 120;
 
   private otpStartedAt = 0;
+  private otpTimerId: ReturnType<typeof setTimeout> | null = null;
   remaining = signal(0);
   formatRemaining = computed(() => {
     const r = Math.max(0, this.remaining());
@@ -1286,6 +1340,19 @@ export class AuthPageComponent implements OnInit {
     });
   }
 
+  ngOnDestroy(): void {
+    this.stopOtpTimer();
+  }
+
+  onGoogleLogin(): void {
+    this.error.set(null);
+    this.auth.googleLogin().subscribe({
+      error: () => {
+        this.error.set("La connexion Google est indisponible pour le moment.");
+      },
+    });
+  }
+
   onSignUp(): void {
     this.signUpForm.markAllAsTouched();
     if (this.signUpForm.invalid) return;
@@ -1298,6 +1365,7 @@ export class AuthPageComponent implements OnInit {
       next: () => {
         this.busy.set(false);
         this.pendingEmail.set(v.email!); this.attempts.set(0); this.otpCode.set('');
+        this.regOtpDigits.set(Array.from({ length: 6 }, () => ''));
         this.startOtpTimer();
         this.step.set('otp');
       },
@@ -1311,6 +1379,130 @@ export class AuthPageComponent implements OnInit {
   onOtpInput(e: Event): void {
     const v = (e.target as HTMLInputElement).value.replace(/[^0-9]/g, '').slice(0, 6);
     this.otpCode.set(v);
+  }
+
+  private setRegOtpDigit(index: number, digit: string): void {
+    const digits = [...this.regOtpDigits()];
+    digits[index] = digit.replace(/\D/g, '').slice(0, 1);
+    this.regOtpDigits.set(digits);
+    this.otpCode.set(digits.join(''));
+  }
+
+  private insertRegOtpDigits(startIndex: number, rawDigits: string, clearTail = false): void {
+    const digits = [...this.regOtpDigits()];
+    const incoming = rawDigits.replace(/\D/g, '').slice(0, 6 - startIndex).split('');
+    if (!incoming.length) return;
+
+    for (let i = 0; i < incoming.length; i += 1) {
+      digits[startIndex + i] = incoming[i];
+    }
+
+    if (clearTail) {
+      for (let i = startIndex + incoming.length; i < digits.length; i += 1) {
+        digits[i] = '';
+      }
+    }
+
+    this.regOtpDigits.set(digits);
+    this.otpCode.set(digits.join(''));
+  }
+
+  private focusRegOtpBox(index: number): void {
+    const input = this.regOtpBoxes?.get(index)?.nativeElement;
+    if (!input) return;
+    input.focus();
+    input.select();
+  }
+
+  onRegOtpBoxInput(index: number, event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.dataset['skipInput'] === '1') {
+      input.dataset['skipInput'] = '0';
+      return;
+    }
+
+    const inputEvent = event as InputEvent;
+    const digits = input.value.replace(/\D/g, '');
+
+    if (inputEvent.inputType === 'deleteContentBackward') {
+      this.setRegOtpDigit(index, '');
+      if (index > 0) this.focusRegOtpBox(index - 1);
+      return;
+    }
+
+    if (!digits) {
+      this.setRegOtpDigit(index, '');
+      return;
+    }
+
+    if (digits.length > 1) {
+      if (index === 0 && digits.length === 6) {
+        this.insertRegOtpDigits(0, digits, true);
+        setTimeout(() => this.focusRegOtpBox(5));
+        return;
+      }
+      this.setRegOtpDigit(index, digits.slice(-1));
+      if (index < 5) setTimeout(() => this.focusRegOtpBox(index + 1));
+      return;
+    }
+
+    this.setRegOtpDigit(index, digits);
+    if (index < 5) setTimeout(() => this.focusRegOtpBox(index + 1));
+  }
+
+  onRegOtpKeyDown(index: number, event: KeyboardEvent): void {
+    if (/^\d$/.test(event.key)) {
+      event.preventDefault();
+      const input = event.target as HTMLInputElement;
+      input.dataset['skipInput'] = '1';
+      this.setRegOtpDigit(index, event.key);
+      if (index < 5) setTimeout(() => this.focusRegOtpBox(index + 1));
+      return;
+    }
+
+    if (event.key === 'Backspace') {
+      event.preventDefault();
+      const digits = this.regOtpSlots();
+      if (digits[index]) {
+        this.setRegOtpDigit(index, '');
+        if (index > 0) this.focusRegOtpBox(index - 1);
+        return;
+      }
+      if (index > 0) {
+        this.setRegOtpDigit(index - 1, '');
+        this.focusRegOtpBox(index - 1);
+      }
+      return;
+    }
+
+    if (event.key === 'Delete') {
+      event.preventDefault();
+      this.setRegOtpDigit(index, '');
+      return;
+    }
+
+    if (event.key.length === 1 && !/^\d$/.test(event.key)) {
+      event.preventDefault();
+      return;
+    }
+
+    if (event.key === 'ArrowLeft' && index > 0) {
+      event.preventDefault();
+      this.focusRegOtpBox(index - 1);
+    }
+
+    if (event.key === 'ArrowRight' && index < 5) {
+      event.preventDefault();
+      this.focusRegOtpBox(index + 1);
+    }
+  }
+
+  onRegOtpPaste(index: number, event: ClipboardEvent): void {
+    event.preventDefault();
+    const pasted = event.clipboardData?.getData('text')?.replace(/\D/g, '').slice(0, 6) ?? '';
+    if (!pasted) return;
+    this.insertRegOtpDigits(index, pasted, true);
+    setTimeout(() => this.focusRegOtpBox(Math.min(index + pasted.length, 5)));
   }
 
   submitOtp(): void {
@@ -1362,6 +1554,7 @@ export class AuthPageComponent implements OnInit {
         this.startOtpTimer();
         this.attempts.set(0);
         this.otpCode.set('');
+        this.regOtpDigits.set(Array.from({ length: 6 }, () => ''));
         this.error.set(null);
       },
       error: () => { this.busy.set(false); this.startOtpTimer(); }
@@ -1409,15 +1602,26 @@ export class AuthPageComponent implements OnInit {
   }
 
   private startOtpTimer(): void {
+    this.stopOtpTimer();
     this.otpStartedAt = Date.now();
-    this.remaining.set(600);
+    this.remaining.set(this.otpExpirySeconds);
     const tick = () => {
       const elapsed = Math.floor((Date.now() - this.otpStartedAt) / 1000);
-      this.remaining.set(Math.max(0, 600 - elapsed));
-      if ((this.step() === 'otp' || this.regStep() === 3) && this.remaining() > 0)
-        requestAnimationFrame(() => setTimeout(tick, 1000));
+      this.remaining.set(Math.max(0, this.otpExpirySeconds - elapsed));
+      if ((this.step() === 'otp' || this.regStep() === 4) && this.remaining() > 0) {
+        this.otpTimerId = setTimeout(tick, 1000);
+      } else {
+        this.otpTimerId = null;
+      }
     };
     tick();
+  }
+
+  private stopOtpTimer(): void {
+    if (this.otpTimerId !== null) {
+      clearTimeout(this.otpTimerId);
+      this.otpTimerId = null;
+    }
   }
 
   // ── Multi-step registration wizard methods ──
@@ -1433,6 +1637,7 @@ export class AuthPageComponent implements OnInit {
         this.pendingEmail.set(v.email!);
         this.attempts.set(0);
         this.otpCode.set('');
+        this.regOtpDigits.set(Array.from({ length: 6 }, () => ''));
         this.otpSent.set(true);
         this.emailVerified.set(false);
         this.startOtpTimer();
@@ -1462,6 +1667,7 @@ export class AuthPageComponent implements OnInit {
         this.busy.set(false);
         this.emailVerified.set(true);
         this.otpSent.set(false);
+        this.regOtpDigits.set(Array.from({ length: 6 }, () => ''));
         this.regStep.set(5);
       },
       error: (e: any) => {
@@ -1508,3 +1714,4 @@ export class AuthPageComponent implements OnInit {
     return key ? this.translate.instant(key) : null;
   }
 }
+

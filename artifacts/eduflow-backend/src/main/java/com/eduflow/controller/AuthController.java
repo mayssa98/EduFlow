@@ -112,12 +112,12 @@ public class AuthController {
         return ResponseEntity.noContent().build(); // 204 Déconnecté
     }
 
-    @Operation(summary = "Email a password-reset OTP if the account exists (always returns 200)")
+    @Operation(summary = "Email a password-reset OTP if the account exists")
     @PostMapping("/forgot-password")
     public ResponseEntity<SimpleMessageResponse> forgot(@Valid @RequestBody ForgotPasswordRequest req) {
         authService.forgotPassword(req);
         return ResponseEntity.ok(new SimpleMessageResponse(
-                "If an account exists for this email, a reset code has been sent."));
+                "A reset code has been sent to your email."));
     }
 
     @Operation(summary = "Reset the password using the OTP from forgot-password")
@@ -125,6 +125,13 @@ public class AuthController {
     public ResponseEntity<SimpleMessageResponse> reset(@Valid @RequestBody ResetPasswordRequest req) {
         authService.resetPassword(req);
         return ResponseEntity.ok(new SimpleMessageResponse("Password updated. Please log in."));
+    }
+
+    @Operation(summary = "Validate the password-reset OTP before letting the user set a new password")
+    @PostMapping("/verify-reset-otp")
+    public ResponseEntity<SimpleMessageResponse> verifyResetOtp(@Valid @RequestBody VerifyResetOtpRequest req) {
+        authService.verifyResetOtp(req);
+        return ResponseEntity.ok(new SimpleMessageResponse("OTP verified."));
     }
 
     @Operation(summary = "Return the currently authenticated user (401 if no valid access cookie)")

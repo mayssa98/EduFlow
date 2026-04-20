@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators, AbstractControl } from '@angular/forms';
 import { UserService, ProfileResponse } from '../../../core/services/user.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { APP_ICONS } from '../../icons/app-icons';
 
 function pwdLength(c: AbstractControl)  { return c.value && c.value.length >= 8 ? null : { pwdLength: true }; }
 function pwdUpper(c: AbstractControl)   { return c.value && /[A-Z]/.test(c.value) ? null : { pwdUpper: true }; }
@@ -34,7 +35,7 @@ function pwdSpecial(c: AbstractControl) { return c.value && /[!@#$%^&*()_\-+={}[
       <div class="cards-grid">
         <!-- Carte : Modifier le profil -->
         <div class="card">
-          <h2>✏️ Modifier le profil</h2>
+          <h2><span class="card-title-icon" [innerHTML]="icons.edit"></span>Modifier le profil</h2>
           <form [formGroup]="profileForm" (ngSubmit)="saveProfile()">
             <div class="field-row">
               <div class="field">
@@ -57,7 +58,7 @@ function pwdSpecial(c: AbstractControl) { return c.value && /[!@#$%^&*()_\-+={}[
 
         <!-- Carte : Changer le mot de passe -->
         <div class="card">
-          <h2>🔒 Changer le mot de passe</h2>
+          <h2><span class="card-title-icon" [innerHTML]="icons.lock"></span>Changer le mot de passe</h2>
           <form [formGroup]="pwdForm" (ngSubmit)="changePassword()">
             <div class="field">
               <label>Mot de passe actuel</label>
@@ -99,7 +100,7 @@ function pwdSpecial(c: AbstractControl) { return c.value && /[!@#$%^&*()_\-+={}[
 
         <!-- Carte : Informations du compte -->
         <div class="card info-card">
-          <h2>📋 Informations du compte</h2>
+          <h2><span class="card-title-icon" [innerHTML]="icons.info"></span>Informations du compte</h2>
           <div class="info-row">
             <span class="info-label">Statut</span>
             <span class="status-badge" [class.active]="profile()?.statutCompte === 'ACTIVE'">
@@ -200,7 +201,17 @@ function pwdSpecial(c: AbstractControl) { return c.value && /[!@#$%^&*()_\-+={}[
       gap: 16px;
     }
 
-    .card h2 { margin: 0; font-size: 1.1rem; color: var(--text); }
+    .card h2 { margin: 0; font-size: 1.1rem; color: var(--text); display: flex; align-items: center; gap: 10px; }
+    .card-title-icon {
+      width: 2rem; height: 2rem;
+      display: inline-flex; align-items: center; justify-content: center;
+      color: #a5b4fc;
+      background: rgba(99,102,241,0.12);
+      border: 1px solid rgba(99,102,241,0.18);
+      border-radius: 12px;
+      flex-shrink: 0;
+    }
+    .card-title-icon :is(svg) { display: block; }
 
     form { display: flex; flex-direction: column; gap: 12px; }
 
@@ -288,6 +299,7 @@ export class ProfilePageComponent implements OnInit {
   private fb         = inject(FormBuilder);
   private userSvc    = inject(UserService);
   private authSvc    = inject(AuthService);
+  readonly icons = APP_ICONS;
 
   profile       = signal<ProfileResponse | null>(null);
   profileBusy   = signal(false);

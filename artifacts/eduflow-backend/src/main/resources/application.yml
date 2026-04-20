@@ -5,6 +5,8 @@ server:
   forward-headers-strategy: framework
 
 spring:
+  config:
+    import: optional:file:.env.properties
   application:
     name: eduflow-backend
   datasource:
@@ -52,7 +54,7 @@ eduflow:
   cors:
     allowed-origin: ${APP_FRONTEND_ORIGIN:http://localhost:4200}
   otp:
-    expiry-minutes: ${OTP_EXPIRY_MIN:10}
+    expiry-minutes: ${OTP_EXPIRY_MIN:3}
     max-attempts: 5
   login:
     max-attempts: ${LOGIN_MAX_ATTEMPTS:5}

@@ -43,6 +43,11 @@ public class AuthDtos {
             String newPassword
     ) {}
 
+    public record VerifyResetOtpRequest(
+            @NotBlank @Email String email,
+            @NotBlank @Pattern(regexp = "^\\d{6}$") String code
+    ) {}
+
     public record GoogleAuthRequest(
             @NotBlank String code,
             String redirectUri

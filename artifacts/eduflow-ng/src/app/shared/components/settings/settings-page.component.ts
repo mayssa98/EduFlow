@@ -5,6 +5,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { UserService, ProfileResponse } from '../../../core/services/user.service';
 import { LanguageSwitcherComponent } from '../language-switcher/language-switcher.component';
 import { ThemeToggleComponent } from '../theme-toggle/theme-toggle.component';
+import { APP_ICONS } from '../../icons/app-icons';
 
 @Component({
   selector: 'app-settings-page',
@@ -12,11 +13,11 @@ import { ThemeToggleComponent } from '../theme-toggle/theme-toggle.component';
   imports: [CommonModule, ReactiveFormsModule, TranslateModule, LanguageSwitcherComponent, ThemeToggleComponent],
   template: `
     <div class="settings-shell">
-      <h1 class="page-title">⚙️ Paramètres du compte</h1>
+      <h1 class="page-title"><span class="page-title-icon" [innerHTML]="icons.settings"></span>Parametres du compte</h1>
 
       <!-- Profile Section -->
       <section class="card">
-        <h2>👤 Informations personnelles</h2>
+        <h2><span class="section-icon" [innerHTML]="icons.profile"></span>Informations personnelles</h2>
         <p class="muted">Modifier votre nom et prénom.</p>
 
         <form [formGroup]="profileForm" (ngSubmit)="saveProfile()" class="form-grid" *ngIf="profile()">
@@ -47,7 +48,7 @@ import { ThemeToggleComponent } from '../theme-toggle/theme-toggle.component';
 
       <!-- Password Section -->
       <section class="card">
-        <h2>🔒 Changer le mot de passe</h2>
+        <h2><span class="section-icon" [innerHTML]="icons.lock"></span>Changer le mot de passe</h2>
         <p class="muted">Le nouveau mot de passe doit contenir au moins 8 caractères, une majuscule, un chiffre et un caractère spécial.</p>
 
         <form [formGroup]="passwordForm" (ngSubmit)="changePassword()" class="form-grid">
@@ -75,7 +76,7 @@ import { ThemeToggleComponent } from '../theme-toggle/theme-toggle.component';
 
       <!-- Preferences Section -->
       <section class="card preferences-card">
-        <h2>🎨 Préférences</h2>
+        <h2><span class="section-icon" [innerHTML]="icons.palette"></span>Preferences</h2>
         <div class="pref-row">
           <div class="pref-item">
             <label>Langue</label>
@@ -90,11 +91,11 @@ import { ThemeToggleComponent } from '../theme-toggle/theme-toggle.component';
 
       <!-- Account Info Section -->
       <section class="card" *ngIf="profile() as p">
-        <h2>📋 Informations du compte</h2>
+        <h2><span class="section-icon" [innerHTML]="icons.info"></span>Informations du compte</h2>
         <div class="info-grid">
           <div class="info-item">
             <span class="info-label">Statut du compte</span>
-            <span class="badge" [class]="'status-' + (p.statutCompte ?? '').toLowerCase()">{{ p.statutCompte }}</span>
+            <span class="badge" [class]="'status-' + p.statutCompte.toLowerCase()">{{ p.statutCompte }}</span>
           </div>
           <div class="info-item">
             <span class="info-label">Date d'inscription</span>
@@ -111,13 +112,28 @@ import { ThemeToggleComponent } from '../theme-toggle/theme-toggle.component';
   styles: [`
     :host { --card-bg: #1a1a2e; --border: rgba(99,102,241,0.2); --text: #e2e8f0; --muted: #94a3b8; }
     .settings-shell { padding: 28px; display: flex; flex-direction: column; gap: 24px; max-width: 780px; }
-    .page-title { font-size: 1.5rem; margin: 0; color: var(--text); }
+    .page-title { display: flex; align-items: center; gap: 10px; font-size: 1.5rem; margin: 0; color: var(--text); }
+    .page-title-icon,
+    .section-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: #a5b4fc;
+      background: rgba(99,102,241,0.12);
+      border: 1px solid rgba(99,102,241,0.18);
+      border-radius: 12px;
+      flex-shrink: 0;
+    }
+    .page-title-icon { width: 2.2rem; height: 2.2rem; }
+    .section-icon { width: 2rem; height: 2rem; }
+    .page-title-icon :is(svg),
+    .section-icon :is(svg) { display: block; }
 
     .card {
       background: var(--card-bg); border: 1px solid var(--border);
       border-radius: 16px; padding: 24px; display: flex; flex-direction: column; gap: 16px;
     }
-    .card h2 { margin: 0; font-size: 1.15rem; color: var(--text); }
+    .card h2 { margin: 0; font-size: 1.15rem; color: var(--text); display: flex; align-items: center; gap: 10px; }
     .muted { color: var(--muted); font-size: 0.85rem; margin: 0; }
 
     .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
@@ -160,6 +176,7 @@ import { ThemeToggleComponent } from '../theme-toggle/theme-toggle.component';
 export class SettingsPageComponent implements OnInit {
   private userSvc = inject(UserService);
   private fb = inject(FormBuilder);
+  readonly icons = APP_ICONS;
 
   profile = signal<ProfileResponse | null>(null);
   profileSaving = signal(false);

@@ -1,6 +1,7 @@
 target/
 *.class
 *.log
+.env.properties
 .idea/
 .vscode/
 *.iml

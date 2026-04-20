@@ -12,6 +12,7 @@ import { DonutChartComponent } from '../../shared/components/charts/donut-chart.
 import { ActivityFeedComponent, ActivityItem } from '../../shared/components/activity-feed/activity-feed.component';
 import { RiskBadgeComponent } from '../../shared/components/risk-badge/risk-badge.component';
 import { API_BASE } from '../../core/services/auth.service';
+import { APP_ICONS } from '../../shared/icons/app-icons';
 
 interface StatsOverview {
   usersByRole?: Record<string, number>;
@@ -36,14 +37,14 @@ interface StatsOverview {
     <h1 class="page-title">{{ 'ADMIN.TITLE' | translate }}</h1>
 
     <div class="kpi-grid">
-      <app-kpi-card [label]="'ADMIN.KPI_ADMINS' | translate"   [value]="roleCount('ADMIN')"      [trend]="0"  [hint]="'DASHBOARD.OVERVIEW' | translate"></app-kpi-card>
-      <app-kpi-card [label]="'ADMIN.KPI_TEACHERS' | translate" [value]="roleCount('ENSEIGNANT')" [trend]="3"></app-kpi-card>
-      <app-kpi-card [label]="'ADMIN.KPI_STUDENTS' | translate" [value]="roleCount('ETUDIANT')"   [trend]="12"></app-kpi-card>
-      <app-kpi-card [label]="'ADMIN.KPI_PUBLISHED' | translate" [value]="overview()?.publishedCourses ?? 0" [trend]="6"></app-kpi-card>
-      <app-kpi-card [label]="'ADMIN.KPI_DRAFTS' | translate"    [value]="overview()?.draftCourses ?? 0"     [trend]="-1"></app-kpi-card>
-      <app-kpi-card [label]="'ADMIN.KPI_APPROVALS' | translate" [value]="overview()?.pendingApprovals ?? 0" [trend]="0" [hint]="'ADMIN.NEEDS_REVIEW' | translate"></app-kpi-card>
-      <app-kpi-card [label]="'ADMIN.KPI_SUBMISSIONS' | translate" [value]="overview()?.submissionsThisWeek ?? 0" [trend]="8"></app-kpi-card>
-      <app-kpi-card [label]="'ADMIN.KPI_SESSIONS' | translate"  [value]="overview()?.activeSessions ?? 0"   [trend]="2" [trendSuffix]="'%'"></app-kpi-card>
+      <app-kpi-card [label]="'ADMIN.KPI_ADMINS' | translate"   [value]="roleCount('ADMIN')"      [trend]="0"  [hint]="'DASHBOARD.OVERVIEW' | translate" [icon]="icons.shield"></app-kpi-card>
+      <app-kpi-card [label]="'ADMIN.KPI_TEACHERS' | translate" [value]="roleCount('ENSEIGNANT')" [trend]="3" [icon]="icons.users"></app-kpi-card>
+      <app-kpi-card [label]="'ADMIN.KPI_STUDENTS' | translate" [value]="roleCount('ETUDIANT')"   [trend]="12" [icon]="icons.graduation"></app-kpi-card>
+      <app-kpi-card [label]="'ADMIN.KPI_PUBLISHED' | translate" [value]="overview()?.publishedCourses ?? 0" [trend]="6" [icon]="icons.rocket"></app-kpi-card>
+      <app-kpi-card [label]="'ADMIN.KPI_DRAFTS' | translate"    [value]="overview()?.draftCourses ?? 0"     [trend]="-1" [icon]="icons.edit"></app-kpi-card>
+      <app-kpi-card [label]="'ADMIN.KPI_APPROVALS' | translate" [value]="overview()?.pendingApprovals ?? 0" [trend]="0" [hint]="'ADMIN.NEEDS_REVIEW' | translate" [icon]="icons.approval"></app-kpi-card>
+      <app-kpi-card [label]="'ADMIN.KPI_SUBMISSIONS' | translate" [value]="overview()?.submissionsThisWeek ?? 0" [trend]="8" [icon]="icons.clipboard"></app-kpi-card>
+      <app-kpi-card [label]="'ADMIN.KPI_SESSIONS' | translate"  [value]="overview()?.activeSessions ?? 0"   [trend]="2" [trendSuffix]="'%'" [icon]="icons.activity"></app-kpi-card>
     </div>
 
     <div class="grid-2">
@@ -89,6 +90,7 @@ interface StatsOverview {
 })
 export class AdminDashboardComponent implements OnInit {
   private http = inject(HttpClient);
+  readonly icons = APP_ICONS;
 
   overview = signal<StatsOverview | null>(null);
   roleCount(role: 'ADMIN' | 'ENSEIGNANT' | 'ETUDIANT'): number {

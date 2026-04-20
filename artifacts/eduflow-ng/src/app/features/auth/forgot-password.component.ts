@@ -1,11 +1,12 @@
-import { Component, inject, signal, computed } from '@angular/core';
+import { Component, OnDestroy, computed, ElementRef, QueryList, ViewChildren, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormBuilder, Validators, AbstractControl } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { AbstractControl, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { RouterLink } from '@angular/router';
+import { TranslateModule } from '@ngx-translate/core';
 import { AuthService } from '../../core/services/auth.service';
+import { BrandMarkComponent } from '../../shared/components/brand/brand-mark.component';
+import { APP_ICONS } from '../../shared/icons/app-icons';
 
-// Validateurs individuels (identiques à auth-page)
 function pwdLength(c: AbstractControl)  { return c.value && c.value.length >= 8 ? null : { pwdLength: true }; }
 function pwdUpper(c: AbstractControl)   { return c.value && /[A-Z]/.test(c.value) ? null : { pwdUpper: true }; }
 function pwdDigit(c: AbstractControl)   { return c.value && /\d/.test(c.value) ? null : { pwdDigit: true }; }
@@ -14,17 +15,29 @@ function pwdSpecial(c: AbstractControl) { return c.value && /[!@#$%^&*()_\-+={}[
 @Component({
   selector: 'app-forgot-password',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink, TranslateModule],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink, TranslateModule, BrandMarkComponent],
   template: `
     <div class="wrap">
+      <div class="auth-header">
+        <app-brand-mark [link]="'/auth'" [size]="40"></app-brand-mark>
+      </div>
       <div class="card fade-up">
-        <a routerLink="/auth" class="back">← Retour à la connexion</a>
+        <a routerLink="/auth" class="back" aria-label="Retour à la connexion">
+          <span class="back-icon" [innerHTML]="icons.arrowLeft"></span>
+          <span>Retour à la connexion</span>
+        </a>
+        <div class="wizard-progress" *ngIf="step() !== 'done'">
+          <div class="wizard-step" [class.active]="progressStep() >= 1" [class.done]="progressStep() > 1">1</div>
+          <div class="wizard-line" [class.done]="progressStep() > 1"></div>
+          <div class="wizard-step" [class.active]="progressStep() >= 2" [class.done]="progressStep() > 2">2</div>
+          <div class="wizard-line" [class.done]="progressStep() > 2"></div>
+          <div class="wizard-step" [class.active]="progressStep() >= 3">3</div>
+        </div>
 
-        <!-- Étape 1 : Saisir l'email -->
         <ng-container *ngIf="step() === 'request'">
-          <div class="step-icon">🔐</div>
+          <div class="step-icon" aria-hidden="true" [innerHTML]="icons.shieldLock"></div>
           <h1>Mot de passe oublié</h1>
-          <p class="muted">Entrez votre adresse email. Si elle est enregistrée, vous recevrez un code de vérification.</p>
+          <p class="muted">Entrez votre adresse email pour recevoir un code de vérification.</p>
           <form [formGroup]="emailForm" (ngSubmit)="requestReset()" novalidate>
             <input class="input" type="email" formControlName="email"
                    placeholder="Votre adresse email" autocomplete="email"/>
@@ -36,62 +49,70 @@ function pwdSpecial(c: AbstractControl) { return c.value && /[!@#$%^&*()_\-+={}[
           </form>
         </ng-container>
 
-        <!-- Étape 2 : Réponse neutre (anti-énumération) + saisie OTP -->
         <ng-container *ngIf="step() === 'otp'">
-          <div class="step-icon">📧</div>
+          <div class="step-icon" aria-hidden="true" [innerHTML]="icons.mailSpark"></div>
           <h1>Vérification par email</h1>
-          <!-- Réponse neutre : on ne révèle pas si l'email existe -->
-          <p class="muted">Si cette adresse est enregistrée dans notre système, un code à 6 chiffres a été envoyé.</p>
+          <p class="muted">Saisissez le code à 6 chiffres envoyé à <strong>{{ pendingEmail() }}</strong>.</p>
 
           <div class="otp-meta-row">
             <span [class.warn]="remaining() < 60">⏱ Expire dans {{ formatRemaining() }}</span>
             <span>Tentative {{ attempts() }}/5</span>
           </div>
 
-          <input class="input otp-input" maxlength="6" inputmode="numeric"
-                 [value]="otpCode()" (input)="onOtpInput($event)"
-                 placeholder="••••••" autocomplete="one-time-code"/>
+          <div class="otp-grid">
+            <input
+              *ngFor="let digit of otpSlots(); let i = index"
+              #otpBox
+              class="otp-box"
+              type="text"
+              inputmode="numeric"
+              maxlength="1"
+              autocomplete="one-time-code"
+              [value]="digit"
+              (input)="onOtpBoxInput(i, $event)"
+              (keydown)="onOtpKeyDown(i, $event)"
+              (paste)="onOtpPaste(i, $event)"
+            />
+          </div>
 
           <div class="error" *ngIf="error()">{{ error() }}</div>
 
           <button class="btn-primary full" (click)="verifyOtp()"
-                  [disabled]="otpCode().length !== 6 || busy() || attempts() >= 5">
+                  [disabled]="otpCode().length !== 6 || busy() || attempts() >= 5 || remaining() <= 0">
             <span class="spinner" *ngIf="busy()"></span>
             Vérifier le code
           </button>
 
           <div class="resend-row">
-            <button class="link-btn" (click)="resendOtp()" [disabled]="busy() || remaining() > 540">
+            <button class="link-btn" (click)="resendOtp()" [disabled]="busy() || remaining() > otpResendCooldownSeconds">
               Renvoyer un nouveau code
             </button>
           </div>
         </ng-container>
 
-        <!-- Étape 3 : OTP valide → Formulaire nouveau mot de passe -->
         <ng-container *ngIf="step() === 'newpwd'">
-          <div class="step-icon">🔑</div>
+          <div class="step-icon" [innerHTML]="icons.key"></div>
           <h1>Nouveau mot de passe</h1>
-          <p class="muted">Choisissez un mot de passe sécurisé pour votre compte.</p>
+          <p class="muted">Le code a été confirmé. Choisissez maintenant un mot de passe sécurisé.</p>
           <form [formGroup]="resetForm" (ngSubmit)="submitReset()" novalidate>
             <input class="input" type="password" formControlName="newPassword"
                    placeholder="Nouveau mot de passe" autocomplete="new-password"/>
 
-            <!-- Liste de missions (checklist live) -->
             <div class="pwd-rules" *ngIf="resetForm.get('newPassword')?.value">
               <small class="rule" [class.ok]="!resetForm.get('newPassword')?.errors?.['pwdLength']">
-                <span class="rule-icon">{{ !resetForm.get('newPassword')?.errors?.['pwdLength'] ? '✓' : '✗' }}</span>
+                <span class="rule-icon">{{ !resetForm.get('newPassword')?.errors?.['pwdLength'] ? '✓' : '✕' }}</span>
                 Au moins 8 caractères
               </small>
               <small class="rule" [class.ok]="!resetForm.get('newPassword')?.errors?.['pwdUpper']">
-                <span class="rule-icon">{{ !resetForm.get('newPassword')?.errors?.['pwdUpper'] ? '✓' : '✗' }}</span>
+                <span class="rule-icon">{{ !resetForm.get('newPassword')?.errors?.['pwdUpper'] ? '✓' : '✕' }}</span>
                 Au moins une lettre majuscule
               </small>
               <small class="rule" [class.ok]="!resetForm.get('newPassword')?.errors?.['pwdDigit']">
-                <span class="rule-icon">{{ !resetForm.get('newPassword')?.errors?.['pwdDigit'] ? '✓' : '✗' }}</span>
+                <span class="rule-icon">{{ !resetForm.get('newPassword')?.errors?.['pwdDigit'] ? '✓' : '✕' }}</span>
                 Au moins un chiffre
               </small>
               <small class="rule" [class.ok]="!resetForm.get('newPassword')?.errors?.['pwdSpecial']">
-                <span class="rule-icon">{{ !resetForm.get('newPassword')?.errors?.['pwdSpecial'] ? '✓' : '✗' }}</span>
+                <span class="rule-icon">{{ !resetForm.get('newPassword')?.errors?.['pwdSpecial'] ? '✓' : '✕' }}</span>
                 Au moins un caractère spécial (!&#64;#$...)
               </small>
             </div>
@@ -104,12 +125,11 @@ function pwdSpecial(c: AbstractControl) { return c.value && /[!@#$%^&*()_\-+={}[
           </form>
         </ng-container>
 
-        <!-- Étape 4 : Succès -->
         <ng-container *ngIf="step() === 'done'">
-          <div class="step-icon">✅</div>
-          <h1>Mot de passe mis à jour</h1>
+          <div class="step-icon" [innerHTML]="icons.checkBadge"></div>
+          <h1>Mot de passe mis ? jour</h1>
           <p class="muted">Votre mot de passe a été changé avec succès. Vous pouvez maintenant vous connecter.</p>
-          <a routerLink="/auth" class="btn-primary full" style="text-align:center;text-decoration:none;">
+          <a routerLink="/auth" class="btn-primary full cta-link">
             Se connecter
           </a>
         </ng-container>
@@ -131,6 +151,7 @@ function pwdSpecial(c: AbstractControl) { return c.value && /[!@#$%^&*()_\-+={}[
     .wrap {
       min-height: 100vh;
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
       padding: 24px;
@@ -140,12 +161,16 @@ function pwdSpecial(c: AbstractControl) { return c.value && /[!@#$%^&*()_\-+={}[
         #0f0f1a;
     }
 
+    .auth-header {
+      margin-bottom: 18px;
+    }
+
     .card {
       background: #1a1a2e;
       border: 1px solid rgba(99,102,241,0.2);
       border-radius: 24px;
       padding: 40px;
-      max-width: 440px;
+      max-width: 460px;
       width: 100%;
       display: flex;
       flex-direction: column;
@@ -160,16 +185,98 @@ function pwdSpecial(c: AbstractControl) { return c.value && /[!@#$%^&*()_\-+={}[
     }
 
     .back {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      width: fit-content;
       font-size: 0.82rem;
       color: var(--muted);
       text-decoration: none;
-      transition: color 0.2s;
+      transition: color 0.2s ease;
     }
+
     .back:hover { color: var(--text); }
 
+    .back-icon {
+      display: inline-flex;
+      width: 15px;
+      height: 15px;
+      transition: transform 0.2s ease;
+      flex-shrink: 0;
+    }
+    .back-icon :is(svg) { width: 15px; height: 15px; display: block; }
+
+    .back:hover .back-icon { transform: translateX(-2px); }
+
+    .wizard-progress {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      width: 100%;
+      margin: 4px 0 8px;
+    }
+
+    .wizard-step {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 800;
+      border: 2px solid rgba(255,255,255,0.12);
+      color: rgba(255,255,255,0.3);
+      background: rgba(255,255,255,0.04);
+      transition: all 0.35s ease;
+      flex-shrink: 0;
+    }
+
+    .wizard-step.active {
+      border-color: var(--primary);
+      color: #fff;
+      background: var(--primary);
+      box-shadow: 0 0 0 4px rgba(99,102,241,0.2);
+    }
+
+    .wizard-step.done {
+      border-color: var(--green);
+      color: #fff;
+      background: var(--green);
+      box-shadow: 0 0 0 4px rgba(134,239,172,0.15);
+    }
+
+    .wizard-line {
+      flex: 1;
+      height: 2px;
+      background: rgba(255,255,255,0.08);
+      transition: background 0.4s ease;
+      border-radius: 2px;
+    }
+
+    .wizard-line.done { background: var(--green); }
+
     .step-icon {
-      font-size: 2.2rem;
+      width: 64px;
+      height: 64px;
+      margin: 0 auto;
+      display: grid;
+      place-items: center;
+      border-radius: 18px;
+      background: linear-gradient(135deg, rgba(99,102,241,0.18), rgba(139,92,246,0.16));
+      border: 1px solid rgba(99,102,241,0.28);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 14px 30px rgba(0,0,0,0.25);
+      font-size: 2rem;
       text-align: center;
+    }
+
+    .step-icon svg {
+      width: 30px;
+      height: 30px;
+      stroke: #c4b5fd;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
     }
 
     h1 {
@@ -185,6 +292,7 @@ function pwdSpecial(c: AbstractControl) { return c.value && /[!@#$%^&*()_\-+={}[
       font-size: 0.88rem;
       text-align: center;
       line-height: 1.5;
+      margin: 0;
     }
 
     form {
@@ -205,13 +313,40 @@ function pwdSpecial(c: AbstractControl) { return c.value && /[!@#$%^&*()_\-+={}[
       box-sizing: border-box;
       transition: border-color 0.2s;
     }
+
     .input:focus { border-color: var(--primary); }
 
-    .otp-input {
-      font-size: 1.8rem;
-      letter-spacing: 0.5em;
-      text-align: center;
+    .otp-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 42px);
+      justify-content: center;
+      gap: 8px;
+      width: fit-content;
+      max-width: 100%;
+      margin: 4px auto 0;
+    }
+
+    .otp-box {
+      width: 42px;
+      height: 50px;
+      padding: 0;
+      border-radius: 12px;
+      border: 1px solid rgba(99,102,241,0.25);
+      background: var(--input-bg);
+      color: var(--text);
+      font-size: 1.2rem;
       font-weight: 700;
+      text-align: center;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s;
+      text-transform: uppercase;
+      box-sizing: border-box;
+    }
+
+    .otp-box:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(99,102,241,0.15);
+      transform: translateY(-1px);
     }
 
     .otp-meta-row {
@@ -220,6 +355,7 @@ function pwdSpecial(c: AbstractControl) { return c.value && /[!@#$%^&*()_\-+={}[
       font-size: 12px;
       color: var(--muted);
     }
+
     .warn { color: var(--warn) !important; font-weight: 700; }
 
     .btn-primary {
@@ -237,14 +373,13 @@ function pwdSpecial(c: AbstractControl) { return c.value && /[!@#$%^&*()_\-+={}[
       gap: 8px;
       transition: opacity 0.2s, transform 0.1s;
     }
+
     .btn-primary:hover:not(:disabled) { opacity: 0.9; }
     .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
 
     .full { width: 100%; box-sizing: border-box; }
 
-    .resend-row {
-      text-align: center;
-    }
+    .resend-row { text-align: center; }
 
     .link-btn {
       background: none;
@@ -254,6 +389,7 @@ function pwdSpecial(c: AbstractControl) { return c.value && /[!@#$%^&*()_\-+={}[
       cursor: pointer;
       padding: 0;
     }
+
     .link-btn:disabled { opacity: 0.4; cursor: not-allowed; }
     .link-btn:hover:not(:disabled) { text-decoration: underline; }
 
@@ -263,7 +399,6 @@ function pwdSpecial(c: AbstractControl) { return c.value && /[!@#$%^&*()_\-+={}[
       text-align: left;
     }
 
-    /* Checklist mot de passe */
     .pwd-rules {
       display: flex;
       flex-direction: column;
@@ -292,7 +427,8 @@ function pwdSpecial(c: AbstractControl) { return c.value && /[!@#$%^&*()_\-+={}[
     }
 
     .spinner {
-      width: 14px; height: 14px;
+      width: 14px;
+      height: 14px;
       border: 2px solid rgba(255,255,255,0.35);
       border-top-color: #fff;
       border-radius: 50%;
@@ -300,23 +436,63 @@ function pwdSpecial(c: AbstractControl) { return c.value && /[!@#$%^&*()_\-+={}[
       display: inline-block;
     }
 
+    .cta-link {
+      text-align: center;
+      text-decoration: none;
+    }
+
+    @media (max-width: 520px) {
+      .card {
+        padding: 32px 20px;
+      }
+
+      .otp-grid {
+        grid-template-columns: repeat(6, 38px);
+        gap: 6px;
+      }
+
+      .otp-box {
+        width: 38px;
+        height: 46px;
+        font-size: 1.05rem;
+      }
+    }
+
     @keyframes spin { to { transform: rotate(360deg); } }
   `],
 })
-export class ForgotPasswordComponent {
-  private fb     = inject(FormBuilder);
-  private auth   = inject(AuthService);
-  private router = inject(Router);
+export class ForgotPasswordComponent implements OnDestroy {
+  @ViewChildren('otpBox') private otpBoxes?: QueryList<ElementRef<HTMLInputElement>>;
 
-  step     = signal<'request' | 'otp' | 'newpwd' | 'done'>('request');
-  busy     = signal(false);
-  error    = signal<string | null>(null);
-  otpCode  = signal('');
+  private fb = inject(FormBuilder);
+  private auth = inject(AuthService);
+  readonly icons = APP_ICONS;
+
+  step = signal<'request' | 'otp' | 'newpwd' | 'done'>('request');
+  busy = signal(false);
+  error = signal<string | null>(null);
+  private otpDigits = signal<string[]>(Array(6).fill(''));
+  otpCode = computed(() => this.otpDigits().join(''));
   attempts = signal(0);
+  pendingEmail = signal('');
+  readonly otpExpirySeconds = 180;
+  readonly otpResendCooldownSeconds = 120;
 
-  private pendingEmail = '';
   private otpStartedAt = 0;
+  private timerId: ReturnType<typeof setInterval> | null = null;
   remaining = signal(0);
+
+  progressStep = computed(() => {
+    switch (this.step()) {
+      case 'request': return 1;
+      case 'otp': return 2;
+      case 'newpwd': return 3;
+      default: return 3;
+    }
+  });
+
+  otpSlots = computed(() => [...this.otpDigits()]);
+
   formatRemaining = computed(() => {
     const r = Math.max(0, this.remaining());
     return `${Math.floor(r / 60)}:${(r % 60).toString().padStart(2, '0')}`;
@@ -326,96 +502,281 @@ export class ForgotPasswordComponent {
     email: ['', [Validators.required, Validators.email]],
   });
 
-  // Formulaire nouveau mot de passe avec validateurs individuels
   resetForm = this.fb.group({
     newPassword: ['', [Validators.required, pwdLength, pwdUpper, pwdDigit, pwdSpecial]],
   });
 
-  /** Étape 1 — demande de réinitialisation (réponse neutre anti-énumération) */
   requestReset(): void {
     if (this.emailForm.invalid) return;
-    this.busy.set(true); this.error.set(null);
-    this.pendingEmail = this.emailForm.value.email!;
-    this.auth.forgotPassword({ email: this.pendingEmail }).subscribe({
-      next:  () => { this.busy.set(false); this.goToOtp(); },
-      error: () => { this.busy.set(false); this.goToOtp(); }, // Réponse neutre : toujours avancer
-    });
-  }
-
-  private goToOtp(): void {
-    this.attempts.set(0);
-    this.otpCode.set('');
-    this.startTimer();
-    this.step.set('otp');
-  }
-
-  onOtpInput(e: Event): void {
-    const v = (e.target as HTMLInputElement).value.replace(/\D/g, '').slice(0, 6);
-    this.otpCode.set(v);
-  }
-
-  /** Étape 2 — vérification OTP (max 5 tentatives) */
-  verifyOtp(): void {
-    if (this.attempts() >= 5) {
-      this.error.set('Trop de tentatives. Recommencez la procédure.');
-      return;
-    }
-    this.busy.set(true); this.error.set(null);
-    this.attempts.update(n => n + 1);
-
-    // On utilise resetPassword pour vérifier le code + appliquer le mdp plus tard
-    // Mais selon le diagramme on doit d'abord vérifier l'OTP seul.
-    // On transite directement vers le formulaire si le code semble valide (6 chiffres)
-    // La vraie vérification se fait lors de la soumission du nouveau mot de passe.
-    this.busy.set(false);
-    this.step.set('newpwd');
-  }
-
-  /** Étape 2b — renvoi OTP (nouveau code valide 10 min) */
-  resendOtp(): void {
-    if (!this.pendingEmail) return;
-    this.busy.set(true); this.error.set(null);
-    this.auth.forgotPassword({ email: this.pendingEmail }).subscribe({
-      next:  () => { this.busy.set(false); this.attempts.set(0); this.otpCode.set(''); this.startTimer(); },
-      error: () => { this.busy.set(false); this.startTimer(); },
-    });
-  }
-
-  /** Étape 3 — soumet le nouveau mot de passe avec le code OTP */
-  submitReset(): void {
-    if (this.resetForm.invalid) return;
-    this.busy.set(true); this.error.set(null);
-    const newPassword = this.resetForm.value.newPassword!;
-    this.auth.resetPassword({
-      email: this.pendingEmail,
-      code:  this.otpCode(),
-      newPassword,
-    }).subscribe({
-      next:  () => { this.busy.set(false); this.step.set('done'); },
+    this.busy.set(true);
+    this.error.set(null);
+    this.pendingEmail.set(this.emailForm.value.email ?? '');
+    this.auth.forgotPassword({ email: this.pendingEmail() }).subscribe({
+      next: () => {
+        this.busy.set(false);
+        this.goToOtp();
+      },
       error: e => {
         this.busy.set(false);
         const msg = e?.error?.message ?? '';
-        if (msg.toLowerCase().includes('expired') || msg.toLowerCase().includes('expiré')) {
-          this.error.set('Code expiré. Renvoyez un nouveau code OTP.');
-          this.step.set('otp');
-        } else if (msg.toLowerCase().includes('invalid') || msg.toLowerCase().includes('invalide')) {
-          this.error.set('Code incorrect ou expiré. Vérifiez votre email.');
-          this.step.set('otp');
+        if (msg.toLowerCase().includes('email not found')) {
+          this.error.set("Cette adresse email n'existe pas.");
         } else {
-          this.error.set(msg || 'Une erreur est survenue.');
+          this.error.set(msg || "Impossible d'envoyer le code de réinitialisation.");
         }
       },
     });
   }
 
+  private goToOtp(): void {
+    this.attempts.set(0);
+    this.clearOtpDigits();
+    this.startTimer();
+    this.step.set('otp');
+    setTimeout(() => this.focusOtpBox(0));
+  }
+
+  onOtpBoxInput(index: number, event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.dataset['skipInput'] === '1') {
+      input.dataset['skipInput'] = '0';
+      return;
+    }
+
+    const inputEvent = event as InputEvent;
+    const digits = input.value.replace(/\D/g, '');
+
+    if (inputEvent.inputType === 'deleteContentBackward') {
+      this.setOtpDigit(index, '');
+      if (index > 0) this.focusOtpBox(index - 1);
+      return;
+    }
+
+    if (!digits) {
+      this.setOtpDigit(index, '');
+      return;
+    }
+
+    if (digits.length > 1) {
+      if (index === 0 && digits.length === 6) {
+        this.insertOtpDigits(0, digits, true);
+        setTimeout(() => this.focusOtpBox(5));
+        return;
+      }
+
+      const lastDigit = digits.slice(-1);
+      this.setOtpDigit(index, lastDigit);
+      if (index < 5) setTimeout(() => this.focusOtpBox(index + 1));
+      return;
+    }
+
+    this.setOtpDigit(index, digits);
+    if (index < 5) {
+      setTimeout(() => this.focusOtpBox(index + 1));
+    }
+  }
+
+  onOtpKeyDown(index: number, event: KeyboardEvent): void {
+    if (/^\d$/.test(event.key)) {
+      event.preventDefault();
+      const input = event.target as HTMLInputElement;
+      input.dataset['skipInput'] = '1';
+      this.setOtpDigit(index, event.key);
+      if (index < 5) setTimeout(() => this.focusOtpBox(index + 1));
+      return;
+    }
+
+    if (event.key === 'Backspace') {
+      event.preventDefault();
+      const digits = this.otpDigits();
+      if (digits[index]) {
+        this.setOtpDigit(index, '');
+        if (index > 0) this.focusOtpBox(index - 1);
+        return;
+      }
+
+      if (index > 0) {
+        this.setOtpDigit(index - 1, '');
+        this.focusOtpBox(index - 1);
+      }
+      return;
+    }
+
+    if (event.key === 'Delete') {
+      event.preventDefault();
+      this.setOtpDigit(index, '');
+      return;
+    }
+
+    if (event.key.length === 1 && !/^\d$/.test(event.key)) {
+      event.preventDefault();
+      return;
+    }
+
+    if (event.key === 'ArrowLeft' && index > 0) {
+      event.preventDefault();
+      this.focusOtpBox(index - 1);
+    }
+
+    if (event.key === 'ArrowRight' && index < 5) {
+      event.preventDefault();
+      this.focusOtpBox(index + 1);
+    }
+  }
+
+  onOtpPaste(index: number, event: ClipboardEvent): void {
+    event.preventDefault();
+    const pasted = event.clipboardData?.getData('text')?.replace(/\D/g, '').slice(0, 6) ?? '';
+    if (!pasted) return;
+    this.insertOtpDigits(index, pasted, true);
+    setTimeout(() => this.focusOtpBox(Math.min(index + pasted.length, 5)));
+  }
+
+  verifyOtp(): void {
+    if (this.attempts() >= 5) {
+      this.error.set('Trop de tentatives. Recommencez la procédure.');
+      return;
+    }
+    if (this.remaining() <= 0) {
+      this.error.set('Code expiré. Renvoyez un nouveau code.');
+      return;
+    }
+
+    this.busy.set(true);
+    this.error.set(null);
+    this.auth.verifyResetOtp({ email: this.pendingEmail(), code: this.otpCode() }).subscribe({
+      next: () => {
+        this.busy.set(false);
+        this.stopTimer();
+        this.step.set('newpwd');
+      },
+      error: e => {
+        this.busy.set(false);
+        this.attempts.update(n => n + 1);
+        const msg = (e?.error?.message ?? '').toLowerCase();
+        if (msg.includes('expired')) {
+          this.error.set('Code expiré. Renvoyez un nouveau code.');
+          this.remaining.set(0);
+        } else if (msg.includes('too many')) {
+          this.error.set('Nombre maximum de tentatives atteint. Renvoyez un nouveau code.');
+          this.attempts.set(5);
+        } else {
+          this.error.set(`Code incorrect. Tentative ${this.attempts()}/5.`);
+        }
+      },
+    });
+  }
+
+  resendOtp(): void {
+    if (!this.pendingEmail()) return;
+    this.busy.set(true);
+    this.error.set(null);
+    this.auth.forgotPassword({ email: this.pendingEmail() }).subscribe({
+      next: () => {
+        this.busy.set(false);
+        this.attempts.set(0);
+        this.clearOtpDigits();
+        this.startTimer();
+        setTimeout(() => this.focusOtpBox(0));
+      },
+      error: e => {
+        this.busy.set(false);
+        const msg = e?.error?.message ?? '';
+        this.error.set(msg || 'Impossible de renvoyer le code.');
+      },
+    });
+  }
+
+  submitReset(): void {
+    if (this.resetForm.invalid) return;
+    this.busy.set(true);
+    this.error.set(null);
+    const newPassword = this.resetForm.value.newPassword ?? '';
+    this.auth.resetPassword({
+      email: this.pendingEmail(),
+      code: this.otpCode(),
+      newPassword,
+    }).subscribe({
+      next: () => {
+        this.busy.set(false);
+        this.stopTimer();
+        this.step.set('done');
+      },
+      error: e => {
+        this.busy.set(false);
+        const msg = (e?.error?.message ?? '').toLowerCase();
+        if (msg.includes('expired')) {
+          this.error.set('Code expiré. Renvoyez un nouveau code OTP.');
+          this.step.set('otp');
+        } else if (msg.includes('invalid')) {
+          this.error.set('Code incorrect ou expiré. Vérifiez votre email.');
+          this.step.set('otp');
+        } else {
+          this.error.set(e?.error?.message || 'Une erreur est survenue.');
+        }
+      },
+    });
+  }
+
+  private focusOtpBox(index: number): void {
+    const box = this.otpBoxes?.get(index)?.nativeElement;
+    box?.focus();
+    box?.select();
+  }
+
+  private clearOtpDigits(): void {
+    this.otpDigits.set(Array(6).fill(''));
+  }
+
+  private setOtpDigit(index: number, value: string): void {
+    this.otpDigits.update(current => {
+      const next = [...current];
+      next[index] = value.slice(-1);
+      return next;
+    });
+  }
+
+  private insertOtpDigits(index: number, rawDigits: string, clearAfter: boolean): void {
+    const digits = rawDigits.replace(/\D/g, '');
+    this.otpDigits.update(current => {
+      const next = [...current];
+      let writeIndex = index;
+      for (const digit of digits) {
+        if (writeIndex > 5) break;
+        next[writeIndex] = digit;
+        writeIndex += 1;
+      }
+      if (clearAfter) {
+        for (let i = writeIndex; i < 6; i += 1) {
+          next[i] = '';
+        }
+      }
+      return next;
+    });
+  }
+
   private startTimer(): void {
+    this.stopTimer();
     this.otpStartedAt = Date.now();
-    this.remaining.set(600);
-    const tick = () => {
+    this.remaining.set(this.otpExpirySeconds);
+    this.timerId = setInterval(() => {
       const elapsed = Math.floor((Date.now() - this.otpStartedAt) / 1000);
-      this.remaining.set(Math.max(0, 600 - elapsed));
-      if (this.step() === 'otp' && this.remaining() > 0) requestAnimationFrame(() => setTimeout(tick, 1000));
-    };
-    tick();
+      const nextRemaining = Math.max(0, this.otpExpirySeconds - elapsed);
+      this.remaining.set(nextRemaining);
+      if (nextRemaining <= 0 || this.step() !== 'otp') {
+        this.stopTimer();
+      }
+    }, 1000);
+  }
+
+  private stopTimer(): void {
+    if (this.timerId === null) return;
+    clearInterval(this.timerId);
+    this.timerId = null;
+  }
+
+  ngOnDestroy(): void {
+    this.stopTimer();
   }
 }
+

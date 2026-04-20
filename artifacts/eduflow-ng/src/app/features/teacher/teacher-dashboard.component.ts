@@ -12,6 +12,7 @@ import { LineChartComponent } from '../../shared/components/charts/line-chart.co
 import { ActivityFeedComponent, ActivityItem } from '../../shared/components/activity-feed/activity-feed.component';
 import { StatusChipComponent } from '../../shared/components/status-chip/status-chip.component';
 import { API_BASE } from '../../core/services/auth.service';
+import { APP_ICONS } from '../../shared/icons/app-icons';
 
 interface TeacherStats {
   myCourses?: number;
@@ -34,11 +35,11 @@ interface TeacherStats {
     <h1 class="page-title">{{ 'TEACHER.TITLE' | translate }}</h1>
 
     <div class="kpi-grid">
-      <app-kpi-card [label]="'TEACHER.KPI_COURSES' | translate"     [value]="stats()?.myCourses ?? 0"        [trend]="2"></app-kpi-card>
-      <app-kpi-card [label]="'TEACHER.KPI_PUBLISHED' | translate"   [value]="stats()?.publishedCourses ?? 0" [trend]="1"></app-kpi-card>
-      <app-kpi-card [label]="'TEACHER.KPI_STUDENTS' | translate"    [value]="stats()?.totalStudents ?? 0"    [trend]="9"></app-kpi-card>
-      <app-kpi-card [label]="'TEACHER.KPI_AVG_GRADE' | translate"   [value]="stats()?.averageGrade ?? 0"     [suffix]="'/20'" [trend]="0.4"></app-kpi-card>
-      <app-kpi-card [label]="'TEACHER.KPI_PENDING' | translate"     [value]="stats()?.pendingGradings ?? 0"  [trend]="-2"></app-kpi-card>
+      <app-kpi-card [label]="'TEACHER.KPI_COURSES' | translate"     [value]="stats()?.myCourses ?? 0"        [trend]="2" [icon]="icons.book"></app-kpi-card>
+      <app-kpi-card [label]="'TEACHER.KPI_PUBLISHED' | translate"   [value]="stats()?.publishedCourses ?? 0" [trend]="1" [icon]="icons.rocket"></app-kpi-card>
+      <app-kpi-card [label]="'TEACHER.KPI_STUDENTS' | translate"    [value]="stats()?.totalStudents ?? 0"    [trend]="9" [icon]="icons.users"></app-kpi-card>
+      <app-kpi-card [label]="'TEACHER.KPI_AVG_GRADE' | translate"   [value]="stats()?.averageGrade ?? 0"     [suffix]="'/20'" [trend]="0.4" [icon]="icons.award"></app-kpi-card>
+      <app-kpi-card [label]="'TEACHER.KPI_PENDING' | translate"     [value]="stats()?.pendingGradings ?? 0"  [trend]="-2" [icon]="icons.clipboard"></app-kpi-card>
     </div>
 
     <div class="grid-2">
@@ -93,6 +94,7 @@ interface TeacherStats {
 })
 export class TeacherDashboardComponent implements OnInit {
   private http = inject(HttpClient);
+  readonly icons = APP_ICONS;
   stats = signal<TeacherStats | null>(null);
 
   enrollmentRows: HBarRow[] = [

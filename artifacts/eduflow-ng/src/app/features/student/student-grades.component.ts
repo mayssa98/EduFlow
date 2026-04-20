@@ -7,6 +7,7 @@ import { KpiCardComponent } from '../../shared/components/kpi-card/kpi-card.comp
 import { ChartCardComponent } from '../../shared/components/chart-card/chart-card.component';
 import { LineChartComponent } from '../../shared/components/charts/line-chart.component';
 import { ProgressBarComponent } from '../../shared/components/progress-bar/progress-bar.component';
+import { APP_ICONS } from '../../shared/icons/app-icons';
 
 @Component({
   selector: 'app-student-grades',
@@ -17,13 +18,16 @@ import { ProgressBarComponent } from '../../shared/components/progress-bar/progr
   ],
   template: `
     <div class="grades-shell">
-      <h1 class="page-title">📊 Relevé de notes et résultats</h1>
+      <h1 class="page-title">
+        <span class="title-icon" [innerHTML]="icons.chart"></span>
+        Releve de notes et resultats
+      </h1>
 
       <div class="kpi-grid">
-        <app-kpi-card [label]="'Total soumissions'" [value]="submissions().length" [trend]="0"></app-kpi-card>
-        <app-kpi-card [label]="'Notés'" [value]="gradedCount()" [trend]="0"></app-kpi-card>
-        <app-kpi-card [label]="'En attente'" [value]="pendingCount()" [trend]="0"></app-kpi-card>
-        <app-kpi-card [label]="'Moyenne générale'" [value]="average()" [suffix]="'/20'" [trend]="0"></app-kpi-card>
+        <app-kpi-card [label]="'Total soumissions'" [value]="submissions().length" [trend]="0" [icon]="icons.clipboard"></app-kpi-card>
+        <app-kpi-card [label]="'Notes'" [value]="gradedCount()" [trend]="0" [icon]="icons.checkCircle"></app-kpi-card>
+        <app-kpi-card [label]="'En attente'" [value]="pendingCount()" [trend]="0" [icon]="icons.clock"></app-kpi-card>
+        <app-kpi-card [label]="'Moyenne generale'" [value]="average()" [suffix]="'/20'" [trend]="0" [icon]="icons.award"></app-kpi-card>
       </div>
 
       <div class="grid-2">
@@ -35,16 +39,14 @@ import { ProgressBarComponent } from '../../shared/components/progress-bar/progr
           <div class="summary-list">
             <div class="summary-item" *ngFor="let s of submissions()">
               <div class="summary-left">
-                <div class="summary-icon" [class.graded]="s.note != null">
-                  {{ s.note != null ? '✅' : '⏳' }}
-                </div>
+                <div class="summary-icon" [class.graded]="s.note != null" [innerHTML]="s.note != null ? icons.checkCircle : icons.clock"></div>
                 <div>
                   <strong>{{ s.devoirTitre }}</strong>
                   <p class="muted small">Soumis le {{ formatDate(s.dateSoumission) }}</p>
                 </div>
               </div>
               <div class="summary-right" *ngIf="s.note != null">
-                <span class="grade" [class.failed]="(s.note ?? 0) < 10" [class.passed]="(s.note ?? 0) >= 10">
+                <span class="grade" [class.failed]="s.note < 10" [class.passed]="s.note >= 10">
                   {{ s.note }}/20
                 </span>
               </div>
@@ -79,7 +81,8 @@ import { ProgressBarComponent } from '../../shared/components/progress-bar/progr
   styles: [`
     :host { --card: #1a1a2e; --border: rgba(99,102,241,0.2); --text: #e2e8f0; --muted: #94a3b8; }
     .grades-shell { padding: 28px; display: flex; flex-direction: column; gap: 24px; }
-    .page-title { font-size: 1.5rem; margin: 0; color: var(--text); }
+    .page-title { display: flex; align-items: center; gap: 10px; font-size: 1.5rem; margin: 0; color: var(--text); }
+    .title-icon { display: inline-flex; align-items: center; justify-content: center; color: #a5b4fc; }
     .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; }
     .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
     @media (max-width: 1000px) { .grid-2 { grid-template-columns: 1fr; } }
@@ -92,7 +95,21 @@ import { ProgressBarComponent } from '../../shared/components/progress-bar/progr
     }
     .summary-item:hover { background: rgba(99,102,241,0.04); }
     .summary-left { display: flex; align-items: center; gap: 12px; }
-    .summary-icon { font-size: 1.2rem; width: 32px; text-align: center; }
+    .summary-icon {
+      width: 36px; height: 36px;
+      display: inline-flex; align-items: center; justify-content: center;
+      color: #fcd34d;
+      background: rgba(251,191,36,0.08);
+      border: 1px solid rgba(251,191,36,0.16);
+      border-radius: 12px;
+      flex-shrink: 0;
+    }
+    .summary-icon.graded {
+      color: #86efac;
+      background: rgba(34,197,94,0.08);
+      border-color: rgba(34,197,94,0.18);
+    }
+    .summary-icon :is(svg) { display: block; }
     .summary-left strong { font-size: 0.92rem; color: var(--text); }
     .muted { color: var(--muted); }
     .small { font-size: 0.8rem; }
@@ -111,6 +128,7 @@ import { ProgressBarComponent } from '../../shared/components/progress-bar/progr
 })
 export class StudentGradesComponent implements OnInit {
   private asgSvc = inject(AssignmentService);
+  readonly icons = APP_ICONS;
   submissions = signal<Submission[]>([]);
 
   ngOnInit(): void {

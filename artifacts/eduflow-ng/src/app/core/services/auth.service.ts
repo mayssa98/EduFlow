@@ -4,7 +4,7 @@ import { Router } from '@angular/router';
 import { Observable, BehaviorSubject, tap, of, catchError, map } from 'rxjs';
 import {
   AuthUser, LoginRequest, RegisterRequest,
-  OtpVerifyRequest, ForgotPasswordRequest, ResetPasswordRequest,
+  OtpVerifyRequest, ForgotPasswordRequest, VerifyResetOtpRequest, ResetPasswordRequest,
   SimpleMessageResponse, UserRole, GoogleAuthRequest, GoogleOAuthConfigResponse,
   MfaChallengeResponse, GoogleRegistrationChallenge, VerifyMfaRequest, GoogleCompleteRequest
 } from '../models/auth.models';
@@ -73,6 +73,10 @@ export class AuthService {
     return this.http.post<SimpleMessageResponse>(`${API_BASE}/auth/forgot-password`, body, { withCredentials: true });
   }
 
+  verifyResetOtp(body: VerifyResetOtpRequest): Observable<SimpleMessageResponse> {
+    return this.http.post<SimpleMessageResponse>(`${API_BASE}/auth/verify-reset-otp`, body, { withCredentials: true });
+  }
+
   resetPassword(body: ResetPasswordRequest): Observable<SimpleMessageResponse> {
     return this.http.post<SimpleMessageResponse>(`${API_BASE}/auth/reset-password`, body, { withCredentials: true });
   }
@@ -108,9 +112,9 @@ export class AuthService {
     );
   }
 
-  googleLogin(): void {
-    this.http.get<GoogleOAuthConfigResponse>(`${API_BASE}/auth/google/config`).subscribe({
-      next: cfg => {
+  googleLogin(): Observable<void> {
+    return this.http.get<GoogleOAuthConfigResponse>(`${API_BASE}/auth/google/config`).pipe(
+      tap(cfg => {
         const state = this.createGoogleState();
         sessionStorage.setItem(this.googleStateKey, state);
         sessionStorage.setItem(this.googleRedirectKey, cfg.redirectUri);
@@ -125,11 +129,9 @@ export class AuthService {
           access_type: 'offline',
         });
         window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${query.toString()}`;
-      },
-      error: () => {
-        alert('Google sign-in is not configured yet. Set GOOGLE_CLIENT_ID and GOOGLE_REDIRECT_URI on the backend.');
-      },
-    });
+      }),
+      map(() => undefined),
+    );
   }
 
   consumeGoogleRedirectUri(): string | null {

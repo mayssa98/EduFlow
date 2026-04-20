@@ -1,29 +1,24 @@
 import { Component, inject, signal, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { AuthService } from '../../core/services/auth.service';
 import { interval, Subscription } from 'rxjs';
+import { BrandMarkComponent } from '../../shared/components/brand/brand-mark.component';
+import { APP_ICONS } from '../../shared/icons/app-icons';
 
 @Component({
   selector: 'app-pending-page',
   standalone: true,
-  imports: [CommonModule, RouterLink, TranslateModule],
+  imports: [CommonModule, TranslateModule, BrandMarkComponent],
   template: `
     <div class="pending-shell">
       <div class="topbar">
-        <a routerLink="/" class="brand">
-          <img src="assets/logo.png" alt="EduFlow" class="brand-logo" />
-          <span>EduFlow</span>
-        </a>
+        <app-brand-mark [size]="38"></app-brand-mark>
       </div>
 
       <div class="pending-card fade-up">
-        <div class="hourglass-anim">
-          <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#a5b4fc" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-          </svg>
-        </div>
+        <div class="hourglass-anim" [innerHTML]="icons.clock"></div>
         <h1>Compte en attente d'approbation</h1>
         <p class="muted">
           Votre inscription a été enregistrée avec succès !<br/>
@@ -31,11 +26,7 @@ import { interval, Subscription } from 'rxjs';
         </p>
 
         <div class="info-box">
-          <div class="info-icon">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#a5b4fc" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>
-            </svg>
-          </div>
+          <div class="info-icon" [innerHTML]="icons.mailSpark"></div>
           <div>
             <strong>Vous recevrez un email</strong>
             <p>Lorsque votre compte sera approuvé ou refusé, un email de notification vous sera envoyé.</p>
@@ -49,8 +40,8 @@ import { interval, Subscription } from 'rxjs';
         </div>
 
         <button class="btn-logout" (click)="logout()">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-          Se déconnecter
+          <span [innerHTML]="icons.logout"></span>
+          Se deconnecter
         </button>
       </div>
     </div>
@@ -217,6 +208,7 @@ export class PendingPageComponent implements OnInit, OnDestroy {
   private auth = inject(AuthService);
   private router = inject(Router);
   private pollSub?: Subscription;
+  readonly icons = APP_ICONS;
 
   ngOnInit(): void {
     // Poll /auth/me every 30s to check if status changed

@@ -302,13 +302,14 @@ public class AuthService {
     @Transactional
     public void forgotPassword(ForgotPasswordRequest req) {
         String normalized = EmailNormalizer.normalize(req.email());
-        userRepo.findByEmailNormalized(normalized).ifPresent(u -> {
-            try {
-                issueOtp(u, OtpPurpose.PASSWORD_RESET);
-            } catch (Exception e) {
-                log.warn("Failed to issue password reset OTP: {}", e.getMessage());
-            }
-        });
+        Utilisateur user = userRepo.findByEmailNormalized(normalized)
+                .orElseThrow(() -> new IllegalArgumentException("Email not found"));
+        try {
+            issueOtp(user, OtpPurpose.PASSWORD_RESET);
+        } catch (Exception e) {
+            log.warn("Failed to issue password reset OTP: {}", e.getMessage());
+            throw new IllegalStateException("Failed to send reset code");
+        }
     }
 
     @Transactional
@@ -322,6 +323,13 @@ public class AuthService {
         userRepo.save(user);
         otpRepo.save(otp);
         refreshRepo.revokeAllForUser(user.getId());
+    }
+
+    @Transactional
+    public void verifyResetOtp(VerifyResetOtpRequest req) {
+        Utilisateur user = userRepo.findByEmailNormalized(EmailNormalizer.normalize(req.email()))
+                .orElseThrow(() -> new IllegalArgumentException("Invalid request"));
+        validateOtp(user, req.code(), OtpPurpose.PASSWORD_RESET);
     }
 
     @Transactional
@@ -388,6 +396,23 @@ public class AuthService {
         }
         otp.setConsumedAt(OffsetDateTime.now());
         return otp;
+    }
+
+    private void validateOtp(Utilisateur user, String code, OtpPurpose purpose) {
+        OtpCode otp = otpRepo.findFirstByUtilisateurIdAndPurposeAndConsumedAtIsNullOrderByDateCreationDesc(
+                        user.getId(), purpose)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid or expired code"));
+        if (otp.getExpiresAt().isBefore(OffsetDateTime.now())) {
+            throw new IllegalArgumentException("Code expired");
+        }
+        if (otp.getAttempts() >= otp.getMaxAttempts()) {
+            throw new IllegalArgumentException("Too many attempts");
+        }
+        if (!encoder.matches(code, otp.getCodeHash())) {
+            otp.setAttempts(otp.getAttempts() + 1);
+            otpRepo.save(otp);
+            throw new IllegalArgumentException("Invalid code");
+        }
     }
 
     private void issueTokens(Utilisateur user, HttpServletResponse resp) {

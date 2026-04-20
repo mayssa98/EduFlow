@@ -121,14 +121,14 @@ public class CoursService {
     @Transactional(readOnly = true)
     public List<SupportResponse> listFiles(Long coursId) {
         Cours c = coursRepo.findById(coursId).orElseThrow(() -> new com.eduflow.exception.NotFoundException("Course not found"));
-        ensureVisible(c);
+        ensureMaterialsVisible(c);
         return supportRepo.findByCoursId(coursId).stream().map(this::toSupport).toList();
     }
 
     @Transactional(readOnly = true)
     public SupportPedagogique getFileForServing(Long coursId, Long fileId) {
         Cours c = coursRepo.findById(coursId).orElseThrow(() -> new com.eduflow.exception.NotFoundException("Course not found"));
-        ensureVisible(c);
+        ensureMaterialsVisible(c);
         SupportPedagogique sp = supportRepo.findById(fileId)
                 .orElseThrow(() -> new com.eduflow.exception.NotFoundException("File not found"));
         if (!sp.getCours().getId().equals(coursId)) throw new IllegalArgumentException("File not in course");
@@ -168,6 +168,18 @@ public class CoursService {
         boolean enrolled = inscriptionRepo.findByEtudiantId(uid).stream()
                 .anyMatch(i -> i.getCours().getId().equals(c.getId()));
         if (!enrolled) throw new AccessDeniedException("Not enrolled in this course");
+    }
+
+    private void ensureMaterialsVisible(Cours c) {
+        String role = SecurityUtils.currentRole();
+        if ("ADMIN".equals(role)) return;
+        if ("ENSEIGNANT".equals(role)) {
+            if (!c.getEnseignant().getId().equals(SecurityUtils.currentUserId()))
+                throw new AccessDeniedException("Forbidden");
+            return;
+        }
+        if (c.getStatut() != StatutCours.PUBLISHED)
+            throw new AccessDeniedException("Course materials not available");
     }
 
     private CoursResponse toResponse(Cours c) {

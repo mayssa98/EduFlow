@@ -26,6 +26,7 @@ export interface RegisterRequest {
 }
 export interface OtpVerifyRequest { email: string; code: string; purpose: 'REGISTRATION' | 'PASSWORD_RESET'; }
 export interface ForgotPasswordRequest { email: string; }
+export interface VerifyResetOtpRequest { email: string; code: string; }
 export interface ResetPasswordRequest { email: string; code: string; newPassword: string; }
 export interface GoogleAuthRequest { code: string; redirectUri?: string; }
 export interface GoogleOAuthConfigResponse { clientId: string; redirectUri: string; }
