@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
+import { SafeHtmlPipe } from '../../shared/pipes/safe-html.pipe';
 import { ThemeToggleComponent } from '../../shared/components/theme-toggle/theme-toggle.component';
 import { LanguageSwitcherComponent } from '../../shared/components/language-switcher/language-switcher.component';
 import { BrandMarkComponent } from '../../shared/components/brand/brand-mark.component';
@@ -10,7 +11,7 @@ import { APP_ICONS } from '../../shared/icons/app-icons';
 @Component({
   selector: 'app-landing-page',
   standalone: true,
-  imports: [CommonModule, RouterLink, TranslateModule, ThemeToggleComponent, LanguageSwitcherComponent, BrandMarkComponent],
+  imports: [CommonModule, RouterLink, TranslateModule, SafeHtmlPipe, ThemeToggleComponent, LanguageSwitcherComponent, BrandMarkComponent],
   template: `
     <div class="landing">
       <div class="bg-mesh"></div>
@@ -26,7 +27,7 @@ import { APP_ICONS } from '../../shared/icons/app-icons';
         <app-brand-mark [size]="40"></app-brand-mark>
         <div class="nav-links">
           <a *ngFor="let item of navItems" [href]="item.href" class="nav-link">
-            <span class="nav-link__icon" [innerHTML]="item.icon"></span>
+            <span class="nav-link__icon" [innerHTML]="item.icon | safeHtml"></span>
             <span class="nav-link__label">{{ item.labelKey | translate }}</span>
           </a>
         </div>
@@ -40,7 +41,7 @@ import { APP_ICONS } from '../../shared/icons/app-icons';
       <section id="home" class="hero">
         <div class="hero-copy fade-up">
           <span class="hero-badge glass">
-            <span class="hero-badge__icon" [innerHTML]="icons.sparkles"></span>
+            <span class="hero-badge__icon" [innerHTML]="icons.sparkles | safeHtml"></span>
             {{ 'LANDING.HERO_BADGE' | translate }}
           </span>
 
@@ -106,7 +107,7 @@ import { APP_ICONS } from '../../shared/icons/app-icons';
             <img src="assets/landing-student-photo.jpg" alt="Etudiante utilisant la plateforme" class="hero-student" />
 
             <div class="floating-card floating-card-left glass">
-              <span class="floating-card__icon floating-card__icon--teal" [innerHTML]="icons.checkBadge"></span>
+              <span class="floating-card__icon floating-card__icon--teal" [innerHTML]="icons.checkBadge | safeHtml"></span>
               <div class="floating-card__copy">
                 <span class="floating-card__label">{{ 'LANDING.FLOATING_CARD_TITLE' | translate }}</span>
                 <strong>{{ 'LANDING.FLOATING_CARD_VALUE' | translate }}</strong>
@@ -115,7 +116,7 @@ import { APP_ICONS } from '../../shared/icons/app-icons';
             </div>
 
             <div class="floating-card floating-card-right glass">
-              <span class="floating-card__icon floating-card__icon--amber" [innerHTML]="icons.clock"></span>
+              <span class="floating-card__icon floating-card__icon--amber" [innerHTML]="icons.clock | safeHtml"></span>
               <div class="floating-card__copy">
                 <strong>{{ 'LANDING.VIDEO_CARD_TITLE' | translate }}</strong>
                 <p>{{ 'LANDING.VIDEO_CARD_SUBTITLE' | translate }}</p>
@@ -151,7 +152,7 @@ import { APP_ICONS } from '../../shared/icons/app-icons';
           <div class="grid">
             <article class="feat glass" *ngFor="let f of features">
               <div class="feat-head">
-                <div class="ico" [style.background]="f.bg"><span [innerHTML]="f.icon"></span></div>
+                <div class="ico" [style.background]="f.bg"><span [innerHTML]="f.icon | safeHtml"></span></div>
                 <span class="feat-chip">{{ f.chipKey | translate }}</span>
               </div>
               <h3>{{ f.titleKey | translate }}</h3>
@@ -166,7 +167,7 @@ import { APP_ICONS } from '../../shared/icons/app-icons';
 
             <div class="story-list">
               <div class="story-item" *ngFor="let item of storyItems">
-                <span class="story-item__icon" [innerHTML]="item.icon"></span>
+                <span class="story-item__icon" [innerHTML]="item.icon | safeHtml"></span>
                 <div>
                   <strong>{{ item.titleKey | translate }}</strong>
                   <p>{{ item.descKey | translate }}</p>
@@ -185,10 +186,10 @@ import { APP_ICONS } from '../../shared/icons/app-icons';
         </div>
 
         <div class="journey-layout">
-          <div class="journey-steps">
-            <article class="journey-step glass" *ngFor="let step of workflowSteps">
-              <span class="journey-step__index">{{ step.index }}</span>
-              <span class="journey-step__icon" [innerHTML]="step.icon"></span>
+          <div class="journey-grid">
+            <article class="journey-card glass" *ngFor="let step of workflowSteps">
+              <span class="journey-card__index">{{ step.index }}</span>
+              <span class="journey-card__icon" [innerHTML]="step.icon | safeHtml"></span>
               <h3>{{ step.titleKey | translate }}</h3>
               <p>{{ step.descKey | translate }}</p>
             </article>
@@ -204,7 +205,7 @@ import { APP_ICONS } from '../../shared/icons/app-icons';
             </div>
 
             <div class="timeline-item" *ngFor="let item of timelineItems">
-              <span class="timeline-item__dot"></span>
+              <span class="timeline-item__icon" [innerHTML]="item.icon | safeHtml"></span>
               <div>
                 <strong>{{ item.titleKey | translate }}</strong>
                 <p>{{ item.descKey | translate }}</p>
@@ -979,7 +980,7 @@ import { APP_ICONS } from '../../shared/icons/app-icons';
     .hero-badge__icon svg,
     .nav-link__icon svg,
     .story-item__icon svg,
-    .journey-step__icon svg,
+    .journey-card__icon svg,
     .floating-card__icon svg,
     .ico svg {
       width: 22px;
@@ -992,7 +993,7 @@ import { APP_ICONS } from '../../shared/icons/app-icons';
     .story-item__icon span,
     .floating-card__icon span,
     .hero-badge__icon span,
-    .journey-step__icon span {
+    .journey-card__icon span {
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -1011,19 +1012,19 @@ import { APP_ICONS } from '../../shared/icons/app-icons';
       align-items: start;
     }
 
-    .journey-steps {
+    .journey-grid {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 16px;
     }
 
-    .journey-step {
+    .journey-card {
       padding: 24px;
       position: relative;
       min-height: 220px;
     }
 
-    .journey-step__index {
+    .journey-card__index {
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -1038,7 +1039,7 @@ import { APP_ICONS } from '../../shared/icons/app-icons';
       margin-bottom: 18px;
     }
 
-    .journey-step__icon {
+    .journey-card__icon {
       color: var(--color-primary);
       margin-bottom: 12px;
     }
@@ -1068,13 +1069,22 @@ import { APP_ICONS } from '../../shared/icons/app-icons';
       border-top: 1px solid var(--color-border);
     }
 
-    .timeline-item__dot {
-      width: 14px;
-      height: 14px;
-      border-radius: 50%;
-      margin-top: 4px;
-      background: linear-gradient(135deg, var(--teal-400), var(--indigo-500));
-      box-shadow: 0 0 0 6px rgba(99, 102, 241, 0.08);
+    .timeline-item__icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      margin-top: -2px;
+      background: linear-gradient(135deg, rgba(45, 212, 191, 0.12), rgba(99, 102, 241, 0.12));
+      color: var(--teal-400);
+      box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.04);
+    }
+    
+    .timeline-item__icon svg {
+      width: 18px;
+      height: 18px;
     }
 
     .timeline-item strong {
@@ -1150,7 +1160,7 @@ import { APP_ICONS } from '../../shared/icons/app-icons';
         position: static;
       }
 
-      .journey-steps {
+      .journey-grid {
         grid-template-columns: repeat(3, minmax(0, 1fr));
       }
     }
@@ -1183,7 +1193,7 @@ import { APP_ICONS } from '../../shared/icons/app-icons';
 
       .stats-grid,
       .grid,
-      .journey-steps {
+      .journey-grid {
         grid-template-columns: 1fr;
       }
 
@@ -1418,14 +1428,17 @@ export class LandingPageComponent {
     {
       titleKey: 'LANDING.TIMELINE_ITEM_ONE_TITLE',
       descKey: 'LANDING.TIMELINE_ITEM_ONE_DESC',
+      icon: APP_ICONS.checkBadge,
     },
     {
       titleKey: 'LANDING.TIMELINE_ITEM_TWO_TITLE',
       descKey: 'LANDING.TIMELINE_ITEM_TWO_DESC',
+      icon: APP_ICONS.activity,
     },
     {
       titleKey: 'LANDING.TIMELINE_ITEM_THREE_TITLE',
       descKey: 'LANDING.TIMELINE_ITEM_THREE_DESC',
+      icon: APP_ICONS.award,
     },
   ];
 }

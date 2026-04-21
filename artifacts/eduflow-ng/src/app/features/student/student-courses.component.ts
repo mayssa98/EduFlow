@@ -80,9 +80,18 @@ interface ShowcaseCard {
             </div>
 
             <div class="showcase-lines">
-              <span></span>
-              <span></span>
-              <span></span>
+              <div class="showcase-bullet">
+                <span class="bullet-icon" [innerHTML]="icons.checkCircle"></span>
+                <span>Supports de cours PDF interactifs</span>
+              </div>
+              <div class="showcase-bullet">
+                <span class="bullet-icon" [innerHTML]="icons.playCircle"></span>
+                <span>Mini-capsules vidéo MP4</span>
+              </div>
+              <div class="showcase-bullet">
+                <span class="bullet-icon" [innerHTML]="icons.document"></span>
+                <span>Ressources téléchargeables</span>
+              </div>
             </div>
 
             <div class="showcase-meta">
@@ -600,19 +609,26 @@ interface ShowcaseCard {
 
     .showcase-lines {
       display: grid;
-      gap: 10px;
+      gap: 12px;
       margin: 18px 0;
     }
 
-    .showcase-lines span {
-      height: 10px;
-      border-radius: 999px;
-      background: linear-gradient(90deg, rgba(255,255,255,0.1), rgba(99,102,241,0.2));
+    .showcase-bullet {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #e2e8f0;
+      font-size: 0.85rem;
+      font-weight: 500;
     }
 
-    .showcase-lines span:nth-child(1) { width: 88%; }
-    .showcase-lines span:nth-child(2) { width: 64%; }
-    .showcase-lines span:nth-child(3) { width: 76%; }
+    .bullet-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #99f6e4;
+      width: 18px;
+    }
 
     .showcase-meta > div,
     .meta-grid > div {
