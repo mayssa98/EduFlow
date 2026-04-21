@@ -7,6 +7,11 @@ export const routes: Routes = [
     loadComponent: () => import('./features/landing/landing-page.component').then(m => m.LandingPageComponent),
   },
   {
+    path: 'login',
+    redirectTo: 'auth',
+    pathMatch: 'full',
+  },
+  {
     path: 'auth',
     canActivate: [guestGuard],
     loadComponent: () => import('./features/auth/auth-page.component').then(m => m.AuthPageComponent),

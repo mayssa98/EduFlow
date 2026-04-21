@@ -179,6 +179,8 @@
   },
   "LANDING": {
     "HERO_TITLE": "Apprenez, avancez et restez connecté à votre établissement",
+    "HERO_TITLE_LINE_ONE": "Apprenez, avancez et restez connecté",
+    "HERO_TITLE_LINE_TWO": "à votre établissement",
     "HERO_SUBTITLE": "Retrouvez vos cours, vos échéances et vos résultats dans une expérience simple, claire et professionnelle.",
     "GET_STARTED": "Accéder à mon espace",
     "LEARN_MORE": "Voir les avantages",

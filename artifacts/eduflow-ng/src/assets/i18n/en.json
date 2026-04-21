@@ -179,6 +179,8 @@
   },
   "LANDING": {
     "HERO_TITLE": "Learn, move forward, and stay connected to your institution",
+    "HERO_TITLE_LINE_ONE": "Learn, move forward, and stay connected",
+    "HERO_TITLE_LINE_TWO": "to your institution",
     "HERO_SUBTITLE": "Find your courses, deadlines, and results in a simple, clear, and professional experience.",
     "GET_STARTED": "Access my space",
     "LEARN_MORE": "See the benefits",

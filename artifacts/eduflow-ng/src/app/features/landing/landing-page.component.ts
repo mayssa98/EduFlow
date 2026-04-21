@@ -50,7 +50,7 @@ import { APP_ICONS } from '../../shared/icons/app-icons';
           <div class="nav__actions">
             <app-language-switcher></app-language-switcher>
             <app-theme-toggle></app-theme-toggle>
-            <a class="btn btn-primary nav__cta" routerLink="/login">
+            <a class="btn btn-primary nav__cta" routerLink="/auth">
               {{ 'AUTH.SIGN_IN' | translate }}
             </a>
           </div>
@@ -58,9 +58,15 @@ import { APP_ICONS } from '../../shared/icons/app-icons';
 
         <main class="landing__content">
           <section id="home" class="hero">
-            <div class="hero__copy fade-up">
+            <div class="hero__intro fade-up">
               <span class="eyebrow glass">{{ 'LANDING.HERO_BADGE' | translate }}</span>
-              <h1 class="hero__title gradient-text">{{ 'LANDING.HERO_TITLE' | translate }}</h1>
+              <h1 class="hero__title gradient-text">
+                <span class="hero__title-line">{{ 'LANDING.HERO_TITLE_LINE_ONE' | translate }}</span>
+                <span class="hero__title-line">{{ 'LANDING.HERO_TITLE_LINE_TWO' | translate }}</span>
+              </h1>
+            </div>
+
+            <div class="hero__copy fade-up">
               <p class="hero__subtitle">{{ 'LANDING.HERO_SUBTITLE' | translate }}</p>
 
               <ul class="hero-points">
@@ -73,7 +79,7 @@ import { APP_ICONS } from '../../shared/icons/app-icons';
               </ul>
 
               <div class="hero__actions">
-                <a class="btn btn-primary btn-lg" routerLink="/login">
+                <a class="btn btn-primary btn-lg" routerLink="/auth">
                   {{ 'LANDING.GET_STARTED' | translate }}
                 </a>
                 <button class="btn btn-outline btn-lg" type="button" (click)="scrollToSection('features')">
@@ -105,59 +111,11 @@ import { APP_ICONS } from '../../shared/icons/app-icons';
                 </div>
 
                 <div class="visual-stage__canvas">
-                  <div class="visual-card visual-card--overview glass">
-                    <div class="visual-card__topline">
-                      <span>{{ 'LANDING.VISUAL_PANEL_TITLE' | translate }}</span>
-                      <span class="visual-chip">Live</span>
-                    </div>
-                    <div class="visual-chart" aria-hidden="true">
-                      <span class="visual-chart__bar"></span>
-                      <span class="visual-chart__bar"></span>
-                      <span class="visual-chart__bar"></span>
-                      <span class="visual-chart__bar"></span>
-                    </div>
-                    <div class="visual-card__stats">
-                      <div>
-                        <strong>94%</strong>
-                        <span>{{ 'LANDING.STAT_COMPLETION' | translate }}</span>
-                      </div>
-                      <div>
-                        <strong>12k+</strong>
-                        <span>{{ 'LANDING.STAT_STUDENTS' | translate }}</span>
-                      </div>
-                    </div>
-                  </div>
-
                   <div class="student-frame">
-                    <img src="assets/landing-student-photo.jpg" alt="Etudiante EduFlow" />
+                    <img src="assets/landing-online-students.jpeg" alt="Etudiants suivant leurs cours en ligne sur ordinateur" />
                     <div class="student-frame__shade"></div>
                   </div>
 
-                  <article class="floating-card floating-card--session glass">
-                    <div class="floating-card__icon" [innerHTML]="APP_ICONS.calendarCheck"></div>
-                    <div>
-                      <h3>{{ 'LANDING.VIDEO_CARD_TITLE' | translate }}</h3>
-                      <p>{{ 'LANDING.VIDEO_CARD_SUBTITLE' | translate }}</p>
-                    </div>
-                  </article>
-
-                  <article class="floating-card floating-card--focus glass">
-                    <div class="floating-card__eyebrow">{{ 'LANDING.FLOATING_CARD_TITLE' | translate }}</div>
-                    <strong>{{ 'LANDING.FLOATING_CARD_VALUE' | translate }}</strong>
-                    <p>{{ 'LANDING.FLOATING_CARD_HINT' | translate }}</p>
-                  </article>
-
-                  <article class="floating-card floating-card--signals glass">
-                    @for (signal of quickSignals; track signal.titleKey) {
-                      <div class="signal-line">
-                        <span class="signal-line__icon" [innerHTML]="signal.icon"></span>
-                        <div>
-                          <strong>{{ signal.titleKey | translate }}</strong>
-                          <span>{{ signal.descKey | translate }}</span>
-                        </div>
-                      </div>
-                    }
-                  </article>
                 </div>
               </div>
             </div>
@@ -287,7 +245,7 @@ import { APP_ICONS } from '../../shared/icons/app-icons';
               <h2>{{ 'LANDING.CTA_TITLE' | translate }}</h2>
               <p>{{ 'LANDING.CTA_SUBTITLE' | translate }}</p>
             </div>
-            <a class="btn btn-primary btn-lg" routerLink="/login">
+            <a class="btn btn-primary btn-lg" routerLink="/auth">
               {{ 'LANDING.GET_STARTED' | translate }}
             </a>
           </section>
@@ -414,7 +372,7 @@ import { APP_ICONS } from '../../shared/icons/app-icons';
       color: rgba(240, 244, 255, 0.84);
       font: inherit;
       font-family: var(--font-display);
-      font-size: 0.96rem;
+      font-size: 0.9rem;
       font-weight: 600;
       cursor: pointer;
       transition:
@@ -451,9 +409,7 @@ import { APP_ICONS } from '../../shared/icons/app-icons';
     .feature-story__line-icon,
     .story-item__icon,
     .journey-card__icon,
-    .timeline-item__icon,
-    .floating-card__icon,
-    .signal-line__icon {
+    .timeline-item__icon {
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -496,9 +452,7 @@ import { APP_ICONS } from '../../shared/icons/app-icons';
     .feature-story__line-icon :is(svg),
     .story-item__icon :is(svg),
     .journey-card__icon :is(svg),
-    .timeline-item__icon :is(svg),
-    .floating-card__icon :is(svg),
-    .signal-line__icon :is(svg) {
+    .timeline-item__icon :is(svg) {
       width: 100%;
       height: 100%;
       display: block;
@@ -516,7 +470,7 @@ import { APP_ICONS } from '../../shared/icons/app-icons';
       min-height: 40px;
       padding-inline: 18px;
       border-radius: 14px;
-      font-size: 0.88rem;
+      font-size: 0.82rem;
     }
 
     .landing__content {
@@ -532,18 +486,31 @@ import { APP_ICONS } from '../../shared/icons/app-icons';
 
     .hero {
       display: grid;
-      grid-template-columns: minmax(0, 1.03fr) minmax(0, 0.97fr);
-      align-items: center;
+      grid-template-columns: minmax(0, 0.96fr) minmax(0, 1.04fr);
+      align-items: start;
       gap: 40px;
       min-height: 700px;
       padding: 18px 0 12px;
     }
 
+    .hero__intro {
+      grid-column: 1 / -1;
+      display: grid;
+      gap: 18px;
+      align-content: start;
+      justify-items: center;
+      max-width: 920px;
+      margin-inline: auto;
+      margin-bottom: -4px;
+      text-align: center;
+    }
+
     .hero__copy {
       display: grid;
       gap: 22px;
-      align-content: center;
-      max-width: 560px;
+      align-content: start;
+      max-width: 620px;
+      padding-top: 6px;
     }
 
     .eyebrow,
@@ -558,7 +525,7 @@ import { APP_ICONS } from '../../shared/icons/app-icons';
       min-height: 34px;
       padding: 0 14px;
       border-radius: 999px;
-      font-size: 0.78rem;
+      font-size: 0.72rem;
       font-weight: 700;
       letter-spacing: 0.12em;
       text-transform: uppercase;
@@ -572,11 +539,16 @@ import { APP_ICONS } from '../../shared/icons/app-icons';
     }
 
     .hero__title {
-      font-size: clamp(3rem, 5vw, 4.7rem);
-      line-height: 0.94;
-      letter-spacing: -0.055em;
-      max-width: 10ch;
-      text-wrap: balance;
+      font-size: clamp(2.52rem, 3.95vw, 3.6rem);
+      line-height: 1.04;
+      letter-spacing: -0.045em;
+      max-width: none;
+      white-space: normal;
+      text-wrap: initial;
+    }
+
+    .hero__title-line {
+      display: block;
     }
 
     .hero__subtitle,
@@ -586,17 +558,15 @@ import { APP_ICONS } from '../../shared/icons/app-icons';
     .journey-card p,
     .timeline-item p,
     .cta-section p,
-    .floating-card p,
     .overview-card p,
     .story-item p,
-    .signal-line span,
     .proof-strip__item span {
       color: rgba(224, 231, 255, 0.7);
     }
 
     .hero__subtitle {
       max-width: 54ch;
-      font-size: 1.05rem;
+      font-size: 0.86rem;
       line-height: 1.8;
     }
 
@@ -610,7 +580,7 @@ import { APP_ICONS } from '../../shared/icons/app-icons';
       display: flex;
       align-items: center;
       gap: 14px;
-      font-size: 1rem;
+      font-size: 0.82rem;
       color: rgba(244, 247, 255, 0.92);
     }
 
@@ -639,14 +609,14 @@ import { APP_ICONS } from '../../shared/icons/app-icons';
     .proof-strip__item strong,
     .stat-card strong {
       font-family: var(--font-display);
-      font-size: clamp(1.6rem, 3vw, 2.4rem);
+      font-size: clamp(1.34rem, 2.45vw, 1.96rem);
       line-height: 1;
       color: #ffffff;
     }
 
     .hero__visual {
       position: relative;
-      min-height: 620px;
+      min-height: 700px;
       display: grid;
       align-items: center;
     }
@@ -694,7 +664,7 @@ import { APP_ICONS } from '../../shared/icons/app-icons';
 
     .visual-stage__label {
       font-family: var(--font-display);
-      font-size: 1rem;
+      font-size: 0.84rem;
       font-weight: 700;
       color: rgba(245, 248, 255, 0.92);
     }
@@ -710,6 +680,7 @@ import { APP_ICONS } from '../../shared/icons/app-icons';
       border: 1px solid rgba(255, 255, 255, 0.08);
       color: rgba(244, 247, 255, 0.92);
       font-weight: 600;
+      font-size: 0.82rem;
     }
 
     .status-pill__dot {
@@ -722,27 +693,27 @@ import { APP_ICONS } from '../../shared/icons/app-icons';
 
     .visual-stage__canvas {
       position: relative;
-      min-height: 520px;
+      min-height: 640px;
     }
 
     .student-frame {
       position: absolute;
-      inset: 78px 68px 20px auto;
-      width: min(58%, 360px);
-      min-width: 290px;
+      inset: 0;
+      min-width: 0;
       border-radius: 34px;
       overflow: hidden;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02));
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: linear-gradient(180deg, rgba(12, 18, 30, 0.96), rgba(16, 22, 34, 0.88));
       box-shadow: 0 30px 60px rgba(0, 0, 0, 0.34);
     }
 
     .student-frame img {
       width: 100%;
       height: 100%;
-      min-height: 460px;
+      padding: 0;
+      min-height: 0;
       object-fit: cover;
-      object-position: center 16%;
+      object-position: center center;
       display: block;
     }
 
@@ -754,90 +725,6 @@ import { APP_ICONS } from '../../shared/icons/app-icons';
       pointer-events: none;
     }
 
-    .visual-card,
-    .floating-card {
-      position: absolute;
-      z-index: 2;
-      background: linear-gradient(135deg, rgba(17, 24, 39, 0.88), rgba(15, 23, 42, 0.72));
-      box-shadow: 0 20px 48px rgba(0, 0, 0, 0.28);
-    }
-
-    .visual-card--overview {
-      top: 18px;
-      left: 0;
-      width: min(46%, 250px);
-      padding: 18px;
-      border-radius: 24px;
-    }
-
-    .visual-card__topline {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      margin-bottom: 18px;
-      font-size: 0.82rem;
-      color: rgba(224, 231, 255, 0.72);
-    }
-
-    .visual-chart {
-      display: flex;
-      align-items: end;
-      gap: 10px;
-      height: 74px;
-      margin-bottom: 18px;
-    }
-
-    .visual-chart__bar {
-      flex: 1;
-      border-radius: 999px 999px 8px 8px;
-      background: linear-gradient(180deg, rgba(56, 189, 248, 0.95), rgba(99, 102, 241, 0.72));
-      box-shadow: 0 12px 26px rgba(37, 99, 235, 0.18);
-    }
-
-    .visual-chart__bar:nth-child(1) { height: 42%; }
-    .visual-chart__bar:nth-child(2) { height: 68%; }
-    .visual-chart__bar:nth-child(3) { height: 58%; }
-    .visual-chart__bar:nth-child(4) { height: 92%; }
-
-    .visual-card__stats {
-      display: grid;
-      gap: 14px;
-    }
-
-    .visual-card__stats div {
-      display: grid;
-      gap: 4px;
-    }
-
-    .visual-card__stats strong {
-      font-size: 1.7rem;
-      line-height: 1;
-      color: #ffffff;
-    }
-
-    .visual-card__stats span {
-      font-size: 0.82rem;
-      color: rgba(224, 231, 255, 0.68);
-    }
-
-    .floating-card {
-      border-radius: 24px;
-    }
-
-    .floating-card--session {
-      top: 168px;
-      right: 0;
-      width: min(42%, 240px);
-      padding: 16px;
-      display: flex;
-      align-items: center;
-      gap: 14px;
-    }
-
-    .floating-card--session h3,
-    .floating-card--focus strong,
-    .signal-line strong,
     .feature-card h3,
     .feature-story h3,
     .journey-card h3,
@@ -845,68 +732,6 @@ import { APP_ICONS } from '../../shared/icons/app-icons';
     .overview-card h3,
     .story-item strong {
       color: #ffffff;
-    }
-
-    .floating-card--session h3 {
-      font-size: 1rem;
-      margin-bottom: 4px;
-    }
-
-    .floating-card--session p {
-      font-size: 0.88rem;
-      line-height: 1.55;
-    }
-
-    .floating-card--focus {
-      left: 26px;
-      bottom: 46px;
-      width: min(42%, 240px);
-      padding: 16px;
-      display: grid;
-      gap: 10px;
-    }
-
-    .floating-card__eyebrow {
-      font-size: 0.76rem;
-      font-weight: 700;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: rgba(196, 204, 255, 0.76);
-    }
-
-    .floating-card--focus strong {
-      font-size: 1.25rem;
-      line-height: 1.1;
-    }
-
-    .floating-card--signals {
-      right: 48px;
-      bottom: 24px;
-      width: min(46%, 250px);
-      padding: 14px;
-      display: grid;
-      gap: 12px;
-    }
-
-    .signal-line {
-      display: grid;
-      grid-template-columns: 40px minmax(0, 1fr);
-      align-items: center;
-      gap: 12px;
-    }
-
-    .signal-line div {
-      display: grid;
-      gap: 4px;
-    }
-
-    .signal-line strong {
-      font-size: 0.95rem;
-    }
-
-    .signal-line span {
-      font-size: 0.82rem;
-      line-height: 1.45;
     }
 
     .section {
@@ -928,7 +753,7 @@ import { APP_ICONS } from '../../shared/icons/app-icons';
 
     .section-heading h2,
     .cta-section h2 {
-      font-size: clamp(2.2rem, 4vw, 3.2rem);
+      font-size: clamp(1.84rem, 3.25vw, 2.65rem);
       line-height: 1.04;
       letter-spacing: -0.045em;
       text-wrap: balance;
@@ -936,7 +761,7 @@ import { APP_ICONS } from '../../shared/icons/app-icons';
 
     .section-heading p,
     .cta-section p {
-      font-size: 1rem;
+      font-size: 0.84rem;
       line-height: 1.75;
     }
 
@@ -976,7 +801,7 @@ import { APP_ICONS } from '../../shared/icons/app-icons';
     }
 
     .overview-card__copy h3 {
-      font-size: 2rem;
+      font-size: 1.65rem;
       line-height: 1.06;
       letter-spacing: -0.03em;
       margin-bottom: 12px;
@@ -990,7 +815,7 @@ import { APP_ICONS } from '../../shared/icons/app-icons';
 
     .story-item {
       display: grid;
-      grid-template-columns: 40px minmax(0, 1fr);
+      grid-template-columns: 28px minmax(0, 1fr);
       gap: 14px;
       align-items: start;
       padding: 16px 18px;
@@ -999,15 +824,15 @@ import { APP_ICONS } from '../../shared/icons/app-icons';
       border: 1px solid rgba(255, 255, 255, 0.06);
     }
 
-    .story-item__icon {
+    .overview-card__list .story-item__icon {
       width: 28px;
       height: 28px;
       padding: 0;
       margin-top: 2px;
-      border: 0;
-      border-radius: 0;
-      background: transparent;
-      box-shadow: none;
+      border: 0 !important;
+      border-radius: 0 !important;
+      background: transparent !important;
+      box-shadow: none !important;
       color: rgba(167, 180, 255, 0.96);
     }
 
@@ -1017,11 +842,11 @@ import { APP_ICONS } from '../../shared/icons/app-icons';
     }
 
     .story-item strong {
-      font-size: 1rem;
+      font-size: 0.86rem;
     }
 
     .story-item p {
-      font-size: 0.95rem;
+      font-size: 0.8rem;
       line-height: 1.6;
     }
 
@@ -1049,7 +874,7 @@ import { APP_ICONS } from '../../shared/icons/app-icons';
     }
 
     .stat-card span {
-      font-size: 0.95rem;
+      font-size: 0.8rem;
       color: rgba(224, 231, 255, 0.68);
     }
 
@@ -1087,14 +912,14 @@ import { APP_ICONS } from '../../shared/icons/app-icons';
       background: rgba(99, 102, 241, 0.1);
       border: 1px solid rgba(129, 140, 248, 0.18);
       color: rgba(198, 206, 255, 0.86);
-      font-size: 0.74rem;
+      font-size: 0.68rem;
       font-weight: 700;
       letter-spacing: 0.12em;
       text-transform: uppercase;
     }
 
     .feature-card h3 {
-      font-size: 1.36rem;
+      font-size: 1.08rem;
       line-height: 1.08;
     }
 
@@ -1102,7 +927,7 @@ import { APP_ICONS } from '../../shared/icons/app-icons';
     .feature-story p,
     .journey-card p,
     .timeline-item p {
-      font-size: 0.95rem;
+      font-size: 0.8rem;
       line-height: 1.7;
     }
 
@@ -1113,7 +938,7 @@ import { APP_ICONS } from '../../shared/icons/app-icons';
     }
 
     .feature-story h3 {
-      font-size: 2rem;
+      font-size: 1.65rem;
       line-height: 1.05;
       letter-spacing: -0.03em;
       text-wrap: balance;
@@ -1145,7 +970,7 @@ import { APP_ICONS } from '../../shared/icons/app-icons';
     }
 
     .feature-story__line strong {
-      font-size: 1rem;
+      font-size: 0.86rem;
       color: #ffffff;
     }
 
@@ -1174,7 +999,7 @@ import { APP_ICONS } from '../../shared/icons/app-icons';
     }
 
     .journey-card h3 {
-      font-size: 1.24rem;
+      font-size: 1rem;
       line-height: 1.08;
     }
 
@@ -1230,7 +1055,7 @@ import { APP_ICONS } from '../../shared/icons/app-icons';
       padding: 8px 0 0;
       text-align: center;
       color: rgba(224, 231, 255, 0.48);
-      font-size: 0.88rem;
+      font-size: 0.82rem;
     }
 
     @media (max-width: 1140px) {
@@ -1258,10 +1083,11 @@ import { APP_ICONS } from '../../shared/icons/app-icons';
 
       .hero__copy {
         max-width: none;
+        padding-top: 0;
       }
 
       .hero__visual {
-        min-height: 580px;
+        min-height: 680px;
       }
 
       .stats-grid {
@@ -1301,6 +1127,7 @@ import { APP_ICONS } from '../../shared/icons/app-icons';
 
       .hero__title {
         max-width: 12ch;
+        white-space: normal;
       }
 
       .proof-strip,
@@ -1311,45 +1138,13 @@ import { APP_ICONS } from '../../shared/icons/app-icons';
       }
 
       .visual-stage {
-        min-height: 700px;
+        min-height: 680px;
       }
 
       .student-frame {
-        inset: 120px 24px auto 24px;
+        inset: 0;
         width: auto;
         min-width: 0;
-      }
-
-      .student-frame img {
-        min-height: 420px;
-        max-height: 470px;
-      }
-
-      .visual-card--overview {
-        top: 18px;
-        left: 18px;
-        width: calc(100% - 36px);
-      }
-
-      .floating-card--session,
-      .floating-card--focus,
-      .floating-card--signals {
-        width: calc(100% - 36px);
-        left: 18px;
-        right: 18px;
-      }
-
-      .floating-card--session {
-        top: auto;
-        bottom: 218px;
-      }
-
-      .floating-card--signals {
-        bottom: 18px;
-      }
-
-      .floating-card--focus {
-        bottom: 132px;
       }
 
       .cta-section {
@@ -1384,7 +1179,7 @@ import { APP_ICONS } from '../../shared/icons/app-icons';
       .cta-section h2,
       .overview-card__copy h3,
       .feature-story h3 {
-        font-size: clamp(2rem, 11vw, 2.75rem);
+        font-size: clamp(1.84rem, 10vw, 2.5rem);
       }
 
       .hero__subtitle,
@@ -1394,34 +1189,17 @@ import { APP_ICONS } from '../../shared/icons/app-icons';
       .journey-card p,
       .timeline-item p,
       .cta-section p {
-        font-size: 0.96rem;
+        font-size: 0.88rem;
       }
 
       .visual-stage {
         padding: 18px;
-        min-height: 760px;
+        min-height: 620px;
       }
 
       .student-frame {
-        inset: 126px 12px auto 12px;
+        inset: 0;
         border-radius: 28px;
-      }
-
-      .floating-card--session,
-      .floating-card--focus,
-      .floating-card--signals,
-      .visual-card--overview {
-        left: 12px;
-        right: 12px;
-        width: auto;
-      }
-
-      .floating-card--session {
-        bottom: 230px;
-      }
-
-      .floating-card--focus {
-        bottom: 144px;
       }
 
       .overview-card,
@@ -1441,12 +1219,11 @@ export class LandingPageComponent implements AfterViewInit {
   readonly APP_ICONS = APP_ICONS;
 
   readonly navItems: ReadonlyArray<{ id: string; labelKey: string; icon: SafeHtml }>;
-
-  readonly heroPoints = [
-    { key: 'LANDING.HERO_POINT_PERSONALIZED', icon: APP_ICONS.profile },
-    { key: 'LANDING.HERO_POINT_TRACKING', icon: APP_ICONS.calendarCheck },
-    { key: 'LANDING.HERO_POINT_COLLAB', icon: APP_ICONS.users },
-  ] as const;
+  readonly heroPoints: ReadonlyArray<{ key: string; icon: SafeHtml }>;
+  readonly featureCards: ReadonlyArray<{ icon: SafeHtml; chipKey: string; titleKey: string; descKey: string }>;
+  readonly storyItems: ReadonlyArray<{ icon: SafeHtml; titleKey: string; descKey: string }>;
+  readonly journeySteps: ReadonlyArray<{ icon: SafeHtml; titleKey: string; descKey: string }>;
+  readonly timelineItems: ReadonlyArray<{ icon: SafeHtml; titleKey: string; descKey: string }>;
 
   readonly proofStats = [
     { value: '98%', labelKey: 'LANDING.PROOF_SATISFACTION' },
@@ -1454,60 +1231,10 @@ export class LandingPageComponent implements AfterViewInit {
     { value: '24h', labelKey: 'LANDING.PROOF_ONBOARDING' },
   ] as const;
 
-  readonly quickSignals = [
-    { icon: APP_ICONS.activity, titleKey: 'LANDING.STEP_GUIDE', descKey: 'LANDING.STEP_GUIDE_DESC' },
-    { icon: APP_ICONS.checkCircle, titleKey: 'LANDING.STEP_GROW', descKey: 'LANDING.STEP_GROW_DESC' },
-  ] as const;
-
   readonly overviewStats = [
     { value: '12k+', labelKey: 'LANDING.STAT_STUDENTS', accent: 'linear-gradient(90deg, #6366f1, #8b5cf6)' },
     { value: '94%', labelKey: 'LANDING.STAT_COMPLETION', accent: 'linear-gradient(90deg, #2dd4bf, #38bdf8)' },
     { value: '24/7', labelKey: 'LANDING.STAT_SUPPORT', accent: 'linear-gradient(90deg, #f97316, #fbbf24)' },
-  ] as const;
-
-  readonly featureCards = [
-    {
-      icon: APP_ICONS.chart,
-      chipKey: 'LANDING.FEATURE_CHIP_ANALYTICS',
-      titleKey: 'LANDING.FEATURE_ANALYTICS',
-      descKey: 'LANDING.FEATURE_ANALYTICS_DESC',
-    },
-    {
-      icon: APP_ICONS.sparkles,
-      chipKey: 'LANDING.FEATURE_CHIP_AI',
-      titleKey: 'LANDING.FEATURE_AI',
-      descKey: 'LANDING.FEATURE_AI_DESC',
-    },
-    {
-      icon: APP_ICONS.globe,
-      chipKey: 'LANDING.FEATURE_CHIP_MULTILANG',
-      titleKey: 'LANDING.FEATURE_MULTILANG',
-      descKey: 'LANDING.FEATURE_MULTILANG_DESC',
-    },
-    {
-      icon: APP_ICONS.target,
-      chipKey: 'LANDING.FEATURE_CHIP_EXPERIENCE',
-      titleKey: 'LANDING.FEATURE_EXPERIENCE',
-      descKey: 'LANDING.FEATURE_EXPERIENCE_DESC',
-    },
-  ] as const;
-
-  readonly storyItems = [
-    { icon: APP_ICONS.graduation, titleKey: 'LANDING.STORY_ONE_TITLE', descKey: 'LANDING.STORY_ONE_DESC' },
-    { icon: APP_ICONS.users, titleKey: 'LANDING.STORY_TWO_TITLE', descKey: 'LANDING.STORY_TWO_DESC' },
-    { icon: APP_ICONS.message, titleKey: 'LANDING.STORY_THREE_TITLE', descKey: 'LANDING.STORY_THREE_DESC' },
-  ] as const;
-
-  readonly journeySteps = [
-    { icon: APP_ICONS.lock, titleKey: 'LANDING.STEP_PLAN', descKey: 'LANDING.STEP_PLAN_DESC' },
-    { icon: APP_ICONS.activity, titleKey: 'LANDING.STEP_GUIDE', descKey: 'LANDING.STEP_GUIDE_DESC' },
-    { icon: APP_ICONS.checkBadge, titleKey: 'LANDING.STEP_GROW', descKey: 'LANDING.STEP_GROW_DESC' },
-  ] as const;
-
-  readonly timelineItems = [
-    { icon: APP_ICONS.key, titleKey: 'LANDING.TIMELINE_ITEM_ONE_TITLE', descKey: 'LANDING.TIMELINE_ITEM_ONE_DESC' },
-    { icon: APP_ICONS.calendarCheck, titleKey: 'LANDING.TIMELINE_ITEM_TWO_TITLE', descKey: 'LANDING.TIMELINE_ITEM_TWO_DESC' },
-    { icon: APP_ICONS.document, titleKey: 'LANDING.TIMELINE_ITEM_THREE_TITLE', descKey: 'LANDING.TIMELINE_ITEM_THREE_DESC' },
   ] as const;
 
   readonly activeSection = signal<string>('home');
@@ -1518,6 +1245,57 @@ export class LandingPageComponent implements AfterViewInit {
       { id: 'overview', labelKey: 'LANDING.NAV_COMMUNITY', icon: this.toSafeIcon(APP_ICONS.navOverview) },
       { id: 'features', labelKey: 'LANDING.NAV_FEATURES', icon: this.toSafeIcon(APP_ICONS.navFeatures) },
       { id: 'journey', labelKey: 'LANDING.NAV_JOURNEY', icon: this.toSafeIcon(APP_ICONS.navJourney) },
+    ];
+
+    this.heroPoints = [
+      { key: 'LANDING.HERO_POINT_PERSONALIZED', icon: this.toSafeIcon(APP_ICONS.profile) },
+      { key: 'LANDING.HERO_POINT_TRACKING', icon: this.toSafeIcon(APP_ICONS.calendarCheck) },
+      { key: 'LANDING.HERO_POINT_COLLAB', icon: this.toSafeIcon(APP_ICONS.users) },
+    ];
+
+    this.featureCards = [
+      {
+        icon: this.toSafeIcon(APP_ICONS.chart),
+        chipKey: 'LANDING.FEATURE_CHIP_ANALYTICS',
+        titleKey: 'LANDING.FEATURE_ANALYTICS',
+        descKey: 'LANDING.FEATURE_ANALYTICS_DESC',
+      },
+      {
+        icon: this.toSafeIcon(APP_ICONS.sparkles),
+        chipKey: 'LANDING.FEATURE_CHIP_AI',
+        titleKey: 'LANDING.FEATURE_AI',
+        descKey: 'LANDING.FEATURE_AI_DESC',
+      },
+      {
+        icon: this.toSafeIcon(APP_ICONS.globe),
+        chipKey: 'LANDING.FEATURE_CHIP_MULTILANG',
+        titleKey: 'LANDING.FEATURE_MULTILANG',
+        descKey: 'LANDING.FEATURE_MULTILANG_DESC',
+      },
+      {
+        icon: this.toSafeIcon(APP_ICONS.target),
+        chipKey: 'LANDING.FEATURE_CHIP_EXPERIENCE',
+        titleKey: 'LANDING.FEATURE_EXPERIENCE',
+        descKey: 'LANDING.FEATURE_EXPERIENCE_DESC',
+      },
+    ];
+
+    this.storyItems = [
+      { icon: this.toSafeIcon(APP_ICONS.graduation), titleKey: 'LANDING.STORY_ONE_TITLE', descKey: 'LANDING.STORY_ONE_DESC' },
+      { icon: this.toSafeIcon(APP_ICONS.users), titleKey: 'LANDING.STORY_TWO_TITLE', descKey: 'LANDING.STORY_TWO_DESC' },
+      { icon: this.toSafeIcon(APP_ICONS.message), titleKey: 'LANDING.STORY_THREE_TITLE', descKey: 'LANDING.STORY_THREE_DESC' },
+    ];
+
+    this.journeySteps = [
+      { icon: this.toSafeIcon(APP_ICONS.lock), titleKey: 'LANDING.STEP_PLAN', descKey: 'LANDING.STEP_PLAN_DESC' },
+      { icon: this.toSafeIcon(APP_ICONS.activity), titleKey: 'LANDING.STEP_GUIDE', descKey: 'LANDING.STEP_GUIDE_DESC' },
+      { icon: this.toSafeIcon(APP_ICONS.checkBadge), titleKey: 'LANDING.STEP_GROW', descKey: 'LANDING.STEP_GROW_DESC' },
+    ];
+
+    this.timelineItems = [
+      { icon: this.toSafeIcon(APP_ICONS.key), titleKey: 'LANDING.TIMELINE_ITEM_ONE_TITLE', descKey: 'LANDING.TIMELINE_ITEM_ONE_DESC' },
+      { icon: this.toSafeIcon(APP_ICONS.calendarCheck), titleKey: 'LANDING.TIMELINE_ITEM_TWO_TITLE', descKey: 'LANDING.TIMELINE_ITEM_TWO_DESC' },
+      { icon: this.toSafeIcon(APP_ICONS.document), titleKey: 'LANDING.TIMELINE_ITEM_THREE_TITLE', descKey: 'LANDING.TIMELINE_ITEM_THREE_DESC' },
     ];
   }
 
