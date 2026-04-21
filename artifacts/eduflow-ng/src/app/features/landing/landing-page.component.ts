@@ -999,6 +999,18 @@ import { APP_ICONS } from '../../shared/icons/app-icons';
       border: 1px solid rgba(255, 255, 255, 0.06);
     }
 
+    .story-item__icon {
+      width: 28px;
+      height: 28px;
+      padding: 0;
+      margin-top: 2px;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
+      color: rgba(167, 180, 255, 0.96);
+    }
+
     .story-item div {
       display: grid;
       gap: 6px;
@@ -1481,9 +1493,9 @@ export class LandingPageComponent implements AfterViewInit {
   ] as const;
 
   readonly storyItems = [
-    { icon: APP_ICONS.book, titleKey: 'LANDING.STORY_ONE_TITLE', descKey: 'LANDING.STORY_ONE_DESC' },
+    { icon: APP_ICONS.graduation, titleKey: 'LANDING.STORY_ONE_TITLE', descKey: 'LANDING.STORY_ONE_DESC' },
     { icon: APP_ICONS.users, titleKey: 'LANDING.STORY_TWO_TITLE', descKey: 'LANDING.STORY_TWO_DESC' },
-    { icon: APP_ICONS.mailSpark, titleKey: 'LANDING.STORY_THREE_TITLE', descKey: 'LANDING.STORY_THREE_DESC' },
+    { icon: APP_ICONS.message, titleKey: 'LANDING.STORY_THREE_TITLE', descKey: 'LANDING.STORY_THREE_DESC' },
   ] as const;
 
   readonly journeySteps = [
