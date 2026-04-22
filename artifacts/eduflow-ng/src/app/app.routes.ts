@@ -135,10 +135,15 @@ export const routes: Routes = [
       // ── Common (all roles) ───────────────────────────────────
       {
         path: 'profile',
-        loadComponent: () => import('./shared/components/profile/profile-page.component').then(m => m.ProfilePageComponent),
+        redirectTo: 'settings/profile',
+        pathMatch: 'full',
       },
       {
         path: 'settings',
+        loadComponent: () => import('./shared/components/settings/settings-page.component').then(m => m.SettingsPageComponent),
+      },
+      {
+        path: 'settings/:section',
         loadComponent: () => import('./shared/components/settings/settings-page.component').then(m => m.SettingsPageComponent),
       },
     ],

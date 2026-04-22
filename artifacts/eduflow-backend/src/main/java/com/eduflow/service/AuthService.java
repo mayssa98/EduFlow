@@ -234,7 +234,7 @@ public class AuthService {
             userRepo.save(s);
             
             String ticket = jwtUtil.generatePreAuthToken(s.getId(), "GOOGLE_REG");
-            return new GoogleRegistrationChallenge(true, ticket, s.getEmail(), s.getNom(), s.getPrenom(), s.getPhotoUrl());
+            return new GoogleRegistrationChallenge(true, ticket, s.getEmail(), s.getNom(), s.getPrenom(), resolvePhotoUrl(s));
         }
 
         Utilisateur user = optUser.get();
@@ -429,6 +429,15 @@ public class AuthService {
 
     private AuthUserResponse toResponse(Utilisateur u) {
         return new AuthUserResponse(u.getId(), u.getEmail(), u.getNom(), u.getPrenom(),
-                u.getRole(), u.getStatutCompte().name(), u.getPhotoUrl());
+                u.getRole(), u.getStatutCompte().name(), resolvePhotoUrl(u));
+    }
+
+    private String resolvePhotoUrl(Utilisateur user) {
+        String photoValue = user.getPhotoUrl();
+        if (photoValue == null || photoValue.isBlank()) return null;
+        if (photoValue.startsWith("http://") || photoValue.startsWith("https://") || photoValue.startsWith("/api/")) {
+            return photoValue;
+        }
+        return "/api/users/avatar/" + user.getId() + "?v=" + user.getDateModification().toInstant().toEpochMilli();
     }
 }

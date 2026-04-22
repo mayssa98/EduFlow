@@ -58,6 +58,7 @@ import { LanguageService, LanguageOption } from '../../../core/services/language
     .lang-switcher {
       position: relative;
       display: inline-block;
+      z-index: 60;
     }
 
     .lang-trigger {
@@ -107,36 +108,39 @@ import { LanguageService, LanguageOption } from '../../../core/services/language
 
     .lang-dropdown {
       position: absolute;
-      top: calc(100% + 6px);
+      top: calc(100% + 10px);
       inset-inline-end: 0;
-      min-width: 180px;
+      min-width: 220px;
+      max-width: min(260px, calc(100vw - 32px));
       background: rgba(15, 23, 42, 0.92);
       border: 1px solid rgba(255, 255, 255, 0.08);
       border-radius: 16px;
       box-shadow: 0 18px 42px rgba(0, 0, 0, 0.28);
       list-style: none;
       margin: 0;
-      padding: 6px;
-      z-index: 50;
+      padding: 8px;
+      z-index: 70;
       backdrop-filter: blur(18px);
       -webkit-backdrop-filter: blur(18px);
+      animation: langDropdownEnter 180ms ease;
     }
 
     .lang-option {
       display: flex;
       align-items: center;
       gap: 8px;
-      padding: 10px 12px;
+      padding: 12px 14px;
       border-radius: 12px;
       cursor: pointer;
       color: rgba(245, 245, 250, 0.92);
       font-size: 0.875rem;
-      transition: background 0.12s;
+      transition: background 0.12s, transform 0.12s;
     }
 
     .lang-option:hover,
     .lang-option:focus {
       background: rgba(99, 102, 241, 0.12);
+      transform: translateX(2px);
       outline: none;
     }
 
@@ -173,7 +177,20 @@ import { LanguageService, LanguageOption } from '../../../core/services/language
     .lang-backdrop {
       position: fixed;
       inset: 0;
-      z-index: 40;
+      z-index: 65;
+    }
+
+    @keyframes langDropdownEnter {
+      from { opacity: 0; transform: translateY(-6px) scale(0.98); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    @media (max-width: 720px) {
+      .lang-dropdown {
+        inset-inline-end: auto;
+        inset-inline-start: 0;
+        min-width: 200px;
+      }
     }
   `]
 })

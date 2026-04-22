@@ -157,4 +157,10 @@ export class AuthService {
       default:           return '/auth';
     }
   }
+
+  patchCurrentUser(patch: Partial<AuthUser>): void {
+    const current = this._user();
+    if (!current) return;
+    this.setUser({ ...current, ...patch });
+  }
 }

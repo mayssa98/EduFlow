@@ -13,10 +13,43 @@ export interface ProfileResponse {
   photoUrl?: string;
   dateCreation: string;
   derniereConnexion?: string;
+  dateNaissance?: string;
+  age?: number;
+  emailChangeAllowed?: boolean;
+  passwordChangeAllowed?: boolean;
+  mfaEnabled?: boolean;
+  mfaMethod?: 'EMAIL' | 'TOTP' | 'WEBAUTHN' | null;
+  currentClassId?: number | null;
+  currentClassName?: string | null;
+  availableClasses?: ClassOption[];
+  pendingClassChange?: PendingClassChangeSummary | null;
 }
 
-export interface UpdateProfileRequest { nom: string; prenom: string; }
+export interface ClassOption {
+  id: number;
+  nom: string;
+  niveau?: string;
+  anneeScolaire?: string;
+}
+
+export interface PendingClassChangeSummary {
+  id: number;
+  statut: 'PENDING' | 'APPROVED' | 'REJECTED' | string;
+  classeActuelleNom?: string | null;
+  classeSouhaiteeNom?: string | null;
+  motif?: string | null;
+  dateDemande: string;
+}
+
+export interface UpdateProfileRequest {
+  nom: string;
+  prenom: string;
+  photoUrl?: string | null;
+}
 export interface ChangePasswordRequest { currentPassword: string; newPassword: string; }
+export interface ChangeEmailRequest { currentPassword: string; newEmail: string; }
+export interface UpdateMfaRequest { enabled: boolean; method: 'EMAIL' | 'TOTP' | 'WEBAUTHN' | null; }
+export interface RequestClassChangeRequest { targetClassId: number; motif?: string; }
 
 export interface UserSummary {
   id: number;
@@ -41,8 +74,26 @@ export class UserService {
     return this.http.put<ProfileResponse>(`${API_BASE}/users/me/profile`, req, { withCredentials: true });
   }
 
+  uploadAvatar(file: File): Observable<ProfileResponse> {
+    const body = new FormData();
+    body.append('file', file);
+    return this.http.post<ProfileResponse>(`${API_BASE}/users/me/avatar`, body, { withCredentials: true });
+  }
+
   changePassword(req: ChangePasswordRequest): Observable<void> {
     return this.http.patch<void>(`${API_BASE}/users/me/password`, req, { withCredentials: true });
+  }
+
+  changeEmail(req: ChangeEmailRequest): Observable<ProfileResponse> {
+    return this.http.patch<ProfileResponse>(`${API_BASE}/users/me/email`, req, { withCredentials: true });
+  }
+
+  updateMfa(req: UpdateMfaRequest): Observable<ProfileResponse> {
+    return this.http.patch<ProfileResponse>(`${API_BASE}/users/me/mfa`, req, { withCredentials: true });
+  }
+
+  requestClassChange(req: RequestClassChangeRequest): Observable<ProfileResponse> {
+    return this.http.post<ProfileResponse>(`${API_BASE}/users/me/class-change`, req, { withCredentials: true });
   }
 
   // --- Admin endpoints ---

@@ -2,6 +2,7 @@ package com.eduflow.model.dto;
 
 import com.eduflow.model.entity.enums.Role;
 import com.eduflow.model.entity.enums.StatutCompte;
+import com.eduflow.model.entity.enums.TwoFactorMethod;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -85,7 +86,8 @@ public class AdminDtos {
     // ---- Profil commun à tous les rôles ----
     public record UpdateProfileRequest(
             @NotBlank @Size(max = 120) String nom,
-            @NotBlank @Size(max = 120) String prenom
+            @NotBlank @Size(max = 120) String prenom,
+            @Size(max = 500) String photoUrl
     ) {}
 
     public record ChangePasswordRequest(
@@ -93,6 +95,37 @@ public class AdminDtos {
             @NotBlank @Size(min = 8, max = 128)
             @jakarta.validation.constraints.Pattern(regexp = "^(?=.*[A-Z])(?=.*\\d)(?=.*[^A-Za-z0-9]).+$")
             String newPassword
+    ) {}
+
+    public record ChangeEmailRequest(
+            @NotBlank String currentPassword,
+            @Email @NotBlank @Size(max = 180) String newEmail
+    ) {}
+
+    public record UpdateMfaRequest(
+            boolean enabled,
+            TwoFactorMethod method
+    ) {}
+
+    public record RequestClassChangeRequest(
+            @NotNull Long targetClassId,
+            @Size(max = 1000) String motif
+    ) {}
+
+    public record ClassOption(
+            Long id,
+            String nom,
+            String niveau,
+            String anneeScolaire
+    ) {}
+
+    public record PendingClassChangeSummary(
+            Long id,
+            String statut,
+            String classeActuelleNom,
+            String classeSouhaiteeNom,
+            String motif,
+            OffsetDateTime dateDemande
     ) {}
 
     public record ProfileResponse(
@@ -104,6 +137,16 @@ public class AdminDtos {
             String statutCompte,
             String photoUrl,
             java.time.OffsetDateTime dateCreation,
-            java.time.OffsetDateTime derniereConnexion
+            java.time.OffsetDateTime derniereConnexion,
+            java.time.LocalDate dateNaissance,
+            Integer age,
+            Boolean emailChangeAllowed,
+            Boolean passwordChangeAllowed,
+            Boolean mfaEnabled,
+            String mfaMethod,
+            Long currentClassId,
+            String currentClassName,
+            List<ClassOption> availableClasses,
+            PendingClassChangeSummary pendingClassChange
     ) {}
 }

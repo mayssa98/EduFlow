@@ -12,12 +12,16 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.*;
+import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 
 @Service
 public class FileStorageService {
 
     private static final Logger log = LoggerFactory.getLogger(FileStorageService.class);
+    private static final long AVATAR_MAX_BYTES = 5L * 1024 * 1024;
+    private static final List<String> ALLOWED_AVATAR_TYPES = List.of("image/jpeg", "image/png", "image/webp");
     private final AppProperties props;
     private final Path baseDir;
 
@@ -55,6 +59,34 @@ public class FileStorageService {
         return new StoredFile(rel, file.getSize(), type);
     }
 
+    public String storeAvatarFile(Long userId, MultipartFile file) throws IOException {
+        if (file == null || file.isEmpty()) {
+            throw new IllegalArgumentException("Avatar file is empty");
+        }
+        if (file.getSize() > AVATAR_MAX_BYTES) {
+            throw new IllegalArgumentException("Avatar exceeds max size of " + AVATAR_MAX_BYTES + " bytes");
+        }
+
+        String contentType = file.getContentType() != null ? file.getContentType().toLowerCase(Locale.ROOT) : "";
+        if (!contentType.isBlank() && !ALLOWED_AVATAR_TYPES.contains(contentType)) {
+            throw new IllegalArgumentException("Unsupported avatar type");
+        }
+
+        String ext = detectAvatarExtension(file.getOriginalFilename(), contentType);
+        String filename = UUID.randomUUID() + ext;
+        Path avatarDir = baseDir.resolve("avatars").resolve(String.valueOf(userId));
+        Files.createDirectories(avatarDir);
+        Path target = avatarDir.resolve(filename);
+
+        try (InputStream in = file.getInputStream()) {
+            Files.copy(in, target, StandardCopyOption.REPLACE_EXISTING);
+        }
+
+        String rel = baseDir.relativize(target).toString().replace('\\', '/');
+        log.info("Stored avatar file userId={} type={} size={}", userId, contentType, file.getSize());
+        return rel;
+    }
+
     public Resource loadAsResource(String relativePath) throws IOException {
         Path p = baseDir.resolve(relativePath).normalize();
         if (!p.startsWith(baseDir)) {
@@ -75,6 +107,17 @@ public class FileStorageService {
         } catch (IOException e) {
             log.warn("Failed to delete {}: {}", relativePath, e.getMessage());
         }
+    }
+
+    private String detectAvatarExtension(String originalFilename, String contentType) {
+        String lowerName = originalFilename != null ? originalFilename.toLowerCase(Locale.ROOT) : "";
+        if (lowerName.endsWith(".png")) return ".png";
+        if (lowerName.endsWith(".jpg") || lowerName.endsWith(".jpeg")) return ".jpg";
+        if (lowerName.endsWith(".webp")) return ".webp";
+        if ("image/png".equals(contentType)) return ".png";
+        if ("image/jpeg".equals(contentType)) return ".jpg";
+        if ("image/webp".equals(contentType)) return ".webp";
+        throw new IllegalArgumentException("Unsupported avatar extension");
     }
 
     /** Detects PDF / MP4 by reading magic bytes. Throws if neither matches. */

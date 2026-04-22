@@ -16,8 +16,16 @@ export interface DonutSlice {
     <div class="wrap" [style.--chart-size.px]="size">
       <div class="visual">
         <div class="ambient-ring"></div>
+        <div class="ambient-ring ambient-ring-secondary"></div>
+        <div class="chart-shell"></div>
 
         <svg viewBox="0 0 100 100" class="chart" role="img" [attr.aria-label]="centerLabel">
+          <defs>
+            <filter id="chartGlow" x="-40%" y="-40%" width="180%" height="180%">
+              <feDropShadow dx="0" dy="0" stdDeviation="2.2" flood-color="#0f172a" flood-opacity="0.24"/>
+            </filter>
+          </defs>
+
           <circle
             cx="50"
             cy="50"
@@ -35,7 +43,7 @@ export interface DonutSlice {
               [attr.r]="radius()"
               fill="none"
               [attr.stroke]="colorFor(i, s.color)"
-              [attr.stroke-width]="strokeWidth"
+              [attr.stroke-width]="segmentStrokeWidth(i)"
               stroke-linecap="round"
               pathLength="100"
               [attr.stroke-dasharray]="s.dash"
@@ -48,7 +56,21 @@ export interface DonutSlice {
             />
           </ng-container>
 
-          <circle cx="50" cy="50" r="23" class="core"></circle>
+          <circle cx="50" cy="50" [attr.r]="innerCoreRadius()" class="inner-ring"></circle>
+          <circle cx="50" cy="50" r="24" class="core"></circle>
+          <circle cx="50" cy="50" r="20.5" class="core-highlight"></circle>
+
+          <text
+            x="50"
+            y="35"
+            text-anchor="middle"
+            font-size="4"
+            fill="currentColor"
+            fill-opacity="0.52"
+            class="micro-copy"
+          >
+            {{ hover() ? 'segment actif' : 'vue globale' }}
+          </text>
 
           <text
             x="50"
@@ -68,21 +90,30 @@ export interface DonutSlice {
             </tspan>
           </text>
 
-          <text x="50" y="57.5" text-anchor="middle" font-size="14" fill="currentColor" font-weight="800">
+          <text x="50" y="56.5" text-anchor="middle" font-size="15" fill="currentColor" font-weight="800" class="center-value">
             {{ hover() ? hover()!.value : (total() | number) }}
           </text>
 
-          <text x="50" y="65.5" text-anchor="middle" font-size="4.6" fill="currentColor" fill-opacity="0.55">
+          <text x="50" y="64.5" text-anchor="middle" font-size="4.5" fill="currentColor" fill-opacity="0.55" class="center-meta">
             {{ hover() ? hover()!.pct + '% du total' : 'elements suivis' }}
           </text>
         </svg>
       </div>
 
       <ul class="legend">
-        <li *ngFor="let s of slices; let i = index">
+        <li
+          *ngFor="let s of segments(); let i = index"
+          [class.active]="hover()?.i === i"
+          (mouseenter)="hover.set({ i, label: s.label, value: s.raw, pct: s.pct })"
+          (mouseleave)="hover.set(null)"
+        >
+          <span class="connector"></span>
           <span class="dot" [style.background]="colorFor(i, s.color)"></span>
-          <span class="lab">{{ s.label }}</span>
-          <span class="val">{{ s.value }}</span>
+          <div class="legend-copy">
+            <span class="lab">{{ s.label }}</span>
+            <span class="pct">{{ s.raw }} elements</span>
+          </div>
+          <span class="val">{{ s.pct }}%</span>
         </li>
       </ul>
     </div>
@@ -102,6 +133,18 @@ export interface DonutSlice {
       min-height: var(--chart-size);
     }
 
+    .chart-shell {
+      position: absolute;
+      inset: 8%;
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at center, rgba(255,255,255,0.06), rgba(255,255,255,0.01) 54%, transparent 55%),
+        radial-gradient(circle, rgba(255,255,255,0.04), transparent 72%);
+      border: 1px solid rgba(255,255,255,0.04);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), 0 14px 28px rgba(15,23,42,0.1);
+      pointer-events: none;
+    }
+
     .ambient-ring {
       position: absolute;
       inset: 8% 12%;
@@ -110,6 +153,14 @@ export interface DonutSlice {
       filter: blur(26px);
       animation: pulseRing 5.2s ease-in-out infinite;
       pointer-events: none;
+    }
+
+    .ambient-ring-secondary {
+      inset: 18% 18%;
+      background: radial-gradient(circle, rgba(56,189,248,0.14), transparent 62%);
+      filter: blur(18px);
+      animation-duration: 6.8s;
+      animation-direction: reverse;
     }
 
     .chart {
@@ -121,72 +172,132 @@ export interface DonutSlice {
       animation: chartEnter 680ms cubic-bezier(.2,.8,.2,1);
     }
 
-    .track { opacity: 0.5; }
+    .track {
+      opacity: 0.2;
+      stroke: rgba(148, 163, 184, 0.12);
+    }
+
+    .inner-ring {
+      fill: rgba(255,255,255,0.02);
+      stroke: rgba(255,255,255,0.04);
+      stroke-width: 0.8;
+    }
 
     .core {
-      fill: rgba(15, 23, 42, 0.86);
-      stroke: rgba(255,255,255,0.06);
-      stroke-width: 1;
+      fill: color-mix(in srgb, var(--color-card) 88%, transparent);
+      stroke: rgba(255,255,255,0.04);
+      stroke-width: 0.8;
+    }
+
+    .core-highlight {
+      fill: rgba(255,255,255,0.015);
+      stroke: rgba(255,255,255,0.03);
+      stroke-width: 0.6;
     }
 
     .seg {
-      transition: stroke-width 160ms ease, filter 160ms ease;
+      transition: stroke-width 220ms ease, filter 220ms ease, opacity 220ms ease;
       cursor: pointer;
       opacity: 0;
       animation: segmentReveal 720ms ease forwards;
+      filter: url(#chartGlow);
     }
 
-    .seg:hover {
-      stroke-width: 18;
-      filter: brightness(1.05);
-    }
+    .seg:hover { filter: brightness(1.08); }
 
     .center-copy {
       text-transform: uppercase;
-      letter-spacing: 0.12em;
+      letter-spacing: 0.16em;
+      font-weight: 700;
+    }
+
+    .micro-copy {
+      text-transform: uppercase;
+      letter-spacing: 0.22em;
+    }
+
+    .center-value {
+      font-family: var(--font-display);
+      letter-spacing: -0.04em;
+    }
+
+    .center-meta {
+      letter-spacing: 0.04em;
     }
 
     .legend {
       list-style: none;
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 18px;
     }
 
     .legend li {
       display: grid;
-      grid-template-columns: auto 1fr auto;
+      grid-template-columns: minmax(52px, 76px) auto minmax(120px, 1fr) auto;
       align-items: center;
-      gap: 10px;
-      padding: 10px 12px;
-      border-radius: 14px;
-      background: rgba(255,255,255,0.03);
-      border: 1px solid rgba(255,255,255,0.05);
+      gap: 12px;
+      padding: 4px 0;
+      border-radius: 0;
+      background: transparent;
+      border: 0;
       font-size: 0.84rem;
-      transition: transform 160ms ease, border-color 160ms ease;
+      transition: transform 160ms ease, opacity 160ms ease;
+      cursor: pointer;
     }
 
     .legend li:hover {
       transform: translateX(2px);
-      border-color: rgba(99,102,241,0.18);
+    }
+
+    .legend li.active {
+      transform: translateX(4px);
+    }
+
+    .connector {
+      height: 1.5px;
+      border-radius: 999px;
+      background: rgba(148, 163, 184, 0.55);
+      transform-origin: left center;
+      transition: transform 160ms ease, background 160ms ease;
+    }
+
+    .legend li.active .connector,
+    .legend li:hover .connector {
+      transform: scaleX(1.08);
+      background: rgba(226, 232, 240, 0.78);
     }
 
     .dot {
-      width: 12px;
-      height: 12px;
-      border-radius: 4px;
-      box-shadow: 0 0 0 4px rgba(255,255,255,0.03);
+      width: 38px;
+      height: 38px;
+      border-radius: 14px;
+      box-shadow: 0 12px 24px rgba(15,23,42,0.12), inset 0 1px 0 rgba(255,255,255,0.2);
+    }
+
+    .legend-copy {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
     }
 
     .lab {
+      color: var(--color-foreground);
+      font-weight: 500;
+      font-size: 0.98rem;
+    }
+
+    .pct {
       color: var(--color-muted-foreground);
-      font-weight: 600;
+      font-size: 0.74rem;
+      font-weight: 500;
     }
 
     .val {
       font-family: var(--font-display);
-      font-weight: 700;
-      font-size: 1rem;
+      font-weight: 600;
+      font-size: 0.9rem;
+      color: var(--color-muted-foreground);
     }
 
     @keyframes pulseRing {
@@ -206,6 +317,16 @@ export interface DonutSlice {
 
     @media (max-width: 720px) {
       .wrap { grid-template-columns: 1fr; }
+      .legend li {
+        grid-template-columns: 40px auto 1fr auto;
+        gap: 10px;
+      }
+      .connector { display: none; }
+      .dot {
+        width: 30px;
+        height: 30px;
+        border-radius: 12px;
+      }
     }
   `],
 })
@@ -214,6 +335,7 @@ export class DonutChartComponent {
   @Input() centerLabel = 'Total';
   @Input() size = 240;
   @Input() strokeWidth = 16;
+  @Input() segmentGap = 0;
 
   readonly hover = signal<{ i: number; label: string; value: number; pct: number } | null>(null);
   readonly total = computed(() => this.slices.reduce((acc, s) => acc + (s.value || 0), 0));
@@ -223,13 +345,14 @@ export class DonutChartComponent {
     let acc = 0;
     return this.slices.map(s => {
       const pct = (s.value / total) * 100;
+      const visiblePct = Math.max(0.8, pct - this.segmentGap);
       const seg = {
         label: s.label,
         raw: s.value,
         color: s.color,
         pct: Math.round(pct),
-        dash: `${pct} ${100 - pct}`,
-        offset: -acc,
+        dash: `${visiblePct} ${100 - visiblePct}`,
+        offset: -(acc + this.segmentGap / 2),
       };
       acc += pct;
       return seg;
@@ -244,6 +367,14 @@ export class DonutChartComponent {
 
   radius(): number {
     return Math.max(24, 50 - this.strokeWidth / 2 - 6);
+  }
+
+  innerCoreRadius(): number {
+    return Math.max(28, this.radius() - this.strokeWidth / 2 + 8);
+  }
+
+  segmentStrokeWidth(index: number): number {
+    return this.hover()?.i === index ? this.strokeWidth + 6 : this.strokeWidth;
   }
 
   activeLabelLines(): string[] {

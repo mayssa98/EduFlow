@@ -133,8 +133,9 @@ interface DashboardBrief {
         <app-donut-chart
           [slices]="statusSlices"
           centerLabel="Statut devoirs"
-          [size]="292"
-          [strokeWidth]="18"
+          [size]="310"
+          [strokeWidth]="12"
+          [segmentGap]="0"
         ></app-donut-chart>
       </app-chart-card>
     </div>

@@ -1,12 +1,10 @@
 import { Component, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterOutlet } from '@angular/router';
+import { Router, RouterOutlet } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 
 import { AuthService } from '../core/services/auth.service';
 import { SidebarComponent, SidebarItem } from '../shared/components/sidebar/sidebar.component';
-import { LanguageSwitcherComponent } from '../shared/components/language-switcher/language-switcher.component';
-import { ThemeToggleComponent } from '../shared/components/theme-toggle/theme-toggle.component';
 import { APP_ICONS } from '../shared/icons/app-icons';
 import { SafeHtmlPipe } from '../shared/pipes/safe-html.pipe';
 
@@ -28,16 +26,23 @@ const {
 @Component({
   selector: 'app-authenticated-layout',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, TranslateModule, SidebarComponent, LanguageSwitcherComponent, ThemeToggleComponent, SafeHtmlPipe],
+  imports: [CommonModule, RouterOutlet, TranslateModule, SidebarComponent, SafeHtmlPipe],
   template: `
     <div class="shell">
       <app-sidebar [items]="items()"></app-sidebar>
       <div class="main">
         <header class="topbar glass">
           <div class="title-group">
-            <div class="title-icon-wrap">
-              <span class="title-icon" [innerHTML]="roleBadgeIcon() | safeHtml"></span>
-            </div>
+            <button class="profile-avatar" type="button" (click)="openProfile()" title="Ajouter ou changer la photo de profil">
+              <img
+                *ngIf="avatarUrl()"
+                [src]="avatarUrl()!"
+                alt="Photo de profil"
+                class="profile-avatar-img"
+              />
+              <span *ngIf="!avatarUrl()" class="profile-avatar-fallback" [innerHTML]="avatarFallbackIcon | safeHtml"></span>
+              <span class="profile-avatar-plus" aria-hidden="true">+</span>
+            </button>
             <div class="title">
               <span class="hello">{{ 'DASHBOARD.WELCOME' | translate }}</span>
               <div class="headline">
@@ -51,8 +56,6 @@ const {
             </div>
           </div>
           <div class="actions">
-            <app-language-switcher></app-language-switcher>
-            <app-theme-toggle></app-theme-toggle>
             <button class="btn btn-outline btn-sm" (click)="logout()" [title]="'NAV.LOGOUT' | translate">
               <span class="logout-icon" [innerHTML]="logoutIcon | safeHtml"></span>
               <span class="hide-sm">{{ 'NAV.LOGOUT' | translate }}</span>
@@ -73,14 +76,14 @@ const {
       display: flex; align-items: center; justify-content: space-between;
       gap: 16px; padding: 12px 22px; margin: 12px 16px 0;
       border-radius: var(--radius-lg);
-      overflow: hidden;
+      overflow: visible;
       background:
         radial-gradient(circle at top right, rgba(99,102,241,0.16), transparent 26%),
         linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.03));
       box-shadow: 0 16px 40px rgba(15, 23, 42, 0.18);
     }
     .title-group { display: flex; align-items: center; gap: 14px; min-width: 0; }
-    .title-icon-wrap {
+    .profile-avatar {
       position: relative;
       width: 56px;
       height: 56px;
@@ -92,8 +95,17 @@ const {
       border: 1px solid rgba(129,140,248,0.26);
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.35), 0 18px 30px rgba(59,130,246,0.12);
       flex-shrink: 0;
+      padding: 0;
+      overflow: visible;
+      cursor: pointer;
+      transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
     }
-    .title-icon-wrap::after {
+    .profile-avatar:hover {
+      transform: translateY(-1px);
+      border-color: rgba(129,140,248,0.4);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.4), 0 20px 34px rgba(59,130,246,0.18);
+    }
+    .profile-avatar::after {
       content: '';
       position: absolute;
       inset: -10px;
@@ -101,10 +113,42 @@ const {
       border: 1px solid rgba(99,102,241,0.08);
       animation: haloPulse 4.8s ease-in-out infinite;
     }
-    .title-icon {
+    .profile-avatar-img,
+    .profile-avatar-fallback {
+      width: 100%;
+      height: 100%;
+      border-radius: inherit;
+    }
+    .profile-avatar-img {
+      object-fit: cover;
+      display: block;
+    }
+    .profile-avatar-fallback {
       display: inline-flex;
+      align-items: center;
+      justify-content: center;
       color: #c7d2fe;
       animation: floatBadge 5.4s ease-in-out infinite;
+    }
+    .profile-avatar-plus {
+      position: absolute;
+      right: -4px;
+      bottom: -4px;
+      width: 22px;
+      height: 22px;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #6366f1, #3b82f6);
+      color: #fff;
+      font-family: var(--font-display);
+      font-size: 1rem;
+      font-weight: 700;
+      line-height: 1;
+      border: 2px solid rgba(15, 23, 42, 0.92);
+      box-shadow: 0 10px 18px rgba(37,99,235,0.3);
+      z-index: 1;
     }
     .title { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; min-width: 0; }
     .headline { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; min-width: 0; }
@@ -152,17 +196,20 @@ const {
     @media (max-width: 920px) { .title-group { gap: 10px; } }
     @media (max-width: 820px) {
       .topbar { align-items: flex-start; }
-      .title-icon-wrap { width: 48px; height: 48px; border-radius: 18px; }
+      .profile-avatar { width: 48px; height: 48px; border-radius: 18px; }
     }
     @media (max-width: 720px) { .hide-sm { display: none; } }
   `],
 })
 export class AuthenticatedLayoutComponent {
   private auth = inject(AuthService);
+  private router = inject(Router);
 
   readonly logoutIcon = ICON_LOGOUT;
   readonly workspaceIcon = ICON_ROCKET;
+  readonly avatarFallbackIcon = ICON_PROFILE;
   readonly user = this.auth.user;
+  readonly avatarUrl = computed(() => this.user()?.photoUrl?.trim() || null);
   readonly homeRoute = computed(() => {
     const role = this.auth.role();
     return role === 'ADMIN' ? '/admin' : role === 'ENSEIGNANT' ? '/teacher' : '/student';
@@ -184,6 +231,10 @@ export class AuthenticatedLayoutComponent {
         : 'Parcours etudiant';
   });
 
+  openProfile(): void {
+    void this.router.navigateByUrl('/settings/profile');
+  }
+
   readonly items = computed<SidebarItem[]>(() => {
     const role = this.auth.role();
 
@@ -193,7 +244,6 @@ export class AuthenticatedLayoutComponent {
         { route: '/admin/users',     labelKey: 'NAV.STUDENTS',   icon: ICON_USERS,   shortLabel: 'Utilisateurs' },
         { route: '/admin/courses',   labelKey: 'NAV.COURSES',    icon: ICON_BOOK,    shortLabel: 'Cours' },
         { route: '/admin/approvals', labelKey: 'NAV.APPROVALS',  icon: ICON_CHECK,   shortLabel: 'Validation' },
-        { route: '/profile',         labelKey: 'NAV.PROFILE',    icon: ICON_PROFILE, shortLabel: 'Profil' },
         { route: '/settings',        labelKey: 'NAV.SETTINGS',   icon: ICON_SETTINGS, shortLabel: 'Reglages' },
       ];
     }
@@ -203,7 +253,6 @@ export class AuthenticatedLayoutComponent {
         { route: '/teacher/courses',      labelKey: 'NAV.COURSES',      icon: ICON_BOOK,    shortLabel: 'Cours' },
         { route: '/teacher/assignments',  labelKey: 'ASSIGNMENTS.MENU', icon: ICON_FILE,    shortLabel: 'Travaux' },
         { route: '/teacher/ai-analysis',  labelKey: 'AI.MENU',          icon: ICON_ZAP,     shortLabel: 'Analyse IA' },
-        { route: '/profile',              labelKey: 'NAV.PROFILE',      icon: ICON_PROFILE, shortLabel: 'Profil' },
         { route: '/settings',             labelKey: 'NAV.SETTINGS',     icon: ICON_SETTINGS, shortLabel: 'Reglages' },
       ];
     }
@@ -213,7 +262,6 @@ export class AuthenticatedLayoutComponent {
       { route: '/student/courses',      labelKey: 'NAV.COURSES',      icon: ICON_BOOK,    shortLabel: 'Cours' },
       { route: '/student/assignments',  labelKey: 'ASSIGNMENTS.MENU', icon: ICON_FILE,    shortLabel: 'Devoirs' },
       { route: '/student/grades',       labelKey: 'NAV.GRADES',       icon: ICON_CHART,   shortLabel: 'Notes' },
-      { route: '/profile',              labelKey: 'NAV.PROFILE',      icon: ICON_PROFILE, shortLabel: 'Profil' },
       { route: '/settings',             labelKey: 'NAV.SETTINGS',     icon: ICON_SETTINGS, shortLabel: 'Reglages' },
     ];
   });
