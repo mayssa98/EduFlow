@@ -1,5 +1,6 @@
 import { Component, inject, signal, computed, OnInit, OnDestroy, ElementRef, QueryList, ViewChildren } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { ReactiveFormsModule, FormBuilder, Validators, FormGroup, AbstractControl } from '@angular/forms';
 import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
@@ -1335,7 +1336,7 @@ export class AuthPageComponent implements OnInit, OnDestroy {
       },
       error: e => {
         this.busy.set(false);
-        this.error.set(this.translateError(e?.error?.code) ?? this.translate.instant('AUTH.ERR_INVALID_CREDENTIALS'));
+        this.error.set(this.resolveRequestError(e, 'AUTH.ERR_INVALID_CREDENTIALS'));
       },
     });
   }
@@ -1371,7 +1372,7 @@ export class AuthPageComponent implements OnInit, OnDestroy {
       },
       error: e => {
         this.busy.set(false);
-        this.error.set(this.translateError(e?.error?.code) ?? this.translate.instant('ERRORS.GENERIC'));
+        this.error.set(this.resolveRequestError(e));
       },
     });
   }
@@ -1645,7 +1646,7 @@ export class AuthPageComponent implements OnInit, OnDestroy {
       },
       error: (e: any) => {
         this.busy.set(false);
-        this.error.set(this.translateError(e?.error?.code) ?? e?.error?.message ?? this.translate.instant('ERRORS.GENERIC'));
+        this.error.set(this.resolveRequestError(e));
       },
     });
   }
@@ -1712,6 +1713,23 @@ export class AuthPageComponent implements OnInit, OnDestroy {
     };
     const key = map[code];
     return key ? this.translate.instant(key) : null;
+  }
+
+  private resolveRequestError(error: unknown, fallbackKey = 'ERRORS.GENERIC'): string {
+    if (error instanceof HttpErrorResponse && error.status === 0) {
+      return "Le service d'authentification est momentanément indisponible. Réessayez dans un instant.";
+    }
+
+    const backendCode = (error as any)?.error?.code;
+    const translated = this.translateError(backendCode);
+    if (translated) return translated;
+
+    const backendMessage = (error as any)?.error?.message;
+    if (typeof backendMessage === 'string' && backendMessage.trim()) {
+      return backendMessage;
+    }
+
+    return this.translate.instant(fallbackKey);
   }
 }
 
