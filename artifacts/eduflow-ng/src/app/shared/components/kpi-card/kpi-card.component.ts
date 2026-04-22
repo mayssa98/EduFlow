@@ -2,18 +2,19 @@ import {
   Component, Input, OnChanges, SimpleChanges, signal, ChangeDetectionStrategy,
 } from '@angular/core';
 import { CommonModule, DecimalPipe } from '@angular/common';
+import { SafeHtmlPipe } from '../../pipes/safe-html.pipe';
 
 @Component({
   selector: 'app-kpi-card',
   standalone: true,
-  imports: [CommonModule, DecimalPipe],
+  imports: [CommonModule, DecimalPipe, SafeHtmlPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <article class="kpi" [class.has-glow]="glow">
       <div class="glow" *ngIf="glow"></div>
       <header>
         <span class="label">{{ label }}</span>
-        <span class="icon" *ngIf="icon" [innerHTML]="icon"></span>
+        <span class="icon" *ngIf="icon" [innerHTML]="icon | safeHtml"></span>
       </header>
       <div class="value">
         <ng-container *ngIf="isNumeric; else strBlock">{{ animated() | number:format }}</ng-container>
@@ -65,6 +66,7 @@ import { CommonModule, DecimalPipe } from '@angular/common';
       border: 1px solid rgba(99,102,241,0.18);
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.4), 0 14px 24px rgba(79,70,229,0.12);
       transition: transform 200ms ease, box-shadow 200ms ease;
+      animation: kpiOrbit 6s ease-in-out infinite;
     }
     .icon :is(svg) { display: block; }
     .kpi:hover .icon { transform: translateY(-1px) scale(1.03); box-shadow: inset 0 1px 0 rgba(255,255,255,0.45), 0 16px 28px rgba(79,70,229,0.16); }
@@ -82,6 +84,10 @@ import { CommonModule, DecimalPipe } from '@angular/common';
     .trend.down { color: var(--red-500); }
     .trend:not(.up):not(.down) { color: var(--color-muted-foreground); }
     .hint { color: var(--color-muted-foreground); }
+    @keyframes kpiOrbit {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-2px); }
+    }
   `],
 })
 export class KpiCardComponent implements OnChanges {

@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { BrandMarkComponent } from '../brand/brand-mark.component';
+import { SafeHtmlPipe } from '../../pipes/safe-html.pipe';
 
 export interface SidebarItem {
   route: string;
@@ -14,7 +15,7 @@ export interface SidebarItem {
 @Component({
   selector: 'app-sidebar',
   standalone: true,
-  imports: [CommonModule, RouterLink, RouterLinkActive, TranslateModule, BrandMarkComponent],
+  imports: [CommonModule, RouterLink, RouterLinkActive, TranslateModule, BrandMarkComponent, SafeHtmlPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <aside class="sidebar">
@@ -25,10 +26,11 @@ export interface SidebarItem {
         <a *ngFor="let it of items" [routerLink]="it.route" routerLinkActive="active"
            [routerLinkActiveOptions]="{ exact: false }"
            class="nav-item" [attr.aria-label]="it.labelKey | translate"
-           [attr.title]="it.labelKey | translate">
+          [attr.title]="it.labelKey | translate">
           <span class="active-beam"></span>
+          <span class="ambient-orb"></span>
           <span class="icon-shell">
-            <span class="icon" [innerHTML]="it.icon"></span>
+            <span class="icon" [innerHTML]="it.icon | safeHtml"></span>
           </span>
           <span class="name">{{ it.shortLabel || (it.labelKey | translate) }}</span>
         </a>
@@ -88,6 +90,23 @@ export interface SidebarItem {
       border-color: rgba(99,102,241,0.32);
       box-shadow: 0 18px 32px rgba(79,70,229,0.18);
     }
+    .ambient-orb {
+      position: absolute;
+      inset: auto auto -16px -10px;
+      width: 52px;
+      height: 52px;
+      border-radius: 999px;
+      background: radial-gradient(circle, rgba(96,165,250,0.24), transparent 68%);
+      opacity: 0;
+      transform: scale(0.7);
+      transition: opacity 180ms ease, transform 180ms ease;
+      pointer-events: none;
+    }
+    .nav-item:hover .ambient-orb,
+    .nav-item.active .ambient-orb {
+      opacity: 1;
+      transform: scale(1);
+    }
     .active-beam {
       position: absolute;
       inset-inline-start: -1px;
@@ -111,8 +130,24 @@ export interface SidebarItem {
       background: linear-gradient(135deg, rgba(99,102,241,0.16), rgba(59,130,246,0.08));
       border: 1px solid rgba(99,102,241,0.2);
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.35);
+      transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease;
     }
-    .icon { display: inline-flex; }
+    .nav-item:hover .icon-shell,
+    .nav-item.active .icon-shell {
+      transform: translateY(-1px);
+      background: linear-gradient(135deg, rgba(99,102,241,0.24), rgba(56,189,248,0.16));
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.42), 0 18px 28px rgba(37,99,235,0.18);
+    }
+    .icon {
+      display: inline-flex;
+      color: currentColor;
+      animation: navIconFloat 5.4s ease-in-out infinite;
+    }
+    .nav-item:nth-child(2) .icon { animation-delay: 0.35s; }
+    .nav-item:nth-child(3) .icon { animation-delay: 0.7s; }
+    .nav-item:nth-child(4) .icon { animation-delay: 1.05s; }
+    .nav-item:nth-child(5) .icon { animation-delay: 1.4s; }
+    .nav-item:nth-child(6) .icon { animation-delay: 1.75s; }
     .icon :is(svg) { display: block; }
     .name {
       text-align: center;
@@ -123,6 +158,10 @@ export interface SidebarItem {
       max-width: 72px;
       color: inherit;
       text-wrap: balance;
+    }
+    @keyframes navIconFloat {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-3px); }
     }
     @media (max-width: 760px) {
       .sidebar { width: 74px; padding-inline: 8px; }

@@ -9,6 +9,7 @@ import { DonutChartComponent } from '../../shared/components/charts/donut-chart.
 import { ProgressBarComponent } from '../../shared/components/progress-bar/progress-bar.component';
 import { StatusChipComponent } from '../../shared/components/status-chip/status-chip.component';
 import { APP_ICONS } from '../../shared/icons/app-icons';
+import { SafeHtmlPipe } from '../../shared/pipes/safe-html.pipe';
 
 interface CourseProgress {
   name: string;
@@ -41,12 +42,15 @@ interface DashboardBrief {
     DonutChartComponent,
     ProgressBarComponent,
     StatusChipComponent,
+    SafeHtmlPipe,
   ],
   template: `
     <section class="hero-panel">
+      <div class="hero-aura hero-aura-left"></div>
+      <div class="hero-aura hero-aura-right"></div>
       <div class="hero-copy">
         <span class="eyebrow">
-          <span class="eyebrow-icon" [innerHTML]="icons.sparkles"></span>
+          <span class="eyebrow-icon" [innerHTML]="icons.sparkles | safeHtml"></span>
           Cockpit etudiant
         </span>
         <h1 class="page-title">{{ 'STUDENT.TITLE' | translate }}</h1>
@@ -58,7 +62,7 @@ interface DashboardBrief {
 
       <div class="hero-briefs">
         <article class="hero-brief" *ngFor="let brief of heroBriefs">
-          <span class="brief-icon" [innerHTML]="brief.icon"></span>
+          <span class="brief-icon" [innerHTML]="brief.icon | safeHtml"></span>
           <div>
             <strong>{{ brief.title }}</strong>
             <p>{{ brief.text }}</p>
@@ -164,6 +168,7 @@ interface DashboardBrief {
   `,
   styles: [`
     .hero-panel {
+      position: relative;
       display: grid;
       grid-template-columns: minmax(280px, 1.1fr) minmax(280px, 0.9fr);
       gap: 18px;
@@ -173,11 +178,39 @@ interface DashboardBrief {
       border: 1px solid rgba(99,102,241,0.14);
       background:
         radial-gradient(circle at top right, rgba(99,102,241,0.18), transparent 34%),
-        linear-gradient(135deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
+        linear-gradient(135deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
       box-shadow: 0 20px 40px rgba(15,23,42,0.16);
+      overflow: hidden;
+    }
+
+    .hero-aura {
+      position: absolute;
+      border-radius: 999px;
+      filter: blur(10px);
+      pointer-events: none;
+      opacity: 0.8;
+    }
+
+    .hero-aura-left {
+      top: -42px;
+      left: -28px;
+      width: 180px;
+      height: 180px;
+      background: radial-gradient(circle, rgba(56,189,248,0.16), transparent 70%);
+      animation: auraFloat 8s ease-in-out infinite;
+    }
+
+    .hero-aura-right {
+      bottom: -54px;
+      right: 12%;
+      width: 220px;
+      height: 220px;
+      background: radial-gradient(circle, rgba(129,140,248,0.18), transparent 68%);
+      animation: auraFloat 10s ease-in-out infinite reverse;
     }
 
     .hero-copy {
+      position: relative;
       display: flex;
       flex-direction: column;
       gap: 10px;
@@ -205,6 +238,7 @@ interface DashboardBrief {
       display: inline-flex;
       align-items: center;
       justify-content: center;
+      color: currentColor;
     }
 
     .page-title {
@@ -222,6 +256,7 @@ interface DashboardBrief {
     }
 
     .hero-briefs {
+      position: relative;
       display: grid;
       gap: 12px;
       align-content: center;
@@ -235,7 +270,10 @@ interface DashboardBrief {
       padding: 16px 18px;
       border-radius: 20px;
       border: 1px solid rgba(255,255,255,0.05);
-      background: rgba(255,255,255,0.03);
+      background:
+        linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.025)),
+        rgba(255,255,255,0.03);
+      box-shadow: 0 16px 28px rgba(15,23,42,0.12);
       animation: floatCard 6s ease-in-out infinite;
     }
 
@@ -249,7 +287,8 @@ interface DashboardBrief {
       color: #a5b4fc;
       background: linear-gradient(135deg, rgba(99,102,241,0.18), rgba(59,130,246,0.08));
       border: 1px solid rgba(99,102,241,0.18);
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.35);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.35), 0 12px 22px rgba(59,130,246,0.12);
+      animation: iconPulse 4.8s ease-in-out infinite;
     }
 
     .hero-brief strong {
@@ -295,6 +334,13 @@ interface DashboardBrief {
       border-radius: 18px;
       background: rgba(255,255,255,0.03);
       border: 1px solid rgba(255,255,255,0.04);
+      transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+    }
+
+    .cp li:hover {
+      transform: translateY(-2px);
+      border-color: rgba(99,102,241,0.18);
+      box-shadow: 0 18px 30px rgba(15,23,42,0.14);
     }
 
     .cp header {
@@ -343,6 +389,13 @@ interface DashboardBrief {
       border: 1px dashed var(--color-border);
       border-radius: 18px;
       background: rgba(255,255,255,0.02);
+      transition: transform 180ms ease, border-color 180ms ease, background 180ms ease;
+    }
+
+    .deadlines li:hover {
+      transform: translateY(-2px);
+      border-color: rgba(99,102,241,0.2);
+      background: rgba(255,255,255,0.04);
     }
 
     .deadlines li.urgent {
@@ -360,6 +413,16 @@ interface DashboardBrief {
     @keyframes floatCard {
       0%, 100% { transform: translateY(0); }
       50% { transform: translateY(-4px); }
+    }
+
+    @keyframes iconPulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.06); }
+    }
+
+    @keyframes auraFloat {
+      0%, 100% { transform: translate3d(0, 0, 0); }
+      50% { transform: translate3d(14px, -10px, 0); }
     }
 
     @media (max-width: 1120px) {
