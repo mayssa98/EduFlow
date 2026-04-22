@@ -42,9 +42,17 @@ public class AppProperties {
         private String defaultPassword;
     }
     @Getter @Setter public static class Email {
+        private String provider = "log";
         private String resendApiKey;
         private String fromAddress;
         private String fromName;
+        private String smtpHost = "localhost";
+        private int smtpPort = 1025;
+        private String smtpUsername;
+        private String smtpPassword;
+        private boolean smtpAuth = false;
+        private boolean smtpStarttls = false;
+        private String inboxUrl = "http://localhost:8025";
     }
     @Getter @Setter public static class Google {
         private String clientId;

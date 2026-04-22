@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
-import { Component, ElementRef, OnInit, ViewChild, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, ElementRef, OnInit, ViewChild, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, ParamMap, Router, RouterLink } from '@angular/router';
 
@@ -110,7 +111,6 @@ interface SettingsOption {
                 <ng-template #profileAvatarFallback>
                   <span class="avatar-fallback" [innerHTML]="icons.profile | safeHtml"></span>
                 </ng-template>
-                <span class="avatar-plus">+</span>
               </button>
 
               <button
@@ -666,24 +666,6 @@ interface SettingsOption {
       color: #c7d2fe;
     }
 
-    .avatar-plus {
-      position: absolute;
-      right: 8px;
-      bottom: 8px;
-      width: 28px;
-      height: 28px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 999px;
-      background: linear-gradient(135deg, #6366f1, #3b82f6);
-      color: #fff;
-      font-size: 1.05rem;
-      font-weight: 700;
-      border: 2px solid rgba(15,23,42,0.92);
-      box-shadow: 0 10px 18px rgba(37,99,235,0.3);
-    }
-
     .summary-row {
       display: flex;
       flex-direction: column;
@@ -971,6 +953,7 @@ export class SettingsPageComponent implements OnInit {
   private authSvc = inject(AuthService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
+  private destroyRef = inject(DestroyRef);
 
   readonly languageService = inject(LanguageService);
   readonly themeService = inject(ThemeService);
@@ -1073,6 +1056,12 @@ export class SettingsPageComponent implements OnInit {
 
   ngOnInit(): void {
     this.route.paramMap.subscribe(params => this.applyRouteSection(params));
+    this.authSvc.currentUser$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(currentUser => {
+        if (!currentUser || !this.profile()) return;
+        this.profile.update(profile => profile ? { ...profile, photoUrl: currentUser.photoUrl } : profile);
+      });
     this.loadProfile();
   }
 

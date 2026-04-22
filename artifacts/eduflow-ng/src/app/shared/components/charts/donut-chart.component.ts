@@ -341,11 +341,23 @@ export class DonutChartComponent {
   readonly total = computed(() => this.slices.reduce((acc, s) => acc + (s.value || 0), 0));
 
   readonly segments = computed(() => {
-    const total = this.total() || 1;
+    const rawTotal = this.total();
+    if (rawTotal <= 0) {
+      return this.slices.map(s => ({
+        label: s.label,
+        raw: s.value,
+        color: s.color,
+        pct: 0,
+        dash: '0 100',
+        offset: 0,
+      }));
+    }
+
+    const total = rawTotal;
     let acc = 0;
     return this.slices.map(s => {
       const pct = (s.value / total) * 100;
-      const visiblePct = Math.max(0.8, pct - this.segmentGap);
+      const visiblePct = pct <= 0 ? 0 : Math.max(0.8, pct - this.segmentGap);
       const seg = {
         label: s.label,
         raw: s.value,

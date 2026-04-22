@@ -1,11 +1,15 @@
-import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TranslateModule } from '@ngx-translate/core';
+import { Observable, catchError, forkJoin, map, of, switchMap, timer } from 'rxjs';
 
-import { KpiCardComponent } from '../../shared/components/kpi-card/kpi-card.component';
+import { Assignment, AssignmentService, Submission } from '../../core/services/assignment.service';
+import { Course, CourseService } from '../../core/services/course.service';
 import { ChartCardComponent } from '../../shared/components/chart-card/chart-card.component';
+import { DonutChartComponent, DonutSlice } from '../../shared/components/charts/donut-chart.component';
 import { LineChartComponent } from '../../shared/components/charts/line-chart.component';
-import { DonutChartComponent } from '../../shared/components/charts/donut-chart.component';
+import { KpiCardComponent } from '../../shared/components/kpi-card/kpi-card.component';
 import { ProgressBarComponent } from '../../shared/components/progress-bar/progress-bar.component';
 import { StatusChipComponent } from '../../shared/components/status-chip/status-chip.component';
 import { APP_ICONS } from '../../shared/icons/app-icons';
@@ -29,6 +33,49 @@ interface DashboardBrief {
   text: string;
   icon: string;
 }
+
+interface DashboardTotals {
+  enrolled: number;
+  completed: number;
+  pending: number;
+  overdue: number;
+  average: number;
+}
+
+interface DashboardSnapshot {
+  totals: DashboardTotals;
+  courses: CourseProgress[];
+  statusSlices: DonutSlice[];
+  gradeLabels: string[];
+  gradeTrend: number[];
+  deadlines: Deadline[];
+  lastSyncedAt: number | null;
+}
+
+interface CourseAssignments {
+  course: Course;
+  assignments: Assignment[];
+}
+
+const EMPTY_SNAPSHOT: DashboardSnapshot = {
+  totals: {
+    enrolled: 0,
+    completed: 0,
+    pending: 0,
+    overdue: 0,
+    average: 0,
+  },
+  courses: [],
+  statusSlices: [
+    { label: 'Completed', value: 0, color: '#22c55e' },
+    { label: 'Pending', value: 0, color: '#fbbf24' },
+    { label: 'Overdue', value: 0, color: '#ef4444' },
+  ],
+  gradeLabels: [],
+  gradeTrend: [],
+  deadlines: [],
+  lastSyncedAt: null,
+};
 
 @Component({
   selector: 'app-student-dashboard',
@@ -55,13 +102,17 @@ interface DashboardBrief {
         </span>
         <h1 class="page-title">{{ 'STUDENT.TITLE' | translate }}</h1>
         <p>
-          Suivez vos modules, vos rendus et vos priorites de la semaine depuis un espace
-          plus lisible et plus vivant.
+          Toutes les statistiques partent de l'etat reel du compte et se
+          synchronisent automatiquement. Si une note, un rendu ou un devoir
+          change, le tableau se recalcule sans rester fige.
         </p>
+        <span class="sync-pill" [class.loading]="loading()">
+          {{ loading() ? 'Actualisation en cours...' : syncLabel() }}
+        </span>
       </div>
 
       <div class="hero-briefs">
-        <article class="hero-brief" *ngFor="let brief of heroBriefs">
+        <article class="hero-brief" *ngFor="let brief of heroBriefs()">
           <span class="brief-icon" [innerHTML]="brief.icon | safeHtml"></span>
           <div>
             <strong>{{ brief.title }}</strong>
@@ -74,34 +125,30 @@ interface DashboardBrief {
     <div class="kpi-grid">
       <app-kpi-card
         [label]="'STUDENT.KPI_ENROLLED' | translate"
-        [value]="6"
-        [trend]="1"
+        [value]="snapshot().totals.enrolled"
         [hint]="'modules actifs'"
         [icon]="icons.layers"
       ></app-kpi-card>
 
       <app-kpi-card
         [label]="'STUDENT.KPI_DONE' | translate"
-        [value]="14"
-        [trend]="3"
+        [value]="snapshot().totals.completed"
         [hint]="'travaux remis'"
         [icon]="icons.checkCircle"
       ></app-kpi-card>
 
       <app-kpi-card
         [label]="'STUDENT.KPI_OVERDUE' | translate"
-        [value]="2"
-        [trend]="-1"
+        [value]="snapshot().totals.overdue"
         [hint]="'actions urgentes'"
         [icon]="icons.alert"
       ></app-kpi-card>
 
       <app-kpi-card
         [label]="'STUDENT.KPI_AVG_GRADE' | translate"
-        [value]="14.2"
+        [value]="snapshot().totals.average"
         [suffix]="'/20'"
-        [trend]="0.5"
-        [hint]="'progression continue'"
+        [hint]="'notes publiees'"
         [icon]="icons.award"
         [format]="'1.1-1'"
       ></app-kpi-card>
@@ -110,10 +157,10 @@ interface DashboardBrief {
     <div class="grid-2">
       <app-chart-card
         [title]="'STUDENT.COURSE_PROGRESS' | translate"
-        subtitle="Lecture rapide de vos modules les plus engages"
+        subtitle="Progression calculee depuis les devoirs repondus par cours"
       >
-        <ul class="cp">
-          <li *ngFor="let c of courses">
+        <ul class="cp" *ngIf="snapshot().courses.length > 0; else emptyCourses">
+          <li *ngFor="let c of snapshot().courses">
             <header>
               <div>
                 <strong>{{ c.name }}</strong>
@@ -124,14 +171,20 @@ interface DashboardBrief {
             <app-progress-bar [value]="c.progress" [label]="c.name"></app-progress-bar>
           </li>
         </ul>
+
+        <ng-template #emptyCourses>
+          <div class="panel-empty">
+            Aucun module actif n'est encore visible dans votre tableau.
+          </div>
+        </ng-template>
       </app-chart-card>
 
       <app-chart-card
         [title]="'STUDENT.ASSIGNMENT_STATUS' | translate"
-        subtitle="Diagramme agrandi avec lecture immediate par categorie"
+        subtitle="Statistiques actives : termine, a faire et deja en retard"
       >
         <app-donut-chart
-          [slices]="statusSlices"
+          [slices]="snapshot().statusSlices"
           centerLabel="Statut devoirs"
           [size]="310"
           [strokeWidth]="12"
@@ -143,18 +196,26 @@ interface DashboardBrief {
     <div class="grid-2">
       <app-chart-card
         [title]="'STUDENT.GRADE_TREND' | translate"
-        subtitle="Une courbe simple pour verifier la regularite"
+        subtitle="Courbe mise a jour depuis les dernieres soumissions notees"
       >
-        <app-line-chart [labels]="gradeLabels" [values]="gradeTrend" color="#6366f1"></app-line-chart>
+        <ng-container *ngIf="snapshot().gradeTrend.length > 0; else emptyGrades">
+          <app-line-chart [labels]="snapshot().gradeLabels" [values]="snapshot().gradeTrend" color="#6366f1"></app-line-chart>
+        </ng-container>
+
+        <ng-template #emptyGrades>
+          <div class="panel-empty">
+            Les notes apparaitront ici des que des corrections seront publiees.
+          </div>
+        </ng-template>
       </app-chart-card>
 
       <app-chart-card
         [title]="'STUDENT.UPCOMING_DEADLINES' | translate"
-        subtitle="Les prochaines echeances a ne pas laisser glisser"
+        subtitle="Les prochaines echeances se recalculent automatiquement"
         [fluid]="true"
       >
-        <ul class="deadlines">
-          <li *ngFor="let d of deadlines" [class.urgent]="d.urgent">
+        <ul class="deadlines" *ngIf="snapshot().deadlines.length > 0; else emptyDeadlines">
+          <li *ngFor="let d of snapshot().deadlines" [class.urgent]="d.urgent">
             <div class="deadline-copy">
               <strong>{{ d.title }}</strong>
               <p class="muted">{{ d.course }}</p>
@@ -164,6 +225,12 @@ interface DashboardBrief {
             </div>
           </li>
         </ul>
+
+        <ng-template #emptyDeadlines>
+          <div class="panel-empty">
+            Aucune echeance ouverte pour le moment.
+          </div>
+        </ng-template>
       </app-chart-card>
     </div>
   `,
@@ -254,6 +321,26 @@ interface DashboardBrief {
       color: var(--color-muted-foreground);
       font-size: 0.98rem;
       line-height: 1.7;
+    }
+
+    .sync-pill {
+      display: inline-flex;
+      align-items: center;
+      width: fit-content;
+      padding: 7px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(34,197,94,0.22);
+      background: rgba(34,197,94,0.1);
+      color: #86efac;
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+    }
+
+    .sync-pill.loading {
+      border-color: rgba(251,191,36,0.22);
+      background: rgba(251,191,36,0.1);
+      color: #fde68a;
     }
 
     .hero-briefs {
@@ -411,6 +498,20 @@ interface DashboardBrief {
       font-size: 0.95rem;
     }
 
+    .panel-empty {
+      min-height: 220px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 18px;
+      color: var(--color-muted-foreground);
+      line-height: 1.7;
+      border: 1px dashed rgba(255,255,255,0.08);
+      border-radius: 20px;
+      background: rgba(255,255,255,0.03);
+    }
+
     @keyframes floatCard {
       0%, 100% { transform: translateY(0); }
       50% { transform: translateY(-4px); }
@@ -435,47 +536,203 @@ interface DashboardBrief {
     }
   `],
 })
-export class StudentDashboardComponent {
+export class StudentDashboardComponent implements OnInit {
+  private readonly courseSvc = inject(CourseService);
+  private readonly assignmentSvc = inject(AssignmentService);
+  private readonly destroyRef = inject(DestroyRef);
+
   readonly icons = APP_ICONS;
+  readonly loading = signal(true);
+  readonly snapshot = signal<DashboardSnapshot>(EMPTY_SNAPSHOT);
 
-  readonly heroBriefs: DashboardBrief[] = [
-    {
-      title: 'Vision en un coup d oeil',
-      text: 'Les indicateurs clefs restent visibles sans noyer les informations utiles.',
-      icon: APP_ICONS.layers,
-    },
-    {
-      title: 'Rendus sous controle',
-      text: 'Le diagramme agrandi vous montre vite ce qui est termine, a faire ou deja critique.',
-      icon: APP_ICONS.target,
-    },
-    {
-      title: 'Priorites de la semaine',
-      text: 'Les prochaines echeances restent presentes pour mieux arbitrer vos efforts.',
-      icon: APP_ICONS.calendarCheck,
-    },
-  ];
+  readonly heroBriefs = computed<DashboardBrief[]>(() => {
+    const current = this.snapshot();
+    const tracked = current.statusSlices.reduce((sum, slice) => sum + slice.value, 0);
 
-  readonly courses: CourseProgress[] = [
-    { name: 'Algorithms 101', teacher: 'Prof. Hadj', progress: 78 },
-    { name: 'Web Engineering', teacher: 'Prof. Saidi', progress: 54 },
-    { name: 'Databases', teacher: 'Prof. Khelifa', progress: 42 },
-    { name: 'Mathematics', teacher: 'Prof. Bouaziz', progress: 91 },
-    { name: 'AI Foundations', teacher: 'Prof. Rezzag', progress: 22 },
-  ];
+    return [
+      {
+        title: 'Vision en temps reel',
+        text: `${current.totals.enrolled} modules actifs et ${tracked} elements suivis depuis les donnees reelles.`,
+        icon: APP_ICONS.layers,
+      },
+      {
+        title: 'Rendus synchronises',
+        text: `${current.totals.completed} rendus termines et ${current.totals.pending} devoirs encore ouverts.`,
+        icon: APP_ICONS.target,
+      },
+      {
+        title: 'Priorites immediates',
+        text: `${current.totals.overdue} urgences detectees et ${current.deadlines.length} echeances visibles maintenant.`,
+        icon: APP_ICONS.calendarCheck,
+      },
+    ];
+  });
 
-  readonly statusSlices = [
-    { label: 'Completed', value: 14, color: '#22c55e' },
-    { label: 'Pending', value: 5, color: '#fbbf24' },
-    { label: 'Overdue', value: 2, color: '#ef4444' },
-  ];
+  readonly syncLabel = computed(() => {
+    const ts = this.snapshot().lastSyncedAt;
+    if (!ts) return 'Synchronisation auto active';
+    return `Synchronise a ${this.formatClock(ts)} - refresh auto 5s`;
+  });
 
-  readonly gradeLabels = ['Q1', 'Q2', 'Q3', 'Q4', 'Q5', 'Q6'];
-  readonly gradeTrend = [11.5, 12.2, 12.8, 13.4, 13.9, 14.2];
+  ngOnInit(): void {
+    timer(0, 5000)
+      .pipe(
+        switchMap(() => this.fetchDashboardSnapshot(this.snapshot())),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe(snapshot => {
+        this.snapshot.set(snapshot);
+        this.loading.set(false);
+      });
+  }
 
-  readonly deadlines: Deadline[] = [
-    { title: 'Sorting algorithms TP', course: 'Algorithms 101', due: 'in 1 day', urgent: true },
-    { title: 'Database normalisation', course: 'Databases', due: 'in 4 days', urgent: false },
-    { title: 'Final project', course: 'Web Engineering', due: 'in 12 days', urgent: false },
-  ];
+  private fetchDashboardSnapshot(previous: DashboardSnapshot): Observable<DashboardSnapshot> {
+    this.loading.set(true);
+
+    return forkJoin({
+      courses: this.courseSvc.list().pipe(catchError(() => of([] as Course[]))),
+      submissions: this.assignmentSvc.mySubmissions().pipe(catchError(() => of([] as Submission[]))),
+    }).pipe(
+      switchMap(({ courses, submissions }) => {
+        if (courses.length === 0) {
+          return of(this.buildSnapshot([], submissions, previous));
+        }
+
+        return forkJoin(
+          courses.map(course =>
+            this.assignmentSvc.listForCourse(course.id).pipe(
+              catchError(() => of([] as Assignment[])),
+              map(assignments => ({ course, assignments })),
+            ),
+          ),
+        ).pipe(map(courseAssignments => this.buildSnapshot(courseAssignments, submissions, previous)));
+      }),
+      catchError(() => {
+        this.loading.set(false);
+        return of(previous);
+      }),
+    );
+  }
+
+  private buildSnapshot(courseAssignments: CourseAssignments[], submissions: Submission[], previous: DashboardSnapshot): DashboardSnapshot {
+    const now = Date.now();
+    const submissionByAssignment = new Map<number, Submission>();
+
+    submissions.forEach(submission => {
+      const existing = submissionByAssignment.get(submission.devoirId);
+      if (!existing || new Date(submission.dateSoumission).getTime() > new Date(existing.dateSoumission).getTime()) {
+        submissionByAssignment.set(submission.devoirId, submission);
+      }
+    });
+
+    const allAssignments = courseAssignments.flatMap(({ course, assignments }) =>
+      assignments.map(assignment => ({ ...assignment, teacher: course.enseignantNom })),
+    );
+
+    const completed = allAssignments.filter(assignment => submissionByAssignment.has(assignment.id)).length;
+    const overdue = allAssignments.filter(assignment => !submissionByAssignment.has(assignment.id) && this.isOverdue(assignment.dateEcheance)).length;
+    const pending = Math.max(0, allAssignments.length - completed - overdue);
+
+    const gradedSubmissions = [...submissions]
+      .filter(submission => submission.note != null)
+      .sort((left, right) => new Date(left.dateSoumission).getTime() - new Date(right.dateSoumission).getTime());
+
+    const average = gradedSubmissions.length > 0
+      ? Math.round((gradedSubmissions.reduce((sum, submission) => sum + (submission.note ?? 0), 0) / gradedSubmissions.length) * 10) / 10
+      : 0;
+
+    const courses = courseAssignments
+      .map(({ course, assignments }) => {
+        const submittedCount = assignments.filter(assignment => submissionByAssignment.has(assignment.id)).length;
+        const progress = assignments.length > 0 ? Math.round((submittedCount / assignments.length) * 100) : 0;
+
+        return {
+          name: course.titre,
+          teacher: course.enseignantNom,
+          progress,
+          totalAssignments: assignments.length,
+        };
+      })
+      .sort((left, right) => {
+        if (right.progress !== left.progress) return right.progress - left.progress;
+        if (right.totalAssignments !== left.totalAssignments) return right.totalAssignments - left.totalAssignments;
+        return left.name.localeCompare(right.name);
+      })
+      .slice(0, 5)
+      .map(({ totalAssignments, ...course }) => course);
+
+    const outstandingAssignments = allAssignments
+      .filter(assignment => !submissionByAssignment.has(assignment.id))
+      .sort((left, right) => new Date(left.dateEcheance).getTime() - new Date(right.dateEcheance).getTime());
+
+    const deadlines = outstandingAssignments.slice(0, 3).map(assignment => ({
+      title: assignment.titre,
+      course: assignment.coursTitre,
+      due: this.relativeDueLabel(assignment.dateEcheance, now),
+      urgent: this.isUrgent(assignment.dateEcheance, now),
+    }));
+
+    const recentGrades = gradedSubmissions.slice(-6);
+
+    const totals: DashboardTotals = {
+      enrolled: courseAssignments.length,
+      completed,
+      pending,
+      overdue,
+      average,
+    };
+
+    return {
+      totals,
+      courses,
+      statusSlices: [
+        { label: 'Completed', value: completed, color: '#22c55e' },
+        { label: 'Pending', value: pending, color: '#fbbf24' },
+        { label: 'Overdue', value: overdue, color: '#ef4444' },
+      ],
+      gradeLabels: recentGrades.map((submission, index) => this.compactGradeLabel(submission, index)),
+      gradeTrend: recentGrades.map(submission => submission.note ?? 0),
+      deadlines,
+      lastSyncedAt: now,
+    };
+  }
+
+  private compactGradeLabel(submission: Submission, index: number): string {
+    const title = submission.devoirTitre?.trim() || `Note ${index + 1}`;
+    return title.length <= 10 ? title : `${title.slice(0, 9)}.`;
+  }
+
+  private relativeDueLabel(dateValue: string, now: number): string {
+    const diffMs = new Date(dateValue).getTime() - now;
+    const diffDays = Math.ceil(diffMs / 86_400_000);
+
+    if (diffMs < 0) return 'En retard';
+    if (diffDays <= 0) return "Aujourd'hui";
+    if (diffDays === 1) return 'Demain';
+    if (diffDays <= 7) return `Dans ${diffDays} jours`;
+    return `Le ${this.formatShortDate(dateValue)}`;
+  }
+
+  private isUrgent(dateValue: string, now: number): boolean {
+    const diffMs = new Date(dateValue).getTime() - now;
+    return diffMs < 0 || diffMs <= 2 * 86_400_000;
+  }
+
+  private isOverdue(dateValue: string): boolean {
+    return new Date(dateValue).getTime() < Date.now();
+  }
+
+  private formatShortDate(value: string): string {
+    return new Date(value).toLocaleDateString('fr-FR', {
+      day: '2-digit',
+      month: 'short',
+    });
+  }
+
+  private formatClock(timestamp: number): string {
+    return new Date(timestamp).toLocaleTimeString('fr-FR', {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  }
 }

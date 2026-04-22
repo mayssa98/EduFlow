@@ -9,6 +9,14 @@ spring:
     import: optional:file:.env.properties
   application:
     name: eduflow-backend
+  mail:
+    host: ${EMAIL_SMTP_HOST:localhost}
+    port: ${EMAIL_SMTP_PORT:1025}
+    username: ${EMAIL_SMTP_USERNAME:}
+    password: ${EMAIL_SMTP_PASSWORD:}
+    properties:
+      mail.smtp.auth: ${EMAIL_SMTP_AUTH:false}
+      mail.smtp.starttls.enable: ${EMAIL_SMTP_STARTTLS:false}
   datasource:
     url: jdbc:postgresql://${PGHOST:localhost}:${PGPORT:5432}/${PGDATABASE:eduflow}?sslmode=disable
     username: ${PGUSER:postgres}
@@ -62,9 +70,17 @@ eduflow:
     default-email: ${ADMIN_DEFAULT_EMAIL:admin@eduflow.com}
     default-password: ${ADMIN_DEFAULT_PASSWORD:Admin@EduFlow2026}
   email:
+    provider: ${EMAIL_PROVIDER:log}
     resend-api-key: ${RESEND_API_KEY:}
     from-address: ${EMAIL_FROM:onboarding@resend.dev}
     from-name: EduFlow
+    smtp-host: ${EMAIL_SMTP_HOST:localhost}
+    smtp-port: ${EMAIL_SMTP_PORT:1025}
+    smtp-username: ${EMAIL_SMTP_USERNAME:}
+    smtp-password: ${EMAIL_SMTP_PASSWORD:}
+    smtp-auth: ${EMAIL_SMTP_AUTH:false}
+    smtp-starttls: ${EMAIL_SMTP_STARTTLS:false}
+    inbox-url: ${EMAIL_INBOX_URL:http://localhost:8025}
   google:
     client-id: ${GOOGLE_CLIENT_ID:}
     client-secret: ${GOOGLE_CLIENT_SECRET:}

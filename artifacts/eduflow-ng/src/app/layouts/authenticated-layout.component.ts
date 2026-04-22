@@ -1,9 +1,10 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, ElementRef, ViewChild, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterOutlet } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 
 import { AuthService } from '../core/services/auth.service';
+import { UserService } from '../core/services/user.service';
 import { SidebarComponent, SidebarItem } from '../shared/components/sidebar/sidebar.component';
 import { APP_ICONS } from '../shared/icons/app-icons';
 import { SafeHtmlPipe } from '../shared/pipes/safe-html.pipe';
@@ -33,7 +34,20 @@ const {
       <div class="main">
         <header class="topbar glass">
           <div class="title-group">
-            <button class="profile-avatar" type="button" (click)="openProfile()" title="Ajouter ou changer la photo de profil">
+            <input
+              #headerAvatarInput
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              hidden
+              (change)="onAvatarSelected($event)"
+            />
+            <button
+              class="profile-avatar"
+              type="button"
+              (click)="triggerAvatarPicker()"
+              [disabled]="avatarUploading()"
+              title="Choisir une photo de profil"
+            >
               <img
                 *ngIf="avatarUrl()"
                 [src]="avatarUrl()!"
@@ -99,6 +113,11 @@ const {
       overflow: visible;
       cursor: pointer;
       transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+    }
+    .profile-avatar:disabled {
+      opacity: 0.7;
+      cursor: wait;
+      transform: none;
     }
     .profile-avatar:hover {
       transform: translateY(-1px);
@@ -204,6 +223,11 @@ const {
 export class AuthenticatedLayoutComponent {
   private auth = inject(AuthService);
   private router = inject(Router);
+  private userSvc = inject(UserService);
+
+  @ViewChild('headerAvatarInput') private headerAvatarInput?: ElementRef<HTMLInputElement>;
+
+  readonly avatarUploading = signal(false);
 
   readonly logoutIcon = ICON_LOGOUT;
   readonly workspaceIcon = ICON_ROCKET;
@@ -231,8 +255,31 @@ export class AuthenticatedLayoutComponent {
         : 'Parcours etudiant';
   });
 
-  openProfile(): void {
-    void this.router.navigateByUrl('/settings/profile');
+  triggerAvatarPicker(): void {
+    this.headerAvatarInput?.nativeElement.click();
+  }
+
+  onAvatarSelected(event: Event): void {
+    const input = event.target as HTMLInputElement | null;
+    const file = input?.files?.[0];
+    if (input) input.value = '';
+    if (!file) return;
+
+    const allowedTypes = ['image/png', 'image/jpeg', 'image/webp'];
+    if (!allowedTypes.includes(file.type) || file.size > 5 * 1024 * 1024) {
+      return;
+    }
+
+    this.avatarUploading.set(true);
+    this.userSvc.uploadAvatar(file).subscribe({
+      next: profile => {
+        this.auth.patchCurrentUser({ photoUrl: profile.photoUrl ?? undefined });
+        this.avatarUploading.set(false);
+      },
+      error: () => {
+        this.avatarUploading.set(false);
+      },
+    });
   }
 
   readonly items = computed<SidebarItem[]>(() => {
