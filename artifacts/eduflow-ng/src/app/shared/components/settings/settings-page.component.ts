@@ -34,10 +34,7 @@ interface SettingsOption {
         <section class="hub-card" *ngIf="section() === 'home'">
           <div class="hub-head">
             <div class="hub-copy">
-              <span class="eyebrow">
-                <span [innerHTML]="icons.settings | safeHtml"></span>
-                Reglages
-              </span>
+              <h1>Reglages</h1>
             </div>
 
             <div class="hub-user">
