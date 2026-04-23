@@ -38,11 +38,6 @@ interface SettingsOption {
                 <span [innerHTML]="icons.settings | safeHtml"></span>
                 Reglages
               </span>
-              <h1>Choisissez une option</h1>
-              <p>
-                Cette page contient seulement les options. Cliquez sur une rubrique
-                pour ouvrir son ecran dedie.
-              </p>
             </div>
 
             <div class="hub-user">
